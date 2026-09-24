@@ -3,7 +3,7 @@
 # GSQL surface under the loading jobs.
 services:
   tigergraph:
-    image: tigergraph/community:4.2.0
+    image: tigergraph/community:4.2.5
     container_name: hhgoa-tigergraph
     platform: linux/amd64
     ports:
