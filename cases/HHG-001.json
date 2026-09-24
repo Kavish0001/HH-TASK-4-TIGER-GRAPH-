@@ -58,22 +58,18 @@
         "source": "graph",
         "ref": "query:prior_cases_for_entities(n_entities=2, as_of=2016-12-05 01:55:28)",
         "entity_ids": [
-          "CC-1066",
-          "CC-1673",
+          "CC-3587",
           "CC-2964",
-          "CC-3587"
+          "CC-1673",
+          "CC-1066"
         ]
       }
     ],
     "similar_prior_cases": [
-      "CC-1066",
-      "CC-1673",
-      "CC-2964",
       "CC-3587",
-      "CC-1244",
-      "CC-4236",
-      "CC-4235",
-      "CC-1081"
+      "CC-2964",
+      "CC-1673",
+      "CC-1066"
     ],
     "summary": "The bank's model flagged the transaction on card C12382-K1, transaction 3514030 ($77.07). The graph evidence does not support fraud: Card-present use in billing region 444 seen 10 times before, while 18 transactions continued in the home region 204 over the same window. Assessed fraud probability is 0.21 at confidence 0.69, verdict legitimate, exposure $0.00. Final recommendation: ALLOW_TRANSACTION, CLOSE_NO_FRAUD (policy 3a).",
     "written_to_graph": true,
@@ -118,5 +114,5 @@
   "stop_reason": "Further graph steps are unlikely to change the decision. Confidence 0.69. Main open question: No identity record on the flagged transaction, so device, proxy and screen are unknown",
   "tool_calls": 15,
   "tokens": 0,
-  "latency_s": 0.65
+  "latency_s": 57.85
 }

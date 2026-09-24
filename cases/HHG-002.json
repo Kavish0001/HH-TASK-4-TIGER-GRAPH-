@@ -49,22 +49,6 @@
         ]
       },
       {
-        "claim": "This agent's own earlier case HHG-017 (a case this agent closed earlier, text similarity 0.81) closed as open with pattern card_not_present_fraud",
-        "source": "graph",
-        "ref": "case:GC-HHG-017",
-        "entity_ids": [
-          "HHG-017"
-        ]
-      },
-      {
-        "claim": "This agent's own earlier case HHG-015 (a case this agent closed earlier, text similarity 0.79) closed as closed_fraud with pattern card_not_present_new_device",
-        "source": "graph",
-        "ref": "case:GC-HHG-015",
-        "entity_ids": [
-          "HHG-015"
-        ]
-      },
-      {
         "claim": "Policy R4 governs the recommended actions",
         "source": "document",
         "ref": "policy:R4",
@@ -134,5 +118,5 @@
   "stop_reason": "No reply was assumed, and further graph queries are unlikely to change the decision, so the case rests on R4 and R8 rather than on more querying. Confidence 0.77. Main open question: Signal could not be checked on the available data: device_marked_new",
   "tool_calls": 14,
   "tokens": 0,
-  "latency_s": 1.02
+  "latency_s": 50.39
 }

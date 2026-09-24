@@ -73,7 +73,7 @@
         ]
       },
       {
-        "claim": "Billing region 191.0: has earlier history for this customer (37 transactions, span 140.87 days); home region 191.0; neither a trip nor a clone pattern",
+        "claim": "Billing region 191.0: has earlier history for this customer (37 transactions, span 140.87 days); home region 191.0; reads as a trip",
         "source": "graph",
         "ref": "query:region_history(customer_id=C13487, addr1=191.0)",
         "entity_ids": [
@@ -96,6 +96,21 @@
         ]
       },
       {
+        "claim": "Ring detection from C13487-K1 over rare shared devices finds 44 cards across 44 customers, 33 with confirmed-fraud closed cases",
+        "source": "graph",
+        "ref": "query:ring_detect(seed=C13487-K1)",
+        "entity_ids": [
+          "C04311-K1",
+          "C03551-K2",
+          "C03528-K1",
+          "C11687-K2",
+          "C11468-K2",
+          "C09174-K1",
+          "C07762-K1",
+          "C06197-K2"
+        ]
+      },
+      {
         "claim": "Policy R6 governs the recommended actions",
         "source": "document",
         "ref": "policy:R6",
@@ -109,14 +124,14 @@
       }
     ],
     "similar_prior_cases": [
-      "CC-0020",
-      "CC-0084",
-      "CC-0089",
-      "CC-0100",
-      "CC-0118",
-      "CC-0240",
-      "CC-0280",
-      "CC-0359"
+      "CC-5352",
+      "CC-5482",
+      "CC-5345",
+      "CC-5410",
+      "CC-5274",
+      "CC-5256",
+      "CC-5182",
+      "CC-5185"
     ],
     "summary": "An analyst asked for a review of shared-device activity on card C13487-K1, transaction 3478561 ($74.96). The leading hypothesis is undocumented coordinated abuse: Device profile SM-G935F Build/NRD90M | Android 7.0 | chrome 62.0 for android | 1920x1080 appears on 52 cards across 52 cardholders, marked new on 100% of its transactions and behind an anonymous proxy on 100%; 95 prior confirmed-fraud cases touch cards on this device. Assessed fraud probability is 0.86 at confidence 0.92, verdict fraud, exposure $187.33. Final recommendation: CREATE_CASE, FILE_REPORT, MONITOR_CONNECTED_CARDS, ESCALATE_TO_ANALYST (R6, R9).",
     "written_to_graph": true,
@@ -194,5 +209,5 @@
   "stop_reason": "Probability 0.86 is at or above 0.85 with 3 independent pieces of evidence. Confidence 0.92. Main open question: Cardholder has not been asked whether they made the transaction",
   "tool_calls": 18,
   "tokens": 0,
-  "latency_s": 1.15
+  "latency_s": 67.74
 }

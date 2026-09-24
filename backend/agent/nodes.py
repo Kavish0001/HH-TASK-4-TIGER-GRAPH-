@@ -1105,6 +1105,10 @@ def explain(s: AgentState) -> AgentState:
             step=f"synthesis:{s.case.case_id}",
         )
         if result.ok and result.provider != "mock":
+            # Only a successful provider call consumed tokens. A failed call
+            # falls back to the mock, whose usage is a character estimate, and
+            # reporting that would overstate what was spent.
+            s.llm_tokens += int(result.usage.total_tokens)
             merged, rejected = nar.merge_llm(template, result.data, allowed, sar_file, response)
             used_llm = True
             if rejected:
@@ -1214,10 +1218,7 @@ def update_memory(s: AgentState) -> AgentState:
 def finalize(s: AgentState) -> AgentState:
     c = s.case
     c.tool_calls = s.tools.tool_calls
-    real_tokens = s.llm.usage.total_tokens - s.tokens_at_start
-    # Mock-backend tokens are estimates of calls that never happened, so they
-    # are not reported as consumption.
-    c.tokens = real_tokens if s.llm.provider != "mock" else 0
+    c.tokens = s.llm_tokens
     c.latency_s = round(time.perf_counter() - s.started_perf, 2)
     _step(s, "answer_file", f"tool_calls={c.tool_calls}, tokens={c.tokens}, latency={c.latency_s}s")
     _emit(s, "done", {"case_id": c.case_id, "status": c.status})

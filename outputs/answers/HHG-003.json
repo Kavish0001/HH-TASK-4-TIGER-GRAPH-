@@ -53,12 +53,20 @@
         "source": "graph",
         "ref": "query:prior_cases_for_entities(n_entities=2, as_of=2016-12-10 15:01:21)",
         "entity_ids": [
-          "CC-1589",
-          "CC-2817",
-          "CC-2935",
-          "CC-3327",
+          "CC-4957",
           "CC-3682",
-          "CC-4957"
+          "CC-3327",
+          "CC-2935",
+          "CC-2817",
+          "CC-1589"
+        ]
+      },
+      {
+        "claim": "Earlier benchmark case HHG-007, investigated by this agent, ended escalated with pattern out_of_region_use; retrieved as memory because text similarity to the analyst notes",
+        "source": "graph",
+        "ref": "case:GC-HHG-007",
+        "entity_ids": [
+          "HHG-007"
         ]
       },
       {
@@ -81,14 +89,12 @@
       }
     ],
     "similar_prior_cases": [
-      "CC-1589",
-      "CC-2817",
-      "CC-2935",
-      "CC-3327",
+      "CC-4957",
       "CC-3682",
-      "CC-2674",
-      "CC-4934",
-      "CC-4995"
+      "CC-3327",
+      "CC-2935",
+      "CC-2817",
+      "CC-1589"
     ],
     "summary": "The cardholder disputed a charge on card C08623-K2, transaction 3530164 ($49.00). The leading hypothesis is out-of-region use: Card-present use in billing region 330 seen 42 times before, while 115 transactions continued in the home region 299 over the same window. The cardholder was asked to validate the activity and no reply was assumed within 24 hours (simulated). Assessed fraud probability is 0.37 at confidence 0.66, verdict uncertain, exposure $49.00. Final recommendation: CREATE_CASE, MONITOR_CARD, ESCALATE_TO_ANALYST (R4, R8).",
     "written_to_graph": true,
@@ -154,5 +160,5 @@
   "stop_reason": "No reply was assumed, and further graph queries are unlikely to change the decision, so the case rests on R4 and R8 rather than on more querying. Confidence 0.66. Main open question: No identity record on the flagged transaction, so device, proxy and screen are unknown",
   "tool_calls": 16,
   "tokens": 0,
-  "latency_s": 1.07
+  "latency_s": 57.03
 }

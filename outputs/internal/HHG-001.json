@@ -14,17 +14,17 @@
   "status_history": [
     {
       "status": "open",
-      "at": "2026-09-24T12:56:08.248636",
+      "at": "2026-09-24T13:07:25.325203",
       "note": "alert received, investigation opened"
     },
     {
       "status": "open",
-      "at": "2026-09-24T12:56:08.248636",
+      "at": "2026-09-24T13:07:25.326203",
       "note": "investigating"
     },
     {
       "status": "closed_legitimate",
-      "at": "2026-09-24T12:56:08.897814",
+      "at": "2026-09-24T13:08:20.325579",
       "note": "investigation complete"
     }
   ],
@@ -282,86 +282,55 @@
       "source": "graph",
       "ref": "query:prior_cases_for_entities(n_entities=2, as_of=2016-12-05 01:55:28)",
       "entity_ids": [
-        "CC-1066",
-        "CC-1673",
+        "CC-3587",
         "CC-2964",
-        "CC-3587"
+        "CC-1673",
+        "CC-1066"
       ]
     }
   ],
   "similar_prior_cases": [
-    "CC-1066",
-    "CC-1673",
-    "CC-2964",
     "CC-3587",
-    "CC-1244",
-    "CC-4236",
-    "CC-4235",
-    "CC-1081"
+    "CC-2964",
+    "CC-1673",
+    "CC-1066"
   ],
   "retrieved_chunks": [
     {
+      "ref": "pattern:out_of_region_use",
+      "text": "Out-of-region use. Card-present purchases in a billing region the cardholder has no history in, while their normal activity continues at home. Several days of purchases in one new region is a trip, not a clone. Signals: addr1 absent from the card's history before the investigation time, plus activity continuing in the home region inside the same window. Conditioned on how many regions the customer already uses: 61.9% use exactly one, and for a customer already spanning ten a new region means almost nothing. 716 of the 900 cleared closed cases were cleared as cardholder travel, which is this pa",
+      "score": 0.7459,
+      "kind": "pattern",
+      "outcome": null,
+      "pattern": null,
+      "exposure_usd": null
+    },
+    {
+      "ref": "answer:part_2_sar",
+      "text": "Part 2: `sar`\n| Field | Type | Meaning |\n|---|---|---|\n| `file` | boolean | Whether a suspicious activity report should be filed. Must agree with whether `FILE_REPORT` appears in your final actions |\n| `reason` | string | Why file, or why not. Cite the policy rule |\n| `narrative` | string | Required when `file` is true. The report itself: **who** (customer, cards, merchants, devices), **what** happened, **when** (dates), **where** (locations, channels), **how** it was carried out, **why** it is suspicious. Six to twelve sentences. This is what a regulator reads |\n| `subjects` | list of strings",
+      "score": 0.677,
+      "kind": "policy",
+      "outcome": null,
+      "pattern": null,
+      "exposure_usd": null
+    },
+    {
+      "ref": "policy:2_approval_routing",
+      "text": "2. Approval routing\n| Route | Applies to |\n|---|---|\n| `auto` | `ALLOW_TRANSACTION`, `MONITOR_CARD`, `MONITOR_CONNECTED_CARDS`, `WARN_CUSTOMER`, `VERIFY_WITH_CUSTOMER`, `STEP_UP_AUTH`, `GENERATE_REPORT`, `CREATE_CASE`, `ESCALATE_TO_ANALYST`, `CLOSE_NO_FRAUD` |\n| `L1` (team lead) | `DECLINE_TRANSACTION`; `BLOCK_CARD` when exposure ≤ $2,500 |\n| `L2` (fraud manager) | `BLOCK_CARD` when exposure > $2,500; `BLOCK_ALL_CARDS` always; `FILE_REPORT` always |\n\nThe agent recommends. Only `auto` actions may be executed by the agent. `L1` and `L2` actions are recommended with the route stated and wait for ",
+      "score": 0.6758,
+      "kind": "policy",
+      "outcome": null,
+      "pattern": null,
+      "exposure_usd": null
+    },
+    {
       "ref": "policy:R1",
-      "text": "Policy rule R1. Verify before you block on a weak signal\ntitle: Verify before you block on a weak signal\nwhen: single_signal and fraud_probability < 0.70\nrecommend: ['VERIFY_WITH_CUSTOMER', 'STEP_UP_AUTH']\nforbids: ['BLOCK_CARD', 'BLOCK_ALL_CARDS']\nnote: Blocking a legitimate customer on one signal is a policy breach",
-      "score": 0.7674,
+      "text": "R1 Verify before you block on a weak signal\n**R1. Verify before you block on a weak signal.** If the case rests on a single signal (including a risk score alone) and your assessed fraud probability is below 0.70, recommend `VERIFY_WITH_CUSTOMER` or `STEP_UP_AUTH` before any block. Blocking a legitimate customer on one signal is a policy breach.",
+      "score": 0.6667,
       "kind": "policy",
       "outcome": null,
       "pattern": null,
       "exposure_usd": null
-    },
-    {
-      "ref": "document:README#3_rules",
-      "text": "3. Rules\n\n**R1. Verify before you block on a weak signal.** If the case rests on a single signal (including a risk score alone) and your assessed fraud probability is below 0.70, recommend `VERIFY_WITH_CUSTOMER` or `STEP_UP_AUTH` before any block. Blocking a legitimate customer on one signal is a policy breach.\n\n**R2. Customer denies the transaction.** Recommend `BLOCK_CARD` and `CREATE_CASE`. Add `FILE_REPORT` if exposure exceeds $1,000 or the case connects to a shared device profile or another card's fraud.\n\n**R3. Customer confirms the transaction.** Recommend `CLOSE_NO_FRAUD`. Note the conf",
-      "score": 0.732,
-      "kind": "policy",
-      "outcome": null,
-      "pattern": null,
-      "exposure_usd": null
-    },
-    {
-      "ref": "document:README#2_approval_routing",
-      "text": "2. Approval routing\n\n| Route | Applies to |\n|---|---|\n| `auto` | `ALLOW_TRANSACTION`, `MONITOR_CARD`, `MONITOR_CONNECTED_CARDS`, `WARN_CUSTOMER`, `VERIFY_WITH_CUSTOMER`, `STEP_UP_AUTH`, `GENERATE_REPORT`, `CREATE_CASE`, `ESCALATE_TO_ANALYST`, `CLOSE_NO_FRAUD` |\n| `L1` (team lead) | `DECLINE_TRANSACTION`; `BLOCK_CARD` when exposure ≤ $2,500 |\n| `L2` (fraud manager) | `BLOCK_CARD` when exposure > $2,500; `BLOCK_ALL_CARDS` always; `FILE_REPORT` always |\n\nThe agent recommends. Only `auto` actions may be executed by the agent. `L1` and `L2` actions are recommended with the route stated and wait for",
-      "score": 0.7274,
-      "kind": "policy",
-      "outcome": null,
-      "pattern": null,
-      "exposure_usd": null
-    },
-    {
-      "ref": "policy:routing",
-      "text": "Approval routing.\nauto: ['ALLOW_TRANSACTION', 'MONITOR_CARD', 'MONITOR_CONNECTED_CARDS', 'WARN_CUSTOMER', 'VERIFY_WITH_CUSTOMER', 'STEP_UP_AUTH', 'GENERATE_REPORT', 'CREATE_CASE', 'ESCALATE_TO_ANALYST', 'CLOSE_NO_FRAUD']\nconditional: {'BLOCK_CARD': [{'when': 'exposure_usd <= 2500', 'route': 'L1'}, {'when': 'exposure_usd > 2500', 'route': 'L2'}]}\nl1: ['DECLINE_TRANSACTION']\nl2: ['BLOCK_ALL_CARDS', 'FILE_REPORT']",
-      "score": 0.7241,
-      "kind": "policy",
-      "outcome": null,
-      "pattern": null,
-      "exposure_usd": null
-    },
-    {
-      "ref": "case:CC-1066",
-      "text": "Case CC-1066: cardholder C12382 reported unrecognized activity on card C12382-K1. 1 transaction(s) between 2016-07-23 and 2016-07-23 totaling $170.98 were confirmed fraudulent. Card-present use in a billing region the cardholder had no history in, while the cardholder retained the card. Card blocked and reissued. Customer reimbursed.",
-      "score": 1.0,
-      "kind": "prior_case",
-      "outcome": "confirmed_fraud",
-      "pattern": "out_of_region_use",
-      "exposure_usd": 170.98
-    },
-    {
-      "ref": "case:CC-1673",
-      "text": "Case CC-1673: cardholder C12382 reported unrecognized activity on card C12382-K1. 1 transaction(s) between 2016-08-04 and 2016-08-04 totaling $199.98 were confirmed fraudulent. Online purchases from a device not previously seen on this account, inconsistent with the cardholder's history. Online transactions came from a iOS Device on mobile safari 11.0. Card blocked and reissued. Customer reimbursed.",
-      "score": 1.0,
-      "kind": "prior_case",
-      "outcome": "confirmed_fraud",
-      "pattern": "card_not_present_new_device",
-      "exposure_usd": 199.98
-    },
-    {
-      "ref": "case:CC-2964",
-      "text": "Case CC-2964: cardholder C12382 reported unrecognized activity on card C12382-K1. 1 transaction(s) between 2016-09-01 and 2016-09-01 totaling $171.08 were confirmed fraudulent. Card-present use in a billing region the cardholder had no history in, while the cardholder retained the card. Card blocked and reissued. Customer reimbursed.",
-      "score": 1.0,
-      "kind": "prior_case",
-      "outcome": "confirmed_fraud",
-      "pattern": "out_of_region_use",
-      "exposure_usd": 171.08
     },
     {
       "ref": "case:CC-3587",
@@ -373,40 +342,31 @@
       "exposure_usd": 49.09
     },
     {
-      "ref": "case:CC-1244",
-      "text": "Closed case CC-1244, outcome cleared, pattern none, exposure $0.00 over 1 transaction(s), opened 2016-07-26 23:07:48, closed 2016-07-29 17:07:48, actions VERIFY_WITH_CUSTOMER|CLOSE_NO_FRAUD, report filed No.\nCase CC-1244: model scored a $99.97 transaction at 0.84. Cardholder confirmed travel to the billing region in question. Alert cleared.",
-      "score": 0.7914,
-      "kind": "closed_case",
-      "outcome": "cleared",
-      "pattern": "none",
-      "exposure_usd": 0.0
+      "ref": "case:CC-2964",
+      "text": "Case CC-2964: cardholder C12382 reported unrecognized activity on card C12382-K1. 1 transaction(s) between 2016-09-01 and 2016-09-01 totaling $171.08 were confirmed fraudulent. Card-present use in a billing region the cardholder had no history in, while the cardholder retained the card. Card blocked and reissued. Customer reimbursed.",
+      "score": 1.0,
+      "kind": "prior_case",
+      "outcome": "confirmed_fraud",
+      "pattern": "out_of_region_use",
+      "exposure_usd": 171.08
     },
     {
-      "ref": "case:CC-4236",
-      "text": "Closed case CC-4236, outcome cleared, pattern none, exposure $0.00 over 1 transaction(s), opened 2016-10-01 20:54:35, closed 2016-10-04 16:54:35, actions VERIFY_WITH_CUSTOMER|CLOSE_NO_FRAUD, report filed No.\nCase CC-4236: model scored a $1,465.04 transaction at 0.89. Cardholder confirmed travel to the billing region in question. Alert cleared.",
-      "score": 0.7911,
-      "kind": "closed_case",
-      "outcome": "cleared",
-      "pattern": "none",
-      "exposure_usd": 0.0
+      "ref": "case:CC-1673",
+      "text": "Case CC-1673: cardholder C12382 reported unrecognized activity on card C12382-K1. 1 transaction(s) between 2016-08-04 and 2016-08-04 totaling $199.98 were confirmed fraudulent. Online purchases from a device not previously seen on this account, inconsistent with the cardholder's history. Online transactions came from a iOS Device on mobile safari 11.0. Card blocked and reissued. Customer reimbursed.",
+      "score": 1.0,
+      "kind": "prior_case",
+      "outcome": "confirmed_fraud",
+      "pattern": "card_not_present_new_device",
+      "exposure_usd": 199.98
     },
     {
-      "ref": "case:CC-4235",
-      "text": "Closed case CC-4235, outcome cleared, pattern none, exposure $0.00 over 1 transaction(s), opened 2016-10-01 20:29:50, closed 2016-10-04 16:29:50, actions VERIFY_WITH_CUSTOMER|CLOSE_NO_FRAUD, report filed No.\nCase CC-4235: model scored a $49.99 transaction at 0.83. Cardholder confirmed travel to the billing region in question. Alert cleared.",
-      "score": 0.7902,
-      "kind": "closed_case",
-      "outcome": "cleared",
-      "pattern": "none",
-      "exposure_usd": 0.0
-    },
-    {
-      "ref": "case:CC-1081",
-      "text": "Closed case CC-1081, outcome cleared, pattern none, exposure $0.00 over 1 transaction(s), opened 2016-07-24 07:51:13, closed 2016-07-26 23:51:13, actions VERIFY_WITH_CUSTOMER|CLOSE_NO_FRAUD, report filed No.\nCase CC-1081: model scored a $99.95 transaction at 0.84. Cardholder confirmed travel to the billing region in question. Alert cleared.",
-      "score": 0.7891,
-      "kind": "closed_case",
-      "outcome": "cleared",
-      "pattern": "none",
-      "exposure_usd": 0.0
+      "ref": "case:CC-1066",
+      "text": "Case CC-1066: cardholder C12382 reported unrecognized activity on card C12382-K1. 1 transaction(s) between 2016-07-23 and 2016-07-23 totaling $170.98 were confirmed fraudulent. Card-present use in a billing region the cardholder had no history in, while the cardholder retained the card. Card blocked and reissued. Customer reimbursed.",
+      "score": 1.0,
+      "kind": "prior_case",
+      "outcome": "confirmed_fraud",
+      "pattern": "out_of_region_use",
+      "exposure_usd": 170.98
     }
   ],
   "summary": "The bank's model flagged the transaction on card C12382-K1, transaction 3514030 ($77.07). The graph evidence does not support fraud: Card-present use in billing region 444 seen 10 times before, while 18 transactions continued in the home region 204 over the same window. Assessed fraud probability is 0.21 at confidence 0.69, verdict legitimate, exposure $0.00. Final recommendation: ALLOW_TRANSACTION, CLOSE_NO_FRAUD (policy 3a).",
@@ -454,7 +414,7 @@
       "tool": "",
       "args": {},
       "summary": "risk_score trigger on C12382-K1, transaction 3514030: Real-time model scored transaction 3514030 ($77.07, in billing region 444.0) at 0.61. Review and decide.",
-      "at": "2026-09-24T12:56:08.248636",
+      "at": "2026-09-24T13:07:25.325203",
       "duration_s": 0.0,
       "ok": true
     },
@@ -464,7 +424,7 @@
       "tool": "",
       "args": {},
       "summary": "case HHG-001 opened as of 2016-12-05 01:55:28; no data after this time is read",
-      "at": "2026-09-24T12:56:08.248636",
+      "at": "2026-09-24T13:07:25.325203",
       "duration_s": 0.0,
       "ok": true
     },
@@ -474,7 +434,7 @@
       "tool": "",
       "args": {},
       "summary": "round 1: tx_context, customer_profile, behavior_shift, card_window, prior_cases_for_entities",
-      "at": "2026-09-24T12:56:08.248636",
+      "at": "2026-09-24T13:07:25.326203",
       "duration_s": 0.0,
       "ok": true
     },
@@ -486,8 +446,8 @@
         "txn_id": "3514030"
       },
       "summary": "transaction 3514030 $77.07 in_person risk 0.61",
-      "at": "2026-09-24T12:56:08.257034",
-      "duration_s": 0.009,
+      "at": "2026-09-24T13:07:26.478996",
+      "duration_s": 1.152,
       "ok": true
     },
     {
@@ -498,8 +458,8 @@
         "customer_id": "C12382"
       },
       "summary": "360 transactions on the customer, cards ['C12382-K1']",
-      "at": "2026-09-24T12:56:08.265706",
-      "duration_s": 0.014,
+      "at": "2026-09-24T13:07:27.068605",
+      "duration_s": 0.59,
       "ok": true
     },
     {
@@ -511,8 +471,8 @@
         "txn_id": "3514030"
       },
       "summary": "amount percentile 0.457, new device False, new product False",
-      "at": "2026-09-24T12:56:08.282613",
-      "duration_s": 0.009,
+      "at": "2026-09-24T13:07:27.640667",
+      "duration_s": 0.572,
       "ok": true
     },
     {
@@ -524,8 +484,8 @@
         "hours": 48
       },
       "summary": "9 transactions on the card in window hours=48",
-      "at": "2026-09-24T12:56:08.291459",
-      "duration_s": 0.009,
+      "at": "2026-09-24T13:07:28.226374",
+      "duration_s": 0.585,
       "ok": true
     },
     {
@@ -539,8 +499,8 @@
         ]
       },
       "summary": "4 closed cases on these entities, confirmed rate 1.0",
-      "at": "2026-09-24T12:56:08.297822",
-      "duration_s": 0.006,
+      "at": "2026-09-24T13:07:28.842341",
+      "duration_s": 0.616,
       "ok": true
     },
     {
@@ -549,7 +509,7 @@
       "tool": "",
       "args": {},
       "summary": "round 1: probability 0.21, confidence 0.59, leading out_of_region_use 0.16, independent evidence 3, checklist missing ['region_history', 'pattern_match:out_of_region_use']; next round: region_history, velocity, pattern_match, pattern_match, similar_cases, policy_lookup",
-      "at": "2026-09-24T12:56:08.465948",
+      "at": "2026-09-24T13:07:29.128474",
       "duration_s": 0.0,
       "ok": true
     },
@@ -562,8 +522,8 @@
         "addr1": "444.0"
       },
       "summary": "region history found=True, has_history=True, trip=False",
-      "at": "2026-09-24T12:56:08.474716",
-      "duration_s": 0.009,
+      "at": "2026-09-24T13:07:29.702325",
+      "duration_s": 0.573,
       "ok": true
     },
     {
@@ -579,8 +539,8 @@
         ]
       },
       "summary": "velocity 1h n=0, 24h n=4, 168h n=19",
-      "at": "2026-09-24T12:56:08.509325",
-      "duration_s": 0.035,
+      "at": "2026-09-24T13:07:30.300138",
+      "duration_s": 0.598,
       "ok": true
     },
     {
@@ -593,8 +553,8 @@
         "txn_id": "3514030"
       },
       "summary": "out_of_region_use score 0.16",
-      "at": "2026-09-24T12:56:08.529292",
-      "duration_s": 0.02,
+      "at": "2026-09-24T13:07:30.898405",
+      "duration_s": 0.598,
       "ok": true
     },
     {
@@ -606,9 +566,9 @@
         "card_id": "C12382-K1",
         "txn_id": "3514030"
       },
-      "summary": "card_testing score 0.0",
-      "at": "2026-09-24T12:56:08.544199",
-      "duration_s": 0.014,
+      "summary": "card_testing score 0",
+      "at": "2026-09-24T13:07:31.474239",
+      "duration_s": 0.576,
       "ok": true
     },
     {
@@ -623,9 +583,9 @@
         ],
         "k": 8
       },
-      "summary": "8 similar cases: CC-1244, CC-4236, CC-4235, CC-1081, CC-3484",
-      "at": "2026-09-24T12:56:08.710815",
-      "duration_s": 0.167,
+      "summary": "8 similar cases: CC-3587, CC-2964, CC-1066, CC-1673, CC-2708",
+      "at": "2026-09-24T13:07:32.091821",
+      "duration_s": 0.618,
       "ok": true
     },
     {
@@ -636,9 +596,9 @@
         "query": "out-of-region use policy rule verify block report approval",
         "k": 4
       },
-      "summary": "policy chunks policy:R1, document:README#3_rules, document:README#2_approval_routing, policy:routing",
-      "at": "2026-09-24T12:56:08.723626",
-      "duration_s": 0.013,
+      "summary": "policy chunks pattern:out_of_region_use, answer:part_2_sar, policy:2_approval_routing, policy:R1",
+      "at": "2026-09-24T13:07:32.709002",
+      "duration_s": 0.617,
       "ok": true
     },
     {
@@ -647,7 +607,7 @@
       "tool": "",
       "args": {},
       "summary": "round 2: probability 0.21, confidence 0.69, leading out_of_region_use 0.16, independent evidence 3, checklist missing nothing; stop gathering",
-      "at": "2026-09-24T12:56:08.893529",
+      "at": "2026-09-24T13:07:32.948151",
       "duration_s": 0.0,
       "ok": true
     },
@@ -657,7 +617,7 @@
       "tool": "",
       "args": {},
       "summary": "before evidence: ALLOW_TRANSACTION(auto), CLOSE_NO_FRAUD(auto); rules none; verdict legitimate; request evidence: False",
-      "at": "2026-09-24T12:56:08.894610",
+      "at": "2026-09-24T13:07:32.949151",
       "duration_s": 0.0,
       "ok": true
     },
@@ -667,7 +627,7 @@
       "tool": "",
       "args": {},
       "summary": "initial: 2 auto, 0 held for approval",
-      "at": "2026-09-24T12:56:08.895147",
+      "at": "2026-09-24T13:07:32.950153",
       "duration_s": 0.0,
       "ok": true
     },
@@ -677,7 +637,7 @@
       "tool": "",
       "args": {},
       "summary": "no evidence requested, final recommendation equals the initial one",
-      "at": "2026-09-24T12:56:08.895147",
+      "at": "2026-09-24T13:07:32.951152",
       "duration_s": 0.0,
       "ok": true
     },
@@ -687,7 +647,7 @@
       "tool": "",
       "args": {},
       "summary": "executed ['ALLOW_TRANSACTION(auto)', 'CLOSE_NO_FRAUD(auto)']; routed for approval nothing",
-      "at": "2026-09-24T12:56:08.895686",
+      "at": "2026-09-24T13:07:32.952164",
       "duration_s": 0.0,
       "ok": true
     },
@@ -697,7 +657,7 @@
       "tool": "",
       "args": {},
       "summary": "SAR not required: Policy 3a: a report requires fraud confirmed or strongly suspected. Assessed probability 0.21 with verdict legitimate, so no report.",
-      "at": "2026-09-24T12:56:08.896247",
+      "at": "2026-09-24T13:07:32.953156",
       "duration_s": 0.0,
       "ok": true
     },
@@ -706,8 +666,8 @@
       "node": "explain",
       "tool": "",
       "args": {},
-      "summary": "templated write-up; notes: LLM in mock mode (DRY_RUN is set, so no provider call is made), templated text used",
-      "at": "2026-09-24T12:56:08.897283",
+      "summary": "templated write-up; notes: LLM call failed, templated text used: ClientError: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more i",
+      "at": "2026-09-24T13:08:20.324568",
       "duration_s": 0.0,
       "ok": true
     },
@@ -717,7 +677,7 @@
       "tool": "write_case",
       "args": {},
       "summary": "written_to_graph=True as GC-HHG-001",
-      "at": "2026-09-24T12:56:08.898900",
+      "at": "2026-09-24T13:08:23.173628",
       "duration_s": 0.0,
       "ok": true
     },
@@ -727,7 +687,7 @@
       "tool": "",
       "args": {},
       "summary": "HHG-001 is now memory for investigations opened after 2016-12-05 01:55:28",
-      "at": "2026-09-24T12:56:08.899432",
+      "at": "2026-09-24T13:08:23.176623",
       "duration_s": 0.0,
       "ok": true
     },
@@ -736,8 +696,8 @@
       "node": "answer_file",
       "tool": "",
       "args": {},
-      "summary": "tool_calls=15, tokens=0, latency=0.65s",
-      "at": "2026-09-24T12:56:08.899432",
+      "summary": "tool_calls=15, tokens=4509, latency=57.85s",
+      "at": "2026-09-24T13:08:23.177626",
       "duration_s": 0.0,
       "ok": true
     }
@@ -752,7 +712,7 @@
       "reason": "Probability 0.21 at confidence 0.69 on 3 independent pieces of evidence; nothing supports holding the transaction",
       "phase": "initial",
       "approval_status": "not_required",
-      "at": "2026-09-24T12:56:08.895147"
+      "at": "2026-09-24T13:07:32.950153"
     },
     {
       "actor": "agent",
@@ -763,7 +723,7 @@
       "reason": "Policy section 6: probability 0.21 with no pattern scoring above 0.16; further steps are unlikely to change the decision, so the alert closes",
       "phase": "initial",
       "approval_status": "not_required",
-      "at": "2026-09-24T12:56:08.895147"
+      "at": "2026-09-24T13:07:32.950153"
     },
     {
       "actor": "agent",
@@ -774,7 +734,7 @@
       "reason": "Probability 0.21 at confidence 0.69 on 3 independent pieces of evidence; nothing supports holding the transaction",
       "phase": "final",
       "approval_status": "not_required",
-      "at": "2026-09-24T12:56:08.895686"
+      "at": "2026-09-24T13:07:32.951152"
     },
     {
       "actor": "agent",
@@ -785,11 +745,11 @@
       "reason": "Policy section 6: probability 0.21 with no pattern scoring above 0.16; further steps are unlikely to change the decision, so the alert closes",
       "phase": "final",
       "approval_status": "not_required",
-      "at": "2026-09-24T12:56:08.895686"
+      "at": "2026-09-24T13:07:32.951152"
     }
   ],
   "stop_reason": "Further graph steps are unlikely to change the decision. Confidence 0.69. Main open question: No identity record on the flagged transaction, so device, proxy and screen are unknown",
   "tool_calls": 15,
   "tokens": 0,
-  "latency_s": 0.65
+  "latency_s": 57.85
 }

@@ -44,7 +44,8 @@ class Settings(BaseSettings):
     llm_fallback_models: str = "gemini-3.1-flash-lite,gemini-3-flash-preview"
     google_api_key: str = ""
     openai_api_key: str = ""
-    llm_max_tokens: int = 2048
+    # 2048 truncated one SAR-bearing synthesis mid-string on the final run.
+    llm_max_tokens: int = 4096
     # Free-tier requests per minute are the binding constraint on a 20-case run.
     llm_max_rpm: int = 10
     llm_max_retries: int = 5

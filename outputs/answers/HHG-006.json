@@ -55,7 +55,7 @@
         ]
       },
       {
-        "claim": "Billing region 264.0: has earlier history for this customer (29 transactions, span 138.83 days); home region 264.0; neither a trip nor a clone pattern",
+        "claim": "Billing region 264.0: has earlier history for this customer (29 transactions, span 138.83 days); home region 264.0; reads as a trip",
         "source": "graph",
         "ref": "query:region_history(customer_id=C07297, addr1=264.0)",
         "entity_ids": [
@@ -90,9 +90,11 @@
       }
     ],
     "similar_prior_cases": [
+      "CC-3748",
       "CC-3907",
-      "CC-3841",
-      "CC-3748"
+      "CC-4086",
+      "CC-4124",
+      "CC-3841"
     ],
     "summary": "The cardholder disputed a charge on card C07297-K1, transaction 3476682 ($482.12). The leading hypothesis is undocumented coordinated abuse: 4 online purchases of $400 to $500 on this card inside 60 minutes, totalling $1,906.07, each amount stopping just short of a round authorization ceiling. The cardholder, asked to validate the activity, was assumed to deny it (simulated response). Assessed fraud probability is 0.95 at confidence 0.99, verdict fraud, exposure $1,906.07. Final recommendation: BLOCK_CARD, CREATE_CASE, FILE_REPORT, ESCALATE_TO_ANALYST (R2, R9).",
     "written_to_graph": true,
@@ -169,5 +171,5 @@
   "stop_reason": "The assumed cardholder response (denied) settles the question under policy section 6. Confidence 0.99. Main open question: No closed case on these entities to compare against",
   "tool_calls": 19,
   "tokens": 0,
-  "latency_s": 1.64
+  "latency_s": 62.66
 }

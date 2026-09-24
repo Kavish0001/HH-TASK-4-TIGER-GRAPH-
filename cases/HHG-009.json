@@ -49,11 +49,19 @@
         ]
       },
       {
-        "claim": "Device profile unknown | unknown | unknown | unknown appears on 12 cards across 12 customers; the profile is common, so sharing alone is not evidence",
+        "claim": "Device profile unknown | unknown | unknown | unknown appears on 1013 cards across 1011 customers; the profile is common, so sharing alone is not evidence",
         "source": "graph",
         "ref": "query:shared_device_profile(device_profile=unknown | unknown | unknown | unknown)",
         "entity_ids": [
           "C08299-K1"
+        ]
+      },
+      {
+        "claim": "Earlier benchmark case HHG-002, investigated by this agent, ended open with pattern card_not_present_fraud; retrieved as memory because text similarity to the analyst notes",
+        "source": "graph",
+        "ref": "case:GC-HHG-002",
+        "entity_ids": [
+          "HHG-002"
         ]
       },
       {
@@ -70,7 +78,8 @@
       }
     ],
     "similar_prior_cases": [
-      "CC-1799"
+      "CC-3999",
+      "CC-2512"
     ],
     "summary": "The cardholder disputed a charge on card C08299-K1, transaction 3581141 ($30.02). The leading hypothesis is card-not-present fraud: Online purchase of $30.02 at the 30% percentile of this card's history. The cardholder was asked to validate the activity and no reply was assumed within 24 hours (simulated). Assessed fraud probability is 0.29 at confidence 0.84, verdict uncertain, exposure $30.02. Final recommendation: CREATE_CASE, MONITOR_CARD (R4).",
     "written_to_graph": true,
@@ -126,5 +135,5 @@
   "stop_reason": "No reply was assumed, and further graph queries are unlikely to change the decision, so the case rests on R4 and R8 rather than on more querying. Confidence 0.84. Main open question: Cardholder did not reply, so the dispute is unresolved",
   "tool_calls": 17,
   "tokens": 0,
-  "latency_s": 1.27
+  "latency_s": 53.88
 }

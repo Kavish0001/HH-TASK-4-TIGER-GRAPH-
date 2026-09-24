@@ -49,7 +49,7 @@
         ]
       },
       {
-        "claim": "Billing region 469.0: has earlier history for this customer (25 transactions, span 148.64 days); home region 469.0; neither a trip nor a clone pattern",
+        "claim": "Billing region 469.0: has earlier history for this customer (25 transactions, span 148.64 days); home region 469.0; reads as a trip",
         "source": "graph",
         "ref": "query:region_history(customer_id=C10434, addr1=469.0)",
         "entity_ids": [
@@ -73,19 +73,11 @@
         ]
       },
       {
-        "claim": "This agent's own earlier case HHG-015 (a case this agent closed earlier, text similarity 0.81) closed as closed_fraud with pattern card_not_present_new_device",
+        "claim": "Earlier benchmark case HHG-015, investigated by this agent, ended closed_fraud with pattern card_not_present_new_device; retrieved as memory because text similarity to the analyst notes",
         "source": "graph",
         "ref": "case:GC-HHG-015",
         "entity_ids": [
           "HHG-015"
-        ]
-      },
-      {
-        "claim": "This agent's own earlier case HHG-017 (a case this agent closed earlier, text similarity 0.80) closed as open with pattern card_not_present_fraud",
-        "source": "graph",
-        "ref": "case:GC-HHG-017",
-        "entity_ids": [
-          "HHG-017"
         ]
       },
       {
@@ -103,7 +95,8 @@
     ],
     "similar_prior_cases": [
       "CC-0873",
-      "CC-0331"
+      "CC-3057",
+      "CC-0528"
     ],
     "summary": "The bank's model flagged the transaction on card C10434-K1, transaction 3506725 ($1,000.03). The leading hypothesis is card-not-present fraud from a new device: Online purchase of $1,000.03 at the 100% percentile of this card's history, from a device profile new to this card. The cardholder, asked to validate the activity, was assumed to deny it (simulated response). Assessed fraud probability is 0.93 at confidence 0.97, verdict fraud, exposure $1,000.03. Final recommendation: BLOCK_CARD, CREATE_CASE, FILE_REPORT (R2).",
     "written_to_graph": true,
@@ -175,5 +168,5 @@
   "stop_reason": "The assumed cardholder response (denied) settles the question under policy section 6. Confidence 0.97. Main open question: The dataset carries no merchant name, so 'same merchant' recurrence is inferred from amount, product code and cadence rather than observed directly",
   "tool_calls": 18,
   "tokens": 0,
-  "latency_s": 1.09
+  "latency_s": 66.89
 }

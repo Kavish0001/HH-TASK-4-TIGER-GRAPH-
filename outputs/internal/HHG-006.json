@@ -14,22 +14,22 @@
   "status_history": [
     {
       "status": "open",
-      "at": "2026-09-24T12:55:58.152777",
+      "at": "2026-09-24T13:00:11.092314",
       "note": "alert received, investigation opened"
     },
     {
       "status": "open",
-      "at": "2026-09-24T12:55:58.152777",
+      "at": "2026-09-24T13:00:11.093320",
       "note": "investigating"
     },
     {
       "status": "open",
-      "at": "2026-09-24T12:55:59.417535",
+      "at": "2026-09-24T13:00:20.265691",
       "note": "awaiting evidence: customer_validation"
     },
     {
       "status": "escalated",
-      "at": "2026-09-24T12:55:59.790967",
+      "at": "2026-09-24T13:01:09.320952",
       "note": "investigation complete"
     }
   ],
@@ -332,7 +332,7 @@
       ]
     },
     {
-      "claim": "Billing region 264.0: has earlier history for this customer (29 transactions, span 138.83 days); home region 264.0; neither a trip nor a clone pattern",
+      "claim": "Billing region 264.0: has earlier history for this customer (29 transactions, span 138.83 days); home region 264.0; reads as a trip",
       "source": "graph",
       "ref": "query:region_history(customer_id=C07297, addr1=264.0)",
       "entity_ids": [
@@ -367,73 +367,93 @@
     }
   ],
   "similar_prior_cases": [
+    "CC-3748",
     "CC-3907",
-    "CC-3841",
-    "CC-3748"
+    "CC-4086",
+    "CC-4124",
+    "CC-3841"
   ],
   "retrieved_chunks": [
     {
       "ref": "policy:R9",
-      "text": "Policy rule R9. Undocumented patterns\ntitle: Undocumented patterns\nwhen: fits no known pattern but evidence shows coordinated or repeated abuse across customers\nrecommend: ['CREATE_CASE', 'FILE_REPORT', 'ESCALATE_TO_ANALYST']\nrequires: pattern_description in the agent's own words, pattern set to undocumented",
-      "score": 0.7649,
+      "text": "R9 Undocumented patterns\n**R9. Undocumented patterns.** When activity fits none of the known patterns but the evidence shows coordinated or repeated abuse across customers, recommend `CREATE_CASE`, `FILE_REPORT`, and `ESCALATE_TO_ANALYST`, and describe the pattern in your own words. Do not force it into a known category.",
+      "score": 0.7004,
       "kind": "policy",
       "outcome": null,
       "pattern": null,
       "exposure_usd": null
     },
     {
-      "ref": "policy:R1",
-      "text": "Policy rule R1. Verify before you block on a weak signal\ntitle: Verify before you block on a weak signal\nwhen: single_signal and fraud_probability < 0.70\nrecommend: ['VERIFY_WITH_CUSTOMER', 'STEP_UP_AUTH']\nforbids: ['BLOCK_CARD', 'BLOCK_ALL_CARDS']\nnote: Blocking a legitimate customer on one signal is a policy breach",
-      "score": 0.7528,
+      "ref": "answer:part_1_case",
+      "text": "Part 1: `case`\n| Field | Type | Meaning |\n|---|---|---|\n| `status` | `open` \\| `closed_fraud` \\| `closed_legitimate` \\| `escalated` | Where the case stands when your agent stops. `open` means more evidence is still pending |\n| `verdict` | `fraud` \\| `legitimate` \\| `uncertain` | Your conclusion |\n| `fraud_probability` | number 0–1 | How likely the flagged activity is fraud. Be honest; this is scored for calibration |\n| `pattern` | enum, see below | The fraud pattern you identified, `undocumented` if it matches none of the known ones, or `none` |\n| `pattern_description` | string | Required when",
+      "score": 0.6686,
       "kind": "policy",
       "outcome": null,
       "pattern": null,
       "exposure_usd": null
     },
     {
-      "ref": "document:README#3_rules",
-      "text": "3. Rules\n\n**R1. Verify before you block on a weak signal.** If the case rests on a single signal (including a risk score alone) and your assessed fraud probability is below 0.70, recommend `VERIFY_WITH_CUSTOMER` or `STEP_UP_AUTH` before any block. Blocking a legitimate customer on one signal is a policy breach.\n\n**R2. Customer denies the transaction.** Recommend `BLOCK_CARD` and `CREATE_CASE`. Add `FILE_REPORT` if exposure exceeds $1,000 or the case connects to a shared device profile or another card's fraud.\n\n**R3. Customer confirms the transaction.** Recommend `CLOSE_NO_FRAUD`. Note the conf",
-      "score": 0.7253,
+      "ref": "answer:part_2_sar",
+      "text": "Part 2: `sar`\n| Field | Type | Meaning |\n|---|---|---|\n| `file` | boolean | Whether a suspicious activity report should be filed. Must agree with whether `FILE_REPORT` appears in your final actions |\n| `reason` | string | Why file, or why not. Cite the policy rule |\n| `narrative` | string | Required when `file` is true. The report itself: **who** (customer, cards, merchants, devices), **what** happened, **when** (dates), **where** (locations, channels), **how** it was carried out, **why** it is suspicious. Six to twelve sentences. This is what a regulator reads |\n| `subjects` | list of strings",
+      "score": 0.6672,
       "kind": "policy",
       "outcome": null,
       "pattern": null,
       "exposure_usd": null
     },
     {
-      "ref": "document:README#3_rules[1]",
-      "text": "3. Rules\n\n**R7. Disputed but legitimate.** When the customer disputes a charge that matches their own recurring pattern (same merchant, same amount, monthly), recommend `CREATE_CASE`, `VERIFY_WITH_CUSTOMER`, and `WARN_CUSTOMER`. Do not block.\n\n**R8. Escalate when uncertain and exposed.** If the verdict is `uncertain` and exposure exceeds $500, or the evidence conflicts, recommend `ESCALATE_TO_ANALYST`.\n\n**R9. Undocumented patterns.** When activity fits none of the known patterns but the evidence shows coordinated or repeated abuse across customers, recommend `CREATE_CASE`, `FILE_REPORT`, and `",
-      "score": 0.7221,
+      "ref": "policy:2_approval_routing",
+      "text": "2. Approval routing\n| Route | Applies to |\n|---|---|\n| `auto` | `ALLOW_TRANSACTION`, `MONITOR_CARD`, `MONITOR_CONNECTED_CARDS`, `WARN_CUSTOMER`, `VERIFY_WITH_CUSTOMER`, `STEP_UP_AUTH`, `GENERATE_REPORT`, `CREATE_CASE`, `ESCALATE_TO_ANALYST`, `CLOSE_NO_FRAUD` |\n| `L1` (team lead) | `DECLINE_TRANSACTION`; `BLOCK_CARD` when exposure ≤ $2,500 |\n| `L2` (fraud manager) | `BLOCK_CARD` when exposure > $2,500; `BLOCK_ALL_CARDS` always; `FILE_REPORT` always |\n\nThe agent recommends. Only `auto` actions may be executed by the agent. `L1` and `L2` actions are recommended with the route stated and wait for ",
+      "score": 0.654,
       "kind": "policy",
       "outcome": null,
       "pattern": null,
       "exposure_usd": null
+    },
+    {
+      "ref": "case:CC-3748",
+      "text": "Case CC-3748: cardholder C12267 reported four online purchases within forty minutes, each just under $500, none of which they made. Amounts appear chosen to stay under a $500 authorization threshold. Pattern not matched to a documented typology. Card blocked and reissued.",
+      "score": 0.7998,
+      "kind": "closed_case",
+      "outcome": "confirmed_fraud",
+      "pattern": "undocumented",
+      "exposure_usd": 1905.21
     },
     {
       "ref": "case:CC-3907",
-      "text": "Closed case CC-3907, outcome confirmed_fraud, pattern undocumented, exposure $1,922.65 over 4 transaction(s), opened 2016-09-24 22:22:00, closed 2016-09-28 11:22:00, actions CREATE_CASE|BLOCK_CARD|FILE_REPORT, report filed Yes.\nCase CC-3907: cardholder C03060 reported four online purchases within forty minutes, each just under $500, none of which they made. Amounts appear chosen to stay under a $500 authorization threshold. Pattern not matched to a documented typology. Card blocked and reissued.",
-      "score": 0.7808,
+      "text": "Case CC-3907: cardholder C03060 reported four online purchases within forty minutes, each just under $500, none of which they made. Amounts appear chosen to stay under a $500 authorization threshold. Pattern not matched to a documented typology. Card blocked and reissued.",
+      "score": 0.7983,
       "kind": "closed_case",
       "outcome": "confirmed_fraud",
       "pattern": "undocumented",
       "exposure_usd": 1922.65
     },
     {
+      "ref": "case:CC-4086",
+      "text": "Case CC-4086: cardholder C13269 reported four online purchases within forty minutes, each just under $500, none of which they made. Amounts appear chosen to stay under a $500 authorization threshold. Pattern not matched to a documented typology. Card blocked and reissued.",
+      "score": 0.7962,
+      "kind": "closed_case",
+      "outcome": "confirmed_fraud",
+      "pattern": "undocumented",
+      "exposure_usd": 1871.13
+    },
+    {
+      "ref": "case:CC-4124",
+      "text": "Case CC-4124: cardholder C02838 reported four online purchases within forty minutes, each just under $500, none of which they made. Amounts appear chosen to stay under a $500 authorization threshold. Pattern not matched to a documented typology. Card blocked and reissued.",
+      "score": 0.7918,
+      "kind": "closed_case",
+      "outcome": "confirmed_fraud",
+      "pattern": "undocumented",
+      "exposure_usd": 1922.37
+    },
+    {
       "ref": "case:CC-3841",
-      "text": "Closed case CC-3841, outcome confirmed_fraud, pattern undocumented, exposure $1,899.30 over 4 transaction(s), opened 2016-09-23 01:21:00, closed 2016-09-24 21:21:00, actions CREATE_CASE|BLOCK_CARD|FILE_REPORT, report filed Yes.\nCase CC-3841: cardholder C01099 reported four online purchases within forty minutes, each just under $500, none of which they made. Amounts appear chosen to stay under a $500 authorization threshold. Pattern not matched to a documented typology. Card blocked and reissued.",
-      "score": 0.7791,
+      "text": "Case CC-3841: cardholder C01099 reported four online purchases within forty minutes, each just under $500, none of which they made. Amounts appear chosen to stay under a $500 authorization threshold. Pattern not matched to a documented typology. Card blocked and reissued.",
+      "score": 0.7885,
       "kind": "closed_case",
       "outcome": "confirmed_fraud",
       "pattern": "undocumented",
       "exposure_usd": 1899.3
-    },
-    {
-      "ref": "case:CC-3748",
-      "text": "Closed case CC-3748, outcome confirmed_fraud, pattern undocumented, exposure $1,905.21 over 4 transaction(s), opened 2016-09-20 20:27:00, closed 2016-09-26 15:27:00, actions CREATE_CASE|BLOCK_CARD|FILE_REPORT, report filed Yes.\nCase CC-3748: cardholder C12267 reported four online purchases within forty minutes, each just under $500, none of which they made. Amounts appear chosen to stay under a $500 authorization threshold. Pattern not matched to a documented typology. Card blocked and reissued.",
-      "score": 0.7769,
-      "kind": "closed_case",
-      "outcome": "confirmed_fraud",
-      "pattern": "undocumented",
-      "exposure_usd": 1905.21
     }
   ],
   "summary": "The cardholder disputed a charge on card C07297-K1, transaction 3476682 ($482.12). The leading hypothesis is undocumented coordinated abuse: 4 online purchases of $400 to $500 on this card inside 60 minutes, totalling $1,906.07, each amount stopping just short of a round authorization ceiling. The cardholder, asked to validate the activity, was assumed to deny it (simulated response). Assessed fraud probability is 0.95 at confidence 0.99, verdict fraud, exposure $1,906.07. Final recommendation: BLOCK_CARD, CREATE_CASE, FILE_REPORT, ESCALATE_TO_ANALYST (R2, R9).",
@@ -518,7 +538,7 @@
       "tool": "",
       "args": {},
       "summary": "customer_report trigger on C07297-K1, transaction 3476682: Customer C07297 message: 'I never made this $482.12 purchase. Please check my card.' Refers to 3476682.",
-      "at": "2026-09-24T12:55:58.150765",
+      "at": "2026-09-24T13:00:11.092314",
       "duration_s": 0.0,
       "ok": true
     },
@@ -528,7 +548,7 @@
       "tool": "",
       "args": {},
       "summary": "case HHG-006 opened as of 2016-11-22 02:30:00; no data after this time is read",
-      "at": "2026-09-24T12:55:58.152777",
+      "at": "2026-09-24T13:00:11.092314",
       "duration_s": 0.0,
       "ok": true
     },
@@ -538,7 +558,7 @@
       "tool": "",
       "args": {},
       "summary": "round 1: tx_context, customer_profile, behavior_shift, card_window, prior_cases_for_entities",
-      "at": "2026-09-24T12:55:58.152777",
+      "at": "2026-09-24T13:00:11.093320",
       "duration_s": 0.0,
       "ok": true
     },
@@ -550,8 +570,8 @@
         "txn_id": "3476682"
       },
       "summary": "transaction 3476682 $482.12 online risk 0.25",
-      "at": "2026-09-24T12:55:58.166628",
-      "duration_s": 0.014,
+      "at": "2026-09-24T13:00:12.283581",
+      "duration_s": 1.19,
       "ok": true
     },
     {
@@ -562,8 +582,8 @@
         "customer_id": "C07297"
       },
       "summary": "201 transactions on the customer, cards ['C07297-K1']",
-      "at": "2026-09-24T12:55:58.184630",
-      "duration_s": 0.016,
+      "at": "2026-09-24T13:00:12.866954",
+      "duration_s": 0.583,
       "ok": true
     },
     {
@@ -575,8 +595,8 @@
         "txn_id": "3476682"
       },
       "summary": "amount percentile 0.96, new device False, new product False",
-      "at": "2026-09-24T12:55:58.200033",
-      "duration_s": 0.016,
+      "at": "2026-09-24T13:00:13.458253",
+      "duration_s": 0.591,
       "ok": true
     },
     {
@@ -588,8 +608,8 @@
         "hours": 48
       },
       "summary": "7 transactions on the card in window hours=48",
-      "at": "2026-09-24T12:55:58.221273",
-      "duration_s": 0.021,
+      "at": "2026-09-24T13:00:14.054106",
+      "duration_s": 0.596,
       "ok": true
     },
     {
@@ -603,8 +623,8 @@
         ]
       },
       "summary": "0 closed cases on these entities, confirmed rate 0.0",
-      "at": "2026-09-24T12:55:58.230359",
-      "duration_s": 0.01,
+      "at": "2026-09-24T13:00:14.694868",
+      "duration_s": 0.641,
       "ok": true
     },
     {
@@ -613,7 +633,7 @@
       "tool": "",
       "args": {},
       "summary": "round 1: probability 0.79, confidence 0.78, leading undocumented_structuring 0.78, independent evidence 2, checklist missing ['similar_cases', 'pattern_match:undocumented_structuring']; next round: shared_device_profile, ring_detect, region_history, velocity, pattern_match, pattern_match, similar_cases, policy_lookup",
-      "at": "2026-09-24T12:55:58.657740",
+      "at": "2026-09-24T13:00:14.982326",
       "duration_s": 0.0,
       "ok": true
     },
@@ -625,8 +645,8 @@
         "device_profile": "Trident/7.0 | Windows 7 | ie 11.0 for desktop | 1920x1080"
       },
       "summary": "device profile on 543 cards / 543 customers, rare=False",
-      "at": "2026-09-24T12:55:58.745961",
-      "duration_s": 0.089,
+      "at": "2026-09-24T13:00:15.624506",
+      "duration_s": 0.641,
       "ok": true
     },
     {
@@ -637,8 +657,8 @@
         "card_id": "C07297-K1"
       },
       "summary": "ring size 1, is_ring=False, confirmed-fraud members 0",
-      "at": "2026-09-24T12:55:58.795554",
-      "duration_s": 0.049,
+      "at": "2026-09-24T13:00:16.293447",
+      "duration_s": 0.669,
       "ok": true
     },
     {
@@ -649,9 +669,9 @@
         "customer_id": "C07297",
         "addr1": "264.0"
       },
-      "summary": "region history found=True, has_history=True, trip=False",
-      "at": "2026-09-24T12:55:58.812340",
-      "duration_s": 0.016,
+      "summary": "region history found=True, has_history=True, trip=True",
+      "at": "2026-09-24T13:00:16.945952",
+      "duration_s": 0.653,
       "ok": true
     },
     {
@@ -667,8 +687,8 @@
         ]
       },
       "summary": "velocity 1h n=1, 24h n=5, 168h n=15",
-      "at": "2026-09-24T12:55:58.852227",
-      "duration_s": 0.04,
+      "at": "2026-09-24T13:00:17.535350",
+      "duration_s": 0.589,
       "ok": true
     },
     {
@@ -681,8 +701,8 @@
         "txn_id": "3476682"
       },
       "summary": "undocumented_structuring score 0.78",
-      "at": "2026-09-24T12:55:58.867984",
-      "duration_s": 0.016,
+      "at": "2026-09-24T13:00:18.108615",
+      "duration_s": 0.574,
       "ok": true
     },
     {
@@ -695,8 +715,8 @@
         "txn_id": "3476682"
       },
       "summary": "card_not_present_new_device score 0.68",
-      "at": "2026-09-24T12:55:58.884688",
-      "duration_s": 0.017,
+      "at": "2026-09-24T13:00:18.690256",
+      "duration_s": 0.581,
       "ok": true
     },
     {
@@ -712,9 +732,9 @@
         ],
         "k": 8
       },
-      "summary": "8 similar cases: CC-3907, CC-3841, CC-3748, CC-0007, CC-0370",
-      "at": "2026-09-24T12:55:59.012225",
-      "duration_s": 0.128,
+      "summary": "8 similar cases: CC-3748, CC-3907, CC-4086, CC-4124, CC-3841",
+      "at": "2026-09-24T13:00:19.317264",
+      "duration_s": 0.626,
       "ok": true
     },
     {
@@ -725,9 +745,9 @@
         "query": "undocumented coordinated abuse policy rule verify block report approval",
         "k": 4
       },
-      "summary": "policy chunks policy:R9, policy:R1, document:README#3_rules, document:README#3_rules[1]",
-      "at": "2026-09-24T12:55:59.041681",
-      "duration_s": 0.029,
+      "summary": "policy chunks policy:R9, answer:part_1_case, answer:part_2_sar, policy:2_approval_routing",
+      "at": "2026-09-24T13:00:19.931233",
+      "duration_s": 0.614,
       "ok": true
     },
     {
@@ -736,7 +756,7 @@
       "tool": "",
       "args": {},
       "summary": "round 2: probability 0.79, confidence 0.91, leading undocumented_structuring 0.78, independent evidence 2, checklist missing nothing; stop gathering",
-      "at": "2026-09-24T12:55:59.413513",
+      "at": "2026-09-24T13:00:20.258696",
       "duration_s": 0.0,
       "ok": true
     },
@@ -746,7 +766,7 @@
       "tool": "",
       "args": {},
       "summary": "before evidence: CREATE_CASE(auto), FILE_REPORT(L2), ESCALATE_TO_ANALYST(auto), VERIFY_WITH_CUSTOMER(auto); rules R9; verdict fraud; request evidence: True",
-      "at": "2026-09-24T12:55:59.415524",
+      "at": "2026-09-24T13:00:20.263695",
       "duration_s": 0.0,
       "ok": true
     },
@@ -756,7 +776,7 @@
       "tool": "",
       "args": {},
       "summary": "initial: 3 auto, 1 held for approval",
-      "at": "2026-09-24T12:55:59.417535",
+      "at": "2026-09-24T13:00:20.264695",
       "duration_s": 0.0,
       "ok": true
     },
@@ -766,7 +786,7 @@
       "tool": "request_customer_validation",
       "args": {},
       "summary": "customer_validation requested; simulated response: denied",
-      "at": "2026-09-24T12:55:59.417535",
+      "at": "2026-09-24T13:00:20.265691",
       "duration_s": 0.0,
       "ok": true
     },
@@ -776,7 +796,7 @@
       "tool": "",
       "args": {},
       "summary": "after denied: probability 0.79 -> 0.95, confidence 0.91 -> 0.99",
-      "at": "2026-09-24T12:55:59.780908",
+      "at": "2026-09-24T13:00:20.588110",
       "duration_s": 0.0,
       "ok": true
     },
@@ -786,7 +806,7 @@
       "tool": "",
       "args": {},
       "summary": "after evidence: BLOCK_CARD(L1), CREATE_CASE(auto), FILE_REPORT(L2), ESCALATE_TO_ANALYST(auto); rules R2, R9; verdict fraud",
-      "at": "2026-09-24T12:55:59.782921",
+      "at": "2026-09-24T13:00:20.591118",
       "duration_s": 0.0,
       "ok": true
     },
@@ -796,7 +816,7 @@
       "tool": "",
       "args": {},
       "summary": "executed ['CREATE_CASE(auto)', 'ESCALATE_TO_ANALYST(auto)']; routed for approval ['BLOCK_CARD(L1)', 'FILE_REPORT(L2)']",
-      "at": "2026-09-24T12:55:59.784934",
+      "at": "2026-09-24T13:00:20.592114",
       "duration_s": 0.0,
       "ok": true
     },
@@ -806,7 +826,7 @@
       "tool": "",
       "args": {},
       "summary": "SAR required: Policy 3a: exposure $1,906.07 exceeds $1,000; the pattern is coordinated or undocumented, rule R9.",
-      "at": "2026-09-24T12:55:59.788955",
+      "at": "2026-09-24T13:00:20.596681",
       "duration_s": 0.0,
       "ok": true
     },
@@ -815,8 +835,8 @@
       "node": "explain",
       "tool": "",
       "args": {},
-      "summary": "templated write-up; notes: LLM in mock mode (DRY_RUN is set, so no provider call is made), templated text used",
-      "at": "2026-09-24T12:55:59.790967",
+      "summary": "templated write-up; notes: LLM call failed, templated text used: ClientError: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more i",
+      "at": "2026-09-24T13:01:09.319950",
       "duration_s": 0.0,
       "ok": true
     },
@@ -826,7 +846,7 @@
       "tool": "write_case",
       "args": {},
       "summary": "written_to_graph=True as GC-HHG-006",
-      "at": "2026-09-24T12:55:59.790967",
+      "at": "2026-09-24T13:01:13.749945",
       "duration_s": 0.0,
       "ok": true
     },
@@ -836,7 +856,7 @@
       "tool": "",
       "args": {},
       "summary": "HHG-006 is now memory for investigations opened after 2016-11-22 02:30:00",
-      "at": "2026-09-24T12:55:59.790967",
+      "at": "2026-09-24T13:01:13.751958",
       "duration_s": 0.0,
       "ok": true
     },
@@ -845,8 +865,8 @@
       "node": "answer_file",
       "tool": "",
       "args": {},
-      "summary": "tool_calls=19, tokens=0, latency=1.64s",
-      "at": "2026-09-24T12:55:59.794725",
+      "summary": "tool_calls=19, tokens=6368, latency=62.66s",
+      "at": "2026-09-24T13:01:13.752959",
       "duration_s": 0.0,
       "ok": true
     }
@@ -861,7 +881,7 @@
       "reason": "R9: the evidence shows coordinated or repeated abuse that fits none of the five documented patterns",
       "phase": "initial",
       "approval_status": "not_required",
-      "at": "2026-09-24T12:55:59.417535"
+      "at": "2026-09-24T13:00:20.264695"
     },
     {
       "actor": "agent",
@@ -872,7 +892,7 @@
       "reason": "R9: the evidence shows coordinated or repeated abuse that fits none of the five documented patterns",
       "phase": "initial",
       "approval_status": "superseded",
-      "at": "2026-09-24T12:55:59.417535"
+      "at": "2026-09-24T13:00:20.264695"
     },
     {
       "actor": "agent",
@@ -883,7 +903,7 @@
       "reason": "R9: the evidence shows coordinated or repeated abuse that fits none of the five documented patterns",
       "phase": "initial",
       "approval_status": "not_required",
-      "at": "2026-09-24T12:55:59.417535"
+      "at": "2026-09-24T13:00:20.264695"
     },
     {
       "actor": "agent",
@@ -894,7 +914,7 @@
       "reason": "Policy 3a and section 5: the cardholder disputes the charge, so the bank confirms with them before any block",
       "phase": "initial",
       "approval_status": "not_required",
-      "at": "2026-09-24T12:55:59.417535"
+      "at": "2026-09-24T13:00:20.264695"
     },
     {
       "actor": "agent",
@@ -905,7 +925,7 @@
       "reason": "Evidence request customer_validation, allowed without approval under policy section 5",
       "phase": "evidence",
       "approval_status": "not_required",
-      "at": "2026-09-24T12:55:59.417535"
+      "at": "2026-09-24T13:00:20.265691"
     },
     {
       "actor": "agent",
@@ -916,7 +936,7 @@
       "reason": "R2: the cardholder states they did not make the transaction; exposure or a shared link meets the reporting threshold",
       "phase": "final",
       "approval_status": "pending",
-      "at": "2026-09-24T12:55:59.784934"
+      "at": "2026-09-24T13:00:20.592114"
     },
     {
       "actor": "agent",
@@ -927,7 +947,7 @@
       "reason": "R2: the cardholder states they did not make the transaction; exposure or a shared link meets the reporting threshold",
       "phase": "final",
       "approval_status": "not_required",
-      "at": "2026-09-24T12:55:59.784934"
+      "at": "2026-09-24T13:00:20.592114"
     },
     {
       "actor": "agent",
@@ -938,7 +958,7 @@
       "reason": "R2: the cardholder states they did not make the transaction; exposure or a shared link meets the reporting threshold",
       "phase": "final",
       "approval_status": "pending",
-      "at": "2026-09-24T12:55:59.784934"
+      "at": "2026-09-24T13:00:20.592114"
     },
     {
       "actor": "agent",
@@ -949,11 +969,11 @@
       "reason": "R9: the evidence shows coordinated or repeated abuse that fits none of the five documented patterns",
       "phase": "final",
       "approval_status": "not_required",
-      "at": "2026-09-24T12:55:59.784934"
+      "at": "2026-09-24T13:00:20.592114"
     }
   ],
   "stop_reason": "The assumed cardholder response (denied) settles the question under policy section 6. Confidence 0.99. Main open question: No closed case on these entities to compare against",
   "tool_calls": 19,
   "tokens": 0,
-  "latency_s": 1.64
+  "latency_s": 62.66
 }

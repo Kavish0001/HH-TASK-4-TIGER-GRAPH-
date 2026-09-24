@@ -101,6 +101,26 @@ def _is_unavailable(exc: BaseException) -> bool:
     return "503" in text or "unavailable" in text or "overloaded" in text or "high demand" in text
 
 
+def _is_daily_quota(exc: BaseException) -> bool:
+    """429 against the per-model daily cap.
+
+    The free tier counts requests per model per day, so once a model is spent
+    no amount of backoff helps until the reset, but the next model in the list
+    has its own allowance. The final run lost 18 narratives to retrying a spent
+    model five times each before this existed.
+    """
+    text = f"{exc}"
+    return "RESOURCE_EXHAUSTED" in text and "PerDay" in text
+
+
+class AllModelsExhausted(RuntimeError):
+    """Every configured model is out of daily quota. Not worth retrying."""
+
+
+# Models spent for the day, shared across backend instances in this process.
+_EXHAUSTED_TODAY: set[str] = set()
+
+
 class GoogleBackend(LLMBackend):
     """Gemini through google-genai.
 
@@ -161,13 +181,19 @@ class GoogleBackend(LLMBackend):
         )
 
         last_error: BaseException | None = None
-        for candidate in [self.model, *self.fallback_models]:
+        candidates = [m for m in [self.model, *self.fallback_models] if m not in _EXHAUSTED_TODAY]
+        if not candidates:
+            raise AllModelsExhausted(f"daily quota spent on every model: {sorted(_EXHAUSTED_TODAY)}")
+        for candidate in candidates:
             try:
                 response = self._client.models.generate_content(
                     model=candidate, contents=contents, config=config
                 )
             except BaseException as exc:  # noqa: BLE001
                 last_error = exc
+                if _is_daily_quota(exc):
+                    _EXHAUSTED_TODAY.add(candidate)
+                    continue  # this model is spent until the reset; try the next
                 if _is_unavailable(exc):
                     continue  # next model; retrying this one harder will not help
                 raise
@@ -190,8 +216,10 @@ class GoogleBackend(LLMBackend):
                 data=data, usage=usage, provider=self.provider, model=candidate, raw_text=text
             )
 
+        if all(m in _EXHAUSTED_TODAY for m in [self.model, *self.fallback_models]):
+            raise AllModelsExhausted(f"daily quota spent on every model: {sorted(_EXHAUSTED_TODAY)}") from last_error
         raise RuntimeError(
-            f"every Gemini model returned 503: {[self.model, *self.fallback_models]}"
+            f"every Gemini model returned 503 or quota: {candidates}"
         ) from last_error
 
     def list_models(self) -> list[str]:

@@ -57,6 +57,9 @@ class RpmGovernor:
 
 
 def is_retryable(exc: BaseException) -> bool:
+    # A spent daily quota does not come back within any backoff we would wait.
+    if type(exc).__name__ == "AllModelsExhausted" or "PerDay" in f"{exc}":
+        return False
     text = f"{type(exc).__name__} {exc}".lower()
     status = getattr(exc, "status_code", None) or getattr(exc, "code", None)
     if status in (429, 500, 503):

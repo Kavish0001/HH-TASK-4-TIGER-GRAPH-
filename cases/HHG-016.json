@@ -49,16 +49,19 @@
         ]
       },
       {
-        "claim": "Ring detection from C09988-K1 over rare shared devices finds 6 cards across 6 customers, 0 with confirmed-fraud closed cases",
+        "claim": "Earlier benchmark case HHG-005, investigated by this agent, ended open with pattern card_not_present_new_device; retrieved as memory because text similarity to the analyst notes",
         "source": "graph",
-        "ref": "query:ring_detect(seed=C09988-K1)",
+        "ref": "case:GC-HHG-005",
         "entity_ids": [
-          "C03938-K1",
-          "C09988-K1",
-          "C08924-K2",
-          "C02315-K1",
-          "C10374-K1",
-          "C08644-K1"
+          "HHG-005"
+        ]
+      },
+      {
+        "claim": "Earlier benchmark case HHG-015, investigated by this agent, ended closed_fraud with pattern card_not_present_new_device; retrieved as memory because text similarity to the analyst notes",
+        "source": "graph",
+        "ref": "case:GC-HHG-015",
+        "entity_ids": [
+          "HHG-015"
         ]
       },
       {
@@ -75,11 +78,9 @@
       }
     ],
     "similar_prior_cases": [
-      "CC-0576",
+      "CC-4290",
       "CC-0078",
-      "CC-0598",
-      "CC-3979",
-      "CC-0698"
+      "CC-1990"
     ],
     "summary": "The cardholder disputed a charge on card C09988-K1, transaction 3534820 ($59.67). The leading hypothesis is card-not-present fraud from a new device: Online purchase of $59.67 at the 75% percentile of this card's history, from a device profile new to this card. The cardholder was asked to validate the activity and no reply was assumed within 24 hours (simulated). Assessed fraud probability is 0.57 at confidence 0.77, verdict uncertain, exposure $59.67. Final recommendation: CREATE_CASE, MONITOR_CARD (R4).",
     "written_to_graph": true,
@@ -135,5 +136,5 @@
   "stop_reason": "No reply was assumed, and further graph queries are unlikely to change the decision, so the case rests on R4 and R8 rather than on more querying. Confidence 0.77. Main open question: No billing region recorded on the flagged transaction, so out-of-region reasoning is unavailable",
   "tool_calls": 16,
   "tokens": 0,
-  "latency_s": 1.22
+  "latency_s": 61.59
 }

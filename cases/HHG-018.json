@@ -53,14 +53,14 @@
         "source": "graph",
         "ref": "query:prior_cases_for_entities(n_entities=2, as_of=2016-11-27 14:41:26)",
         "entity_ids": [
-          "CC-0255",
-          "CC-0405",
-          "CC-0454",
-          "CC-0631",
-          "CC-1450",
-          "CC-1699",
-          "CC-2051",
-          "CC-2187"
+          "CC-5558",
+          "CC-5441",
+          "CC-4942",
+          "CC-4721",
+          "CC-4436",
+          "CC-4070",
+          "CC-3899",
+          "CC-3634"
         ]
       },
       {
@@ -83,14 +83,14 @@
       }
     ],
     "similar_prior_cases": [
-      "CC-0255",
-      "CC-0405",
-      "CC-0454",
-      "CC-0631",
-      "CC-1450",
-      "CC-3923",
-      "CC-3946",
-      "CC-3941"
+      "CC-5558",
+      "CC-5441",
+      "CC-4942",
+      "CC-4721",
+      "CC-4436",
+      "CC-3899",
+      "CC-2051",
+      "CC-3085"
     ],
     "summary": "The cardholder disputed a charge on card C02354-K2, transaction 3491361 ($39.08). The leading hypothesis is account takeover: Activity in 2 channel(s) within 48 hours; the flagged channel accounts for 91.6% of this card's history; 1 of 9 match flags disagree with the card's usual values. The cardholder was asked to validate the activity and no reply was assumed within 24 hours (simulated). Assessed fraud probability is 0.48 at confidence 0.62, verdict uncertain, exposure $39.08. Final recommendation: CREATE_CASE, MONITOR_CARD, ESCALATE_TO_ANALYST (R4, R8).",
     "written_to_graph": true,
@@ -156,5 +156,5 @@
   "stop_reason": "No reply was assumed, and further graph queries are unlikely to change the decision, so the case rests on R4 and R8 rather than on more querying. Confidence 0.62. Main open question: Signal could not be checked on the available data: device_anomaly",
   "tool_calls": 16,
   "tokens": 0,
-  "latency_s": 2.23
+  "latency_s": 62.77
 }

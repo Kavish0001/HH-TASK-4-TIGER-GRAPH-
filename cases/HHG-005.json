@@ -3,7 +3,7 @@
   "case": {
     "status": "open",
     "verdict": "uncertain",
-    "fraud_probability": 0.525,
+    "fraud_probability": 0.406,
     "pattern": "card_not_present_new_device",
     "pattern_description": "",
     "affected_txn_ids": [
@@ -41,7 +41,7 @@
         ]
       },
       {
-        "claim": "Billing region 330.0: has earlier history for this customer (86 transactions, span 158.23 days); home region 330.0; neither a trip nor a clone pattern",
+        "claim": "Billing region 330.0: has earlier history for this customer (86 transactions, span 158.23 days); home region 330.0; reads as a trip",
         "source": "graph",
         "ref": "query:region_history(customer_id=C02923, addr1=330.0)",
         "entity_ids": [
@@ -57,32 +57,17 @@
         ]
       },
       {
-        "claim": "Ring detection from C02923-K1 over rare shared devices finds 10 cards across 10 customers, 6 with confirmed-fraud closed cases",
-        "source": "graph",
-        "ref": "query:ring_detect(seed=C02923-K1)",
-        "entity_ids": [
-          "C03714-K1",
-          "C00750-K2",
-          "C02923-K1",
-          "C06224-K2",
-          "C01182-K1",
-          "C11539-K2",
-          "C05712-K1",
-          "C05115-K2"
-        ]
-      },
-      {
         "claim": "3 closed case(s) before this alert touch this card or customer: 3 confirmed fraud (account_takeover), 0 cleared",
         "source": "graph",
         "ref": "query:prior_cases_for_entities(n_entities=2, as_of=2016-12-08 03:38:37)",
         "entity_ids": [
-          "CC-2400",
+          "CC-2857",
           "CC-2717",
-          "CC-2857"
+          "CC-2400"
         ]
       },
       {
-        "claim": "This agent's own earlier case HHG-020 (a case this agent closed earlier, text similarity 0.81) closed as closed_fraud with pattern card_not_present_new_device",
+        "claim": "Earlier benchmark case HHG-020, investigated by this agent, ended closed_fraud with pattern card_not_present_new_device; retrieved as memory because text similarity to the analyst notes",
         "source": "graph",
         "ref": "case:GC-HHG-020",
         "entity_ids": [
@@ -90,11 +75,11 @@
         ]
       },
       {
-        "claim": "This agent's own earlier case HHG-015 (a case this agent closed earlier, text similarity 0.81) closed as closed_fraud with pattern card_not_present_new_device",
+        "claim": "Earlier benchmark case HHG-010, investigated by this agent, ended closed_fraud with pattern card_not_present_new_device; retrieved as memory because text similarity to the analyst notes",
         "source": "graph",
-        "ref": "case:GC-HHG-015",
+        "ref": "case:GC-HHG-010",
         "entity_ids": [
-          "HHG-015"
+          "HHG-010"
         ]
       },
       {
@@ -111,11 +96,11 @@
       }
     ],
     "similar_prior_cases": [
-      "CC-2400",
+      "CC-2857",
       "CC-2717",
-      "CC-2857"
+      "CC-2400"
     ],
-    "summary": "The bank's model flagged the transaction on card C02923-K1, transaction 3523199 ($100.07). The leading hypothesis is card-not-present fraud from a new device: Online purchase of $100.07 at the 23% percentile of this card's history, from a device profile new to this card. The cardholder was asked to validate the activity and no reply was assumed within 24 hours (simulated). Assessed fraud probability is 0.53 at confidence 0.97, verdict uncertain, exposure $100.07. Final recommendation: DECLINE_TRANSACTION, CREATE_CASE, MONITOR_CARD (R4).",
+    "summary": "The bank's model flagged the transaction on card C02923-K1, transaction 3523199 ($100.07). The leading hypothesis is card-not-present fraud from a new device: Online purchase of $100.07 at the 23% percentile of this card's history, from a device profile new to this card. The cardholder was asked to validate the activity and no reply was assumed within 24 hours (simulated). Assessed fraud probability is 0.41 at confidence 0.93, verdict uncertain, exposure $100.07. Final recommendation: DECLINE_TRANSACTION, CREATE_CASE, MONITOR_CARD (R4).",
     "written_to_graph": true,
     "graph_case_id": "GC-HHG-005"
   },
@@ -129,19 +114,19 @@
   "next_best_actions": {
     "initial": [
       {
-        "action": "CREATE_CASE",
-        "route": "auto",
-        "reason": "Policy 3a: probability 0.53 is at or above 0.30 and evidence was requested"
-      },
-      {
-        "action": "MONITOR_CARD",
-        "route": "auto",
-        "reason": "Probability 0.53 is inconclusive; monitoring keeps the card usable while the picture is unclear"
-      },
-      {
         "action": "STEP_UP_AUTH",
         "route": "auto",
-        "reason": "Policy section 6: probability 0.53 has not reached 0.85 or 0.15 on two independent pieces of evidence (confidence 0.97), so the agent asks before acting"
+        "reason": "R1: the case rests on a single signal and probability is 0.41, below 0.70, so verification comes before any block"
+      },
+      {
+        "action": "VERIFY_WITH_CUSTOMER",
+        "route": "auto",
+        "reason": "R1: the case rests on a single signal and probability is 0.41, below 0.70, so verification comes before any block"
+      },
+      {
+        "action": "CREATE_CASE",
+        "route": "auto",
+        "reason": "Policy 3a: probability 0.41 is at or above 0.30 and evidence was requested"
       }
     ],
     "final": [
@@ -153,7 +138,7 @@
       {
         "action": "CREATE_CASE",
         "route": "auto",
-        "reason": "Policy 3a: probability 0.53 is at or above 0.30 and evidence was requested"
+        "reason": "Policy 3a: probability 0.41 is at or above 0.30 and evidence was requested"
       },
       {
         "action": "MONITOR_CARD",
@@ -161,18 +146,18 @@
         "reason": "R4: no reply within 24 hours"
       }
     ],
-    "what_changed": "The assumed response (no_reply) left probability at 0.53, so the recommendation moved from CREATE_CASE, MONITOR_CARD, STEP_UP_AUTH to DECLINE_TRANSACTION, CREATE_CASE, MONITOR_CARD under R4."
+    "what_changed": "The assumed response (no_reply) left probability at 0.41, so the recommendation moved from STEP_UP_AUTH, VERIFY_WITH_CUSTOMER, CREATE_CASE to DECLINE_TRANSACTION, CREATE_CASE, MONITOR_CARD under R4."
   },
   "sar": {
     "file": false,
-    "reason": "Policy 3a: a report requires fraud confirmed or strongly suspected. Assessed probability 0.53 with verdict uncertain, so no report.",
+    "reason": "Policy 3a: a report requires fraud confirmed or strongly suspected. Assessed probability 0.41 with verdict uncertain, so no report.",
     "narrative": "",
     "subjects": [],
     "total_amount_usd": 0.0,
     "activity_dates": []
   },
-  "stop_reason": "No reply was assumed, and further graph queries are unlikely to change the decision, so the case rests on R4 and R8 rather than on more querying. Confidence 0.97. Main open question: Cardholder did not reply, so the dispute is unresolved",
+  "stop_reason": "No reply was assumed, and further graph queries are unlikely to change the decision, so the case rests on R4 and R8 rather than on more querying. Confidence 0.93. Main open question: Cardholder did not reply, so the dispute is unresolved",
   "tool_calls": 18,
   "tokens": 0,
-  "latency_s": 1.22
+  "latency_s": 64.71
 }

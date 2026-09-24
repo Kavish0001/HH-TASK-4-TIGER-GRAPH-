@@ -41,7 +41,7 @@
         ]
       },
       {
-        "claim": "Billing region 264.0: has earlier history for this customer (2225 transactions, span 155.06 days); home region 264.0; neither a trip nor a clone pattern",
+        "claim": "Billing region 264.0: has earlier history for this customer (2225 transactions, span 155.06 days); home region 264.0; reads as a trip",
         "source": "graph",
         "ref": "query:region_history(customer_id=C09933, addr1=264.0)",
         "entity_ids": [
@@ -53,14 +53,14 @@
         "source": "graph",
         "ref": "query:prior_cases_for_entities(n_entities=2, as_of=2016-12-05 03:46:14)",
         "entity_ids": [
-          "CC-0104",
-          "CC-0657",
-          "CC-0765",
-          "CC-1228",
-          "CC-1524",
-          "CC-1682",
-          "CC-2565",
-          "CC-2834"
+          "CC-5521",
+          "CC-5092",
+          "CC-4787",
+          "CC-4597",
+          "CC-4455",
+          "CC-4277",
+          "CC-4196",
+          "CC-3821"
         ]
       },
       {
@@ -83,11 +83,14 @@
       }
     ],
     "similar_prior_cases": [
-      "CC-0104",
-      "CC-0657",
+      "CC-5521",
+      "CC-5092",
+      "CC-4787",
+      "CC-4597",
+      "CC-4455",
       "CC-0765",
-      "CC-1228",
-      "CC-1524"
+      "CC-4196",
+      "CC-3821"
     ],
     "summary": "The bank's model flagged the transaction on card C09933-K2, transaction 3514948 ($111.92). The leading hypothesis is out-of-region use: Card-present use in billing region 264 seen 2224 times before, while 2225 transactions continued in the home region 264 over the same window. The cardholder was asked to validate the activity and no reply was assumed within 24 hours (simulated). Assessed fraud probability is 0.31 at confidence 0.76, verdict uncertain, exposure $111.92. Final recommendation: DECLINE_TRANSACTION, CREATE_CASE, MONITOR_CARD, ESCALATE_TO_ANALYST (R4, R8).",
     "written_to_graph": true,
@@ -158,5 +161,5 @@
   "stop_reason": "No reply was assumed, and further graph queries are unlikely to change the decision, so the case rests on R4 and R8 rather than on more querying. Confidence 0.76. Main open question: No identity record on the flagged transaction, so device, proxy and screen are unknown",
   "tool_calls": 17,
   "tokens": 0,
-  "latency_s": 1.15
+  "latency_s": 67.55
 }

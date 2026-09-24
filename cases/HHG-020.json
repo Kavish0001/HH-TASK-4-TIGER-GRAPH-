@@ -49,7 +49,7 @@
         ]
       },
       {
-        "claim": "Billing region 264.0: has earlier history for this customer (84 transactions, span 150.11 days); home region 264.0; neither a trip nor a clone pattern",
+        "claim": "Billing region 264.0: has earlier history for this customer (84 transactions, span 150.11 days); home region 264.0; reads as a trip",
         "source": "graph",
         "ref": "query:region_history(customer_id=C12265, addr1=264.0)",
         "entity_ids": [
@@ -69,24 +69,24 @@
         "source": "graph",
         "ref": "query:prior_cases_for_entities(n_entities=2, as_of=2016-12-03 12:04:26)",
         "entity_ids": [
-          "CC-2277",
-          "CC-2447"
+          "CC-2447",
+          "CC-2277"
         ]
       },
       {
-        "claim": "This agent's own earlier case HHG-015 (a case this agent closed earlier, text similarity 0.81) closed as closed_fraud with pattern card_not_present_new_device",
-        "source": "graph",
-        "ref": "case:GC-HHG-015",
-        "entity_ids": [
-          "HHG-015"
-        ]
-      },
-      {
-        "claim": "This agent's own earlier case HHG-010 (a case this agent closed earlier, text similarity 0.80) closed as closed_fraud with pattern card_not_present_new_device",
+        "claim": "Earlier benchmark case HHG-010, investigated by this agent, ended closed_fraud with pattern card_not_present_new_device; retrieved as memory because text similarity to the analyst notes",
         "source": "graph",
         "ref": "case:GC-HHG-010",
         "entity_ids": [
           "HHG-010"
+        ]
+      },
+      {
+        "claim": "Earlier benchmark case HHG-015, investigated by this agent, ended closed_fraud with pattern card_not_present_new_device; retrieved as memory because text similarity to the analyst notes",
+        "source": "graph",
+        "ref": "case:GC-HHG-015",
+        "entity_ids": [
+          "HHG-015"
         ]
       },
       {
@@ -103,8 +103,8 @@
       }
     ],
     "similar_prior_cases": [
-      "CC-2277",
-      "CC-2447"
+      "CC-2447",
+      "CC-2277"
     ],
     "summary": "The bank's model flagged the transaction on card C12265-K2, transaction 3509359 ($125.08). The leading hypothesis is card-not-present fraud from a new device: Online purchase of $125.08 at the 59% percentile of this card's history, from a device profile new to this card. The cardholder, asked to validate the activity, was assumed to deny it (simulated response). Assessed fraud probability is 0.87 at confidence 1.00, verdict fraud, exposure $125.08. Final recommendation: BLOCK_CARD, CREATE_CASE (R2).",
     "written_to_graph": true,
@@ -160,5 +160,5 @@
   "stop_reason": "The assumed cardholder response (denied) settles the question under policy section 6. Confidence 1.00. Main open question: The dataset carries no merchant name, so 'same merchant' recurrence is inferred from amount, product code and cadence rather than observed directly",
   "tool_calls": 17,
   "tokens": 0,
-  "latency_s": 1.14
+  "latency_s": 58.7
 }

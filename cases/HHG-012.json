@@ -58,12 +58,12 @@
         "source": "graph",
         "ref": "query:prior_cases_for_entities(n_entities=2, as_of=2016-12-18 05:00:31)",
         "entity_ids": [
-          "CC-0003",
-          "CC-2370"
+          "CC-2370",
+          "CC-0003"
         ]
       },
       {
-        "claim": "This agent's own earlier case HHG-007 (a case this agent closed earlier, text similarity 0.80) closed as escalated with pattern out_of_region_use",
+        "claim": "Earlier benchmark case HHG-007, investigated by this agent, ended escalated with pattern out_of_region_use; retrieved as memory because text similarity to the analyst notes",
         "source": "graph",
         "ref": "case:GC-HHG-007",
         "entity_ids": [
@@ -71,7 +71,7 @@
         ]
       },
       {
-        "claim": "This agent's own earlier case HHG-003 (a case this agent closed earlier, text similarity 0.79) closed as escalated with pattern out_of_region_use",
+        "claim": "Earlier benchmark case HHG-003, investigated by this agent, ended escalated with pattern out_of_region_use; retrieved as memory because text similarity to the analyst notes",
         "source": "graph",
         "ref": "case:GC-HHG-003",
         "entity_ids": [
@@ -80,11 +80,8 @@
       }
     ],
     "similar_prior_cases": [
-      "CC-0003",
       "CC-2370",
-      "CC-4974",
-      "CC-4235",
-      "CC-4236"
+      "CC-0003"
     ],
     "summary": "The bank's model flagged the transaction on card C05876-K2, transaction 3553342 ($30.91). The graph evidence does not support fraud: Card-present use in billing region 494 seen 21 times before, while 116 transactions continued in the home region 325 over the same window. Assessed fraud probability is 0.17 at confidence 0.74, verdict legitimate, exposure $0.00. Final recommendation: ALLOW_TRANSACTION, CLOSE_NO_FRAUD (policy 3a).",
     "written_to_graph": true,
@@ -129,5 +126,5 @@
   "stop_reason": "Further graph steps are unlikely to change the decision. Confidence 0.74. Main open question: No identity record on the flagged transaction, so device, proxy and screen are unknown",
   "tool_calls": 15,
   "tokens": 0,
-  "latency_s": 1.02
+  "latency_s": 64.75
 }

@@ -50,6 +50,7 @@ class AgentState:
     scope: dict[str, Any] = field(default_factory=dict)
     narrative_ctx: dict[str, Any] = field(default_factory=dict)
     tokens_at_start: int = 0
+    llm_tokens: int = 0
     started_perf: float = 0.0
     llm_notes: list[str] = field(default_factory=list)
 
