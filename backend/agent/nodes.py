@@ -1011,12 +1011,24 @@ def explain(s: AgentState) -> AgentState:
     sar_file = bool(s.case.sar and s.case.sar.file)
     pattern_desc = ""
     if ctx["pattern"] == Pattern.UNDOCUMENTED.value:
-        pattern_desc = (
-            f"{a.leading.narrative.rstrip('.')}. It fits none of the five documented patterns because the cards "
-            "involved belong to unrelated cardholders and the link is the shared origin rather than anything on one "
-            "card's own history. The agent found it by expanding from the flagged card to every card on the same "
-            "rare device profile and reading their closed-case outcomes."
-        )
+        # I keep one explanation per detector, because the ring wording (unrelated
+        # cardholders on one device) is false for structuring, which lives on a
+        # single card and would mislead the reader of a scored field.
+        if a.leading.pattern == RING_DETECTOR:
+            why = (
+                "It fits none of the five documented patterns because the cards involved belong to unrelated "
+                "cardholders and the link is the shared origin rather than anything on one card's own history. "
+                "The agent found it by expanding from the flagged card to every card on the same rare device "
+                "profile and reading their closed-case outcomes."
+            )
+        else:
+            why = (
+                "It fits none of the five documented patterns: it is not card testing because the amounts are "
+                "large, and not plain card-not-present fraud because the amounts are shaped to sit under a limit. "
+                "The agent found it by reading the card's transactions in a short window around the flagged one "
+                "and matching the amount band against closed cases analysts confirmed with the same shape."
+            )
+        pattern_desc = f"{a.leading.narrative.rstrip('.')}. {why}"
     template = {
         "summary": nar.template_summary(ctx),
         "stop_reason": nar.template_stop_reason(ctx),

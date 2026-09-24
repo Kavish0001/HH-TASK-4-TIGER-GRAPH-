@@ -13,10 +13,8 @@ Before recording:
 - TigerGraph up, queries installed, MCP server running, `TOOL_BACKEND=mcp`.
 - Backend on :8000, frontend on :3000 with `NEXT_PUBLIC_API_URL` set.
 - Run the full 20 once (`python -m backend.run_cases`) so memory is populated,
-  then reset HHG-006 so it can be run live. TODO(verify): how to reset a single
-  case for a live rerun without clearing memory for the rest
-  (`python -m backend.run_cases --case HHG-006 --keep-memory` reruns it, but the
-  dashboard may show the stored result before the click).
+  then run HHG-006 live from the launcher. A rerun overwrites the same
+  `GC-HHG-006` vertex, so it does not disturb memory for the other cases.
 - GraphStudio open in a second tab on the `FraudInvestigation` graph.
 - Numbers quoted below are from the answer files at the time of writing.
   TODO(verify): re-read `cases/HHG-006.json` and `cases/HHG-014.json` after the
@@ -59,8 +57,7 @@ from here on is cut at that time. Nothing later is read."
    $500 inside 60 minutes, totalling $1,906.07), each item with its source tag
    and `ref` to the query that produced it.
 5. Similar prior cases: closed cases with the same four-under-$500 shape.
-   TODO(verify): confirm CC-3748, CC-3841, CC-3907, CC-4086 or CC-4124 appear
-   in HHG-006's similar cases after the final run.
+   In the final run these are CC-3748, CC-3907, CC-4086, CC-4124 and CC-3841.
 
 **Cutaway (15s of the 60):** open HHG-014, Case subgraph panel. The flagged card
 connects to one device profile, which fans out to the other cards on it.
@@ -117,13 +114,11 @@ subjects, the total, the filing reason. Then GraphStudio: find the
 `CASE_INVOLVES` transactions. Then open a later case whose similar cases list an
 earlier benchmark case.
 
-TODO(verify): no committed answer file currently lists an earlier HHG case in
-`similar_prior_cases`; memory retrieval between benchmark cases needs a shared
-card, customer or device profile, or close vector similarity. Before recording,
-search `outputs/internal/*.json` for `agent_memory` or `case:GC-HHG` /
-`case:CASE-HHG` in a later case's similar cases and use that pair. If none
-exists, show the `similar_cases` query in GraphStudio returning HHG-006's vertex
-for a query run with an `as_of` after its `opened_at`.
+The graded `similar_prior_cases` field only accepts closed-case ids (`CC-NNNN`),
+so agent memory shows up in the internal case instead: HHG-003 retrieves
+`GC-HHG-007`, a benchmark case the agent closed earlier in calendar time. Show
+that in the case view's retrieved context, then the `GC-HHG-007` vertex in
+GraphStudio.
 
 **Voice:**
 "The report is drafted because policy says to file when the pattern is

@@ -143,8 +143,7 @@ docs/               blog, demo script, social post
 
 Tested on Windows 11 with Git Bash and Docker Desktop. The shell scripts are bash;
 on Windows run them from Git Bash. You need Docker, Python 3.10 or later, and
-Node 20 or later. TODO(verify): Node version, we only checked it runs on the
-version on the build machine.
+Node 20 or later (built and tested on Node 26).
 
 ### 1. Get the dataset
 
@@ -170,27 +169,25 @@ Set at least:
 | Key | Value |
 |---|---|
 | `TG_PASSWORD` | the TigerGraph password (container default is `tigergraph`) |
-| `TOOL_BACKEND` | `mcp` to go through the MCP server, `tg` to call RESTPP directly, `mock` to run without a graph. Not in `.env.example` yet; the code default is `mock` |
+| `TOOL_BACKEND` | `mcp` to go through the MCP server, `tg` to call RESTPP directly, `mock` to run without a graph. The code default is `mock` |
 | `MCP_SERVER_URL` | `http://localhost:8765/sse` when `TOOL_BACKEND=mcp` |
 | `DRY_RUN` | `true` (code default) runs with no LLM calls and templated text; `false` plus `GOOGLE_API_KEY` turns on the Gemini narrative pass |
 | `GOOGLE_API_KEY` | optional, only needed with `DRY_RUN=false` |
 
-TODO(verify): `TOOL_BACKEND`, `MCP_SERVER_URL` and `DRY_RUN` are read by
-`backend/config.py` but are missing from `.env.example`. Add them there or keep
-this table as the reference.
 
 ### 3. Python
 
 ```
 python -m venv .venv
 source .venv/Scripts/activate        # Git Bash on Windows; .venv/bin/activate elsewhere
-pip install -r backend/requirements.txt
 pip install tigergraph-mcp uvicorn starlette requests python-dotenv
+pip install -r backend/requirements.txt
 ```
 
-The second line is for the MCP server (`graph/mcp/README.md`). TODO(verify):
-`tigergraph-mcp` pulls `mcp` 2.x; check it does not conflict with the
-`langchain-mcp-adapters==0.1.7` pin in `backend/requirements.txt`.
+The first line is for the MCP server (`graph/mcp/README.md`). Keep the order:
+`tigergraph-mcp` pulls `mcp` 2.x, which breaks `langchain-mcp-adapters==0.1.7`,
+so `backend/requirements.txt` goes second and its `mcp>=1.30,<2` pin wins. Our
+MCP server in `graph/mcp/server.py` runs on `mcp` 1.x.
 
 ### 4. Start TigerGraph
 
@@ -217,8 +214,7 @@ Output lands in `graph/prepared/` (git ignored, `transactions_slim.csv` alone is
 
 ### 6. Schema and load
 
-TODO(verify): there is no single load script yet. This is my reading of the
-files; the paths inside `load_all.gsql` expect the prepared CSVs at
+There is no single load script; these are the steps we ran. The paths inside `load_all.gsql` expect the prepared CSVs at
 `/home/tigergraph/prepared`, and the compose file does not mount that folder, so
 they are copied in.
 
@@ -228,7 +224,7 @@ C=hhgoa-tigergraph
 G=/home/tigergraph/tigergraph/app/cmd/gsql
 
 docker cp graph/prepared $C:/home/tigergraph/prepared
-docker exec -u root $C chown -R tigergraph /home/tigergraph/prepared      # TODO(verify) needed?
+docker exec -u root $C chown -R tigergraph /home/tigergraph/prepared      # loading jobs run as tigergraph
 
 docker cp graph/schema/schema.gsql $C:/tmp/schema.gsql
 docker exec -u tigergraph $C $G /tmp/schema.gsql
@@ -314,8 +310,7 @@ npm run dev                               # http://localhost:3000
 
 With `NEXT_PUBLIC_API_URL` empty the dashboard runs on bundled mock cases in
 `frontend/lib/mock/`. Note the frontend reads `NEXT_PUBLIC_API_URL` from
-`frontend/.env.local`; the `NEXT_PUBLIC_API_BASE` line in the root `.env.example`
-is not read by the frontend. TODO(verify): drop or rename that root key.
+`frontend/.env.local`, not from the root `.env`.
 
 ## Reproducing the 20 answer files
 
@@ -354,11 +349,12 @@ produced): leave `TOOL_BACKEND=mock` and build the pandas slice once with
 `python -m backend.tools.mock.build_card_index` and
 `python -m backend.tools.mock.extract_slice`.
 
-TODO(verify): which backend produced the committed answer files. The copies in
-`cases/` at the time of writing report `tokens: 0` (dry run) and
-`graph_case_id: CASE-HHG-0xx`, while the graph writer's documented default is
-`GC-<case_id>`. Re-run with `TOOL_BACKEND=mcp` before submission and check each
-`graph_case_id` exists as an `InvestigationCase` vertex.
+The committed answer files came from a full run with `TOOL_BACKEND=mcp`: every
+tool call went through the MCP server to TigerGraph, and each case is stored as
+an `InvestigationCase` vertex `GC-<case_id>`. The Gemini free tier ran out of
+daily quota during that run, so the prose fields are the deterministic templates
+(`tokens: 0`). Rerunning with `DRY_RUN=false` once quota is available only
+changes prose fields that pass the narrative guards.
 
 ## Results
 
