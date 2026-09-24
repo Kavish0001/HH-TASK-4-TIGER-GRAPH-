@@ -201,7 +201,8 @@ export function PriorCases({ data, run, className }: { data: InternalCase; run: 
       {!data.similar_prior_cases.length && <Waiting>Waiting for retrieval.</Waiting>}
       <ul>
         {data.similar_prior_cases.map((id, i) => {
-          const chunk = data.retrieved_chunks.find((r) => r.ref === id);
+          // The backend tags prior-case chunks "case:CC-1234"; older mocks used the bare id.
+          const chunk = data.retrieved_chunks.find((r) => r.ref === id || r.ref === `case:${id}`);
           return (
             <li key={id} className={cx("row-dotted py-1.5 pl-1.5 border-l-2", i === 0 ? "border-l-rust-600" : "border-l-transparent")}>
               <div className="flex items-center gap-2">
@@ -215,7 +216,7 @@ export function PriorCases({ data, run, className }: { data: InternalCase; run: 
                   {chunk.text}
                 </p>
               ) : (
-                <p className="text-[11px] text-text-faint">Outcome not returned by the backend.</p>
+                <p className="text-[11px] text-text-faint">No outcome recorded for this case.</p>
               )}
             </li>
           );
@@ -255,6 +256,11 @@ export function ActionDiff({ data, run, className }: { data: InternalCase; run: 
         <Waiting>Waiting for the first decision.</Waiting>
       ) : (
         <>
+          {/* What changed goes first: the panel scrolls, and this line is the point of it. */}
+          <div className="mb-2 border-l-2 border-rust-600 pl-2">
+            <p className="eyebrow">What changed</p>
+            <p className="text-[12px] text-text-muted">{hasFinal ? data.what_changed : "Waiting for evidence."}</p>
+          </div>
           <table className="w-full text-[11.5px]">
             <thead>
               <tr className="border-b border-rust-800">
@@ -277,10 +283,6 @@ export function ActionDiff({ data, run, className }: { data: InternalCase; run: 
               ))}
             </tbody>
           </table>
-          <div className="mt-2 border-l-2 border-rust-600 pl-2">
-            <p className="eyebrow">What changed</p>
-            <p className="text-[12px] text-text-muted">{hasFinal ? data.what_changed : "Waiting for evidence."}</p>
-          </div>
         </>
       )}
     </Panel>

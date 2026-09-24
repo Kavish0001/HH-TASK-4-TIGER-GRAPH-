@@ -367,19 +367,35 @@ purpose so this README cannot disagree with it.
 
 ## Screenshots
 
-TODO(verify): capture these from the running dashboard and save them under
-`docs/screenshots/`.
+Taken from the dashboard running against the live API over MCP.
 
-| Screen | File |
-|---|---|
-| Case queue with risk, confidence, status and approval badges | `docs/screenshots/queue.png` |
-| Case view: agent steps streaming, evidence with sources | `docs/screenshots/case-steps.png` |
-| Case subgraph with the shared device ring (HHG-014) | `docs/screenshots/case-graph.png` |
-| Risk and confidence side by side, unknowns list | `docs/screenshots/risk-confidence.png` |
-| Next best actions before and after evidence, with what changed | `docs/screenshots/nba.png` |
-| Approval panel with L1 and L2 actions | `docs/screenshots/approvals.png` |
-| SAR preview | `docs/screenshots/sar.png` |
-| Trigger launcher | `docs/screenshots/launcher.png` |
+**Case queue**: risk, confidence, status and pending approvals for the 20 benchmark cases.
+
+![Case queue](docs/screenshots/queue.png)
+
+**Live run**: agent steps streaming in while HHG-006 is investigated.
+
+![Streaming run](docs/screenshots/streaming.png)
+
+**Case view**: evidence with sources, risk and confidence, unknowns, similar prior cases.
+
+![Case view](docs/screenshots/case-view.png)
+
+**Next best actions before and after evidence**, with what changed.
+
+![NBA before and after](docs/screenshots/nba-before-after.png)
+
+**SAR preview** for HHG-006.
+
+![SAR](docs/screenshots/sar.png)
+
+**Shared device ring** found on HHG-014.
+
+![Device ring](docs/screenshots/graph-ring.png)
+
+**Trigger launcher**
+
+![Launcher](docs/screenshots/launcher.png)
 
 ## Contracts worth reading
 

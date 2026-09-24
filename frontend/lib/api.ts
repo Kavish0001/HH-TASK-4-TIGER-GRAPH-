@@ -126,7 +126,14 @@ function runLive(id: string, start: InternalCase, h: RunHandlers): () => void {
       }
     } else {
       const c = unwrapCase(data);
-      if (c) push(mergeCase(current, c));
+      if (c) {
+        // Milestone snapshots are taken mid-node, so they can lag the step events that
+        // arrived just before them. Keep whichever step list and counter is further along.
+        const merged = mergeCase(current, c);
+        if ((c.steps?.length ?? 0) < current.steps.length) merged.steps = current.steps;
+        merged.tool_calls = Math.max(merged.tool_calls, merged.steps.filter((s) => s.tool).length);
+        push(merged);
+      }
     }
     if (event === "done" || event === "end" || event === "complete") finish();
   };
@@ -224,12 +231,15 @@ function runLive(id: string, start: InternalCase, h: RunHandlers): () => void {
 /**
  * Rebuilds what the case would look like after step k of a recorded run, so the mock
  * stream reveals fields in the same order the agent produces them. Keyed on node names
- * from backend/agent (intake, gather, retrieve, assess, decide_initial, request_evidence,
- * resolve_evidence, decide_final, sar, write_graph).
+ * from backend/agent/graph.py (trigger, open_case, plan, gather_evidence, assess,
+ * nba_initial, policy_check, request_evidence, reassess, nba_final, execute_or_route,
+ * sar_check, explain, write_case, update_memory, answer_file). Older recordings used
+ * gather, retrieve, decide_initial, resolve_evidence, decide_final and sar, so both work.
  */
 export function partialAt(full: InternalCase, k: number): InternalCase {
   const done = full.steps.slice(0, k);
-  const has = (node: string) => done.some((s) => s.node === node);
+  const has = (...nodes: string[]) => done.some((s) => nodes.includes(s.node));
+  const isGather = (s: AgentStep) => s.node === "gather_evidence" || s.node === "gather" || s.node === "retrieve";
   const hasTool = (tool: string) => done.some((s) => s.tool === tool);
   const c = blankCase(full.case_id, full.trigger);
   c.steps = done;
@@ -237,8 +247,8 @@ export function partialAt(full: InternalCase, k: number): InternalCase {
   c.tokens = Math.round((full.tokens * k) / Math.max(1, full.steps.length));
   c.latency_s = +done.reduce((a, s) => a + s.duration_s + 0.3, 0).toFixed(1);
 
-  const gatherSteps = full.steps.filter((s) => s.node === "gather" || s.node === "retrieve").length;
-  const gatherDone = done.filter((s) => s.node === "gather" || s.node === "retrieve").length;
+  const gatherSteps = full.steps.filter(isGather).length;
+  const gatherDone = done.filter(isGather).length;
   const graphEv = full.evidence.filter((e) => e.source === "graph" || e.source === "external");
   c.evidence = graphEv.slice(0, Math.ceil((graphEv.length * gatherDone) / Math.max(1, gatherSteps)));
   if (hasTool("policy_lookup")) c.evidence.push(...full.evidence.filter((e) => e.source === "document"));
@@ -260,23 +270,23 @@ export function partialAt(full: InternalCase, k: number): InternalCase {
     c.connected_card_ids = full.connected_card_ids;
     c.connected_device_profiles = full.connected_device_profiles;
   }
-  if (has("decide_initial")) {
+  if (has("nba_initial", "decide_initial")) {
     c.initial_actions = full.initial_actions;
     c.decisions = full.decisions.filter((d) => d.phase === "initial").map((d) => ({ ...d, approval_status: d.route === "auto" ? d.approval_status : "pending" }));
   }
   if (has("request_evidence")) c.evidence_requests = full.evidence_requests.map((r) => ({ ...r, resolved_as: null }));
-  if (has("resolve_evidence")) {
+  if (has("reassess", "resolve_evidence")) {
     c.evidence_requests = full.evidence_requests;
     c.customer_response = full.customer_response;
     c.evidence.push(...full.evidence.filter((e) => e.source === "customer"));
   }
-  if (has("decide_final")) {
+  if (has("nba_final", "decide_final")) {
     c.final_actions = full.final_actions;
     c.what_changed = full.what_changed;
     c.decisions = awaitingHuman(full).decisions;
     c.verdict = full.verdict;
   }
-  if (has("sar")) c.sar = full.sar;
+  if (has("sar_check", "sar")) c.sar = full.sar;
   if (k >= full.steps.length) return awaitingHuman(full);
   return c;
 }

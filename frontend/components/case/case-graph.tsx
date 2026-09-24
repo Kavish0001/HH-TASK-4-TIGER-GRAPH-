@@ -5,7 +5,7 @@
 // so the queue and launcher never load it.
 
 import { useEffect, useMemo, useRef } from "react";
-import type { Core, ElementDefinition } from "cytoscape";
+import type { Core, ElementDefinition, NodeSingular } from "cytoscape";
 import type { InternalCase } from "@/lib/types";
 
 const C = {
@@ -22,6 +22,9 @@ const C = {
   flame400: "#FF8568",
   sand: "#D9C7BC",
 };
+
+/** From this many connected cards on, the ring is drawn radially around its device. */
+const RADIAL_MIN = 8;
 
 export function buildElements(c: InternalCase): ElementDefinition[] {
   const els: ElementDefinition[] = [];
@@ -45,11 +48,14 @@ export function buildElements(c: InternalCase): ElementDefinition[] {
   node(t.card_id, "card", t.card_id, parent, "flagged");
   edge(t.customer_id, t.card_id, "holds");
 
+  // A large ring (HHG-014 has 19 connected cards) would double the node count with
+  // customers that only repeat the card prefix, so I drop them past RADIAL_MIN.
+  const many = c.connected_card_ids.length >= RADIAL_MIN;
   for (const card of c.connected_card_ids) {
     const cust = card.split("-")[0];
-    node(cust, "customer", cust);
+    if (!many) node(cust, "customer", cust);
     node(card, "card", card, parent);
-    edge(cust, card, "holds");
+    if (!many) edge(cust, card, "holds");
   }
   c.connected_device_profiles.forEach((d) => {
     node(d, "device", d.split("|")[0].trim(), parent);
@@ -67,6 +73,42 @@ export function buildElements(c: InternalCase): ElementDefinition[] {
     edge(id, t.card_id, "similar");
   }
   return els;
+}
+
+/**
+ * The ring around its shared device: device in the middle, every card that used it on a
+ * circle, the flagged card at nine o'clock with its customer outside it, then the
+ * transactions and prior cases stacked to the right. Deterministic, like the layered one.
+ */
+function radialLayout(inst: Core) {
+  const device = inst.nodes("node.device");
+  const flagged = inst.nodes("node.flagged");
+  const others = inst.nodes("node.card").not(".flagged");
+  const ring = [...flagged.toArray(), ...others.toArray()] as NodeSingular[];
+  const n = ring.length;
+  // An ellipse, since the panel is wider than it is tall.
+  const R = Math.max(90, n * 6);
+  const RX = R * 1.7;
+  device.forEach((d, i) => {
+    d.position({ x: 0, y: (i - (device.length - 1) / 2) * 30 });
+  });
+  ring.forEach((node, i) => {
+    const a = Math.PI + (2 * Math.PI * i) / n;
+    node.position({ x: RX * Math.cos(a), y: R * Math.sin(a) });
+  });
+  inst.nodes("node.customer").forEach((node, i) => {
+    node.position({ x: -RX - 90, y: i * 30 });
+  });
+  const stack = (sel: string, x: number) => {
+    const ns = inst.nodes(sel);
+    ns.forEach((node, i) => {
+      node.position({ x, y: (i - (ns.length - 1) / 2) * 26 });
+    });
+  };
+  stack("node.txn", RX + 90);
+  stack("node.prior", RX + 190);
+  // Prior-case links would cut across the ring; keep them but push them back.
+  inst.edges("edge.similar").style("opacity", 0.3);
 }
 
 export function CaseGraph({ data, highlight }: { data: InternalCase; highlight: string[] }) {
@@ -109,6 +151,13 @@ export function CaseGraph({ data, highlight }: { data: InternalCase; highlight: 
       // by hand so it is identical on every reload and during the demo run. It reads the
       // same way the evidence does: who holds what, what it touched, what it resembles.
       // The ring boundary is a compound parent and takes its bounds from its members.
+      const cards = inst.nodes("node.card").not(".flagged");
+      if (cards.length >= RADIAL_MIN && inst.nodes("node.device").nonempty()) {
+        radialLayout(inst);
+        inst.fit(undefined, 16);
+        cy.current = inst;
+        return;
+      }
       const cols: Record<string, number> = { customer: 0, card: 1, device: 2, txn: 3, prior: 4 };
       const byCol = new Map<number, string[]>();
       inst.nodes().not(":parent").forEach((n) => {
