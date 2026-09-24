@@ -1,0 +1,23 @@
+# Agent + API
+langgraph==0.2.60
+langchain-core==0.3.29
+langchain-mcp-adapters==0.1.7
+anthropic==0.69.0
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+sse-starlette==2.2.1
+pydantic==2.10.4
+pydantic-settings==2.7.0
+
+# TigerGraph
+pyTigerGraph==1.8.6
+
+# Data and GraphRAG
+pandas==2.2.3
+numpy==2.2.1
+sentence-transformers==3.3.1
+pyyaml==6.0.2
+
+# Eval
+jsonschema==4.23.0
+pytest==8.3.4

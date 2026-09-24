@@ -1,0 +1,147 @@
+# Fraud Policy v1.0, transcribed from data/README.md.
+# I keep this as data rather than prose in a prompt because routing and SAR
+# thresholds are scored, and code must decide them the same way every run.
+# Action and route identifiers are exact: the answer files are graded on them.
+
+version: "1.0"
+
+actions:
+  ALLOW_TRANSACTION:      { impact: none,      desc: "Let the flagged transaction stand" }
+  DECLINE_TRANSACTION:    { impact: low,       desc: "Decline the flagged authorization only. Card stays active" }
+  MONITOR_CARD:           { impact: none,      desc: "Card active, monitoring sensitivity raised 72 hours" }
+  MONITOR_CONNECTED_CARDS: { impact: none,      desc: "Monitor cards linked by device profile, region cluster, or ring" }
+  WARN_CUSTOMER:          { impact: none,      desc: "Send an informational message" }
+  VERIFY_WITH_CUSTOMER:   { impact: low,       desc: "Ask the cardholder whether they made the transaction" }
+  STEP_UP_AUTH:           { impact: low,       desc: "Require a one-time passcode or app confirmation" }
+  BLOCK_CARD:             { impact: high,      desc: "Block this card and reissue" }
+  BLOCK_ALL_CARDS:        { impact: very_high, desc: "Block every card the customer holds" }
+  GENERATE_REPORT:        { impact: none,      desc: "Write up the investigation internally, no case opened" }
+  CREATE_CASE:            { impact: none,      desc: "Open an internal fraud case and write it to the graph" }
+  FILE_REPORT:            { impact: none,      desc: "File a suspicious activity report with the regulator" }
+  ESCALATE_TO_ANALYST:    { impact: none,      desc: "Hand the case to a human analyst with the evidence" }
+  CLOSE_NO_FRAUD:         { impact: none,      desc: "Close the alert as legitimate" }
+
+# Routing. Only `auto` may be executed by the agent. L1 and L2 are recommended
+# with the route stated and wait for a human.
+routing:
+  auto:
+    - ALLOW_TRANSACTION
+    - MONITOR_CARD
+    - MONITOR_CONNECTED_CARDS
+    - WARN_CUSTOMER
+    - VERIFY_WITH_CUSTOMER
+    - STEP_UP_AUTH
+    - GENERATE_REPORT
+    - CREATE_CASE
+    - ESCALATE_TO_ANALYST
+    - CLOSE_NO_FRAUD
+  conditional:
+    # BLOCK_CARD routes on exposure, so it cannot be a static list entry.
+    BLOCK_CARD:
+      - { when: "exposure_usd <= 2500", route: L1 }
+      - { when: "exposure_usd > 2500",  route: L2 }
+  l1:
+    - DECLINE_TRANSACTION
+  l2:
+    - BLOCK_ALL_CARDS
+    - FILE_REPORT
+
+rules:
+  R1:
+    title: "Verify before you block on a weak signal"
+    when: "single_signal and fraud_probability < 0.70"
+    recommend: [VERIFY_WITH_CUSTOMER, STEP_UP_AUTH]
+    forbids: [BLOCK_CARD, BLOCK_ALL_CARDS]
+    note: "Blocking a legitimate customer on one signal is a policy breach"
+  R2:
+    title: "Customer denies the transaction"
+    when: "customer_response == denied"
+    recommend: [BLOCK_CARD, CREATE_CASE]
+    add_file_report_when: "exposure_usd > 1000 or shared_device_profile or linked_to_other_card_fraud"
+  R3:
+    title: "Customer confirms the transaction"
+    when: "customer_response == confirmed"
+    recommend: [CLOSE_NO_FRAUD]
+  R4:
+    title: "No reply within 24 hours"
+    when: "customer_response == no_reply"
+    recommend: [MONITOR_CARD, DECLINE_TRANSACTION]
+    escalate_when: "exposure_usd > 500"
+  R5:
+    title: "Card testing"
+    when: "three_or_more_small_online_auths_within_1h followed by larger purchase"
+    recommend: [DECLINE_TRANSACTION, STEP_UP_AUTH]
+    upgrade_when: "cleared_purchase_over_100"
+    upgrade_to: [BLOCK_CARD]
+  R6:
+    title: "Shared origin"
+    when: "several cards show fraud from same device profile, billing region, or recipient email in one window"
+    recommend: [CREATE_CASE, FILE_REPORT, MONITOR_CONNECTED_CARDS]
+    requires: "name the shared element in the evidence"
+  R7:
+    title: "Disputed but legitimate"
+    when: "disputed charge matches the customer's own recurring pattern (same merchant, amount, monthly)"
+    recommend: [CREATE_CASE, VERIFY_WITH_CUSTOMER, WARN_CUSTOMER]
+    forbids: [BLOCK_CARD, BLOCK_ALL_CARDS]
+  R8:
+    title: "Escalate when uncertain and exposed"
+    when: "verdict == uncertain and (exposure_usd > 500 or evidence_conflicts)"
+    recommend: [ESCALATE_TO_ANALYST]
+  R9:
+    title: "Undocumented patterns"
+    when: "fits no known pattern but evidence shows coordinated or repeated abuse across customers"
+    recommend: [CREATE_CASE, FILE_REPORT, ESCALATE_TO_ANALYST]
+    requires: "pattern_description in the agent's own words, pattern set to undocumented"
+  R10:
+    title: "Never BLOCK_ALL_CARDS"
+    forbids: [BLOCK_ALL_CARDS]
+    unless: "at least two of the customer's cards show confirmed fraud or credentials confirmed compromised"
+
+# 3a. A case is not a report.
+case_creation:
+  open_when_any:
+    - "fraud_probability >= 0.30"
+    - "evidence was requested"
+    - "customer disputes a charge"
+
+sar:
+  # File only when fraud is confirmed or strongly suspected AND at least one trigger holds.
+  requires_suspicion: true
+  triggers_any:
+    - "exposure_usd > 1000"
+    - "connects to a shared device profile"
+    - "connects to a shared region cluster"
+    - "connects to another customer's fraud"
+    - "pattern is coordinated or undocumented (R9)"
+  narrative_must_cover: [who, what, when, where, how, why_suspicious]
+  narrative_sentences: { min: 6, max: 12 }
+
+# 4. Exposure is the sum of absolute amounts of every transaction identified as
+# part of the fraud episode, including the flagged one.
+exposure:
+  definition: "sum(abs(amount) for txn in affected_txn_ids)"
+  currency: USD
+
+# 5. Evidence gathering the agent may do without approval.
+evidence_requests:
+  allowed_without_approval: [customer_validation, step_up_auth, analyst_info]
+  responses_provided_by_dataset: false
+  note: "Responses are not supplied this round. Simulate them and record the assumption in evidence_requests."
+
+# 6. Stopping.
+stopping:
+  stop_when_any:
+    - "fraud_probability >= 0.85 with at least two independent pieces of evidence"
+    - "fraud_probability <= 0.15 with at least two independent pieces of evidence"
+    - "a verification response settles the question"
+    - "further steps are unlikely to change the decision"
+  penalty: "Continuing past a defensible decision and stopping before one are both marked down"
+
+patterns:
+  - card_testing
+  - card_not_present_fraud
+  - card_not_present_new_device
+  - out_of_region_use
+  - account_takeover
+  - undocumented
+  - none

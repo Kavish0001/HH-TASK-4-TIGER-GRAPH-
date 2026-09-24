@@ -1,0 +1,17 @@
+Archive/
+ARCHIVE/
+plans/
+data/
+.env
+.env.*
+!.env.example
+node_modules/
+.next/
+out/
+__pycache__/
+*.pyc
+.venv/
+venv/
+.DS_Store
+.pytest_cache/
+*.log

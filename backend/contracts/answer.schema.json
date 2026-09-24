@@ -1,0 +1,106 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HHGOA fraud investigation answer file",
+  "description": "One file per case, named <case_id>.json, written to cases/. Field names and enums come from data/README.md Answer Format. Missing fields score zero for that part.",
+  "type": "object",
+  "required": ["case_id", "case", "evidence_requests", "next_best_actions", "sar", "stop_reason", "tool_calls", "tokens", "latency_s"],
+  "additionalProperties": false,
+  "properties": {
+    "case_id": { "type": "string", "pattern": "^HHG-[0-9]{3}$" },
+    "case": {
+      "type": "object",
+      "required": ["status", "verdict", "fraud_probability", "pattern", "pattern_description", "affected_txn_ids", "first_suspicious_txn_id", "connected_card_ids", "connected_device_profiles", "exposure_usd", "evidence", "similar_prior_cases", "summary", "written_to_graph", "graph_case_id"],
+      "additionalProperties": false,
+      "properties": {
+        "status": { "enum": ["open", "closed_fraud", "closed_legitimate", "escalated"] },
+        "verdict": { "enum": ["fraud", "legitimate", "uncertain"] },
+        "fraud_probability": { "type": "number", "minimum": 0, "maximum": 1 },
+        "pattern": { "enum": ["card_testing", "card_not_present_fraud", "card_not_present_new_device", "out_of_region_use", "account_takeover", "undocumented", "none"] },
+        "pattern_description": { "type": "string" },
+        "affected_txn_ids": { "type": "array", "items": { "type": "string" } },
+        "first_suspicious_txn_id": { "type": "string" },
+        "connected_card_ids": { "type": "array", "items": { "type": "string" } },
+        "connected_device_profiles": { "type": "array", "items": { "type": "string" } },
+        "exposure_usd": { "type": "number", "minimum": 0 },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["claim", "source", "ref", "entity_ids"],
+            "additionalProperties": false,
+            "properties": {
+              "claim": { "type": "string", "minLength": 1 },
+              "source": { "enum": ["graph", "document", "customer", "external"] },
+              "ref": { "type": "string", "minLength": 1 },
+              "entity_ids": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        },
+        "similar_prior_cases": { "type": "array", "items": { "type": "string", "pattern": "^CC-[0-9]{4}$" } },
+        "summary": { "type": "string", "minLength": 1 },
+        "written_to_graph": { "type": "boolean" },
+        "graph_case_id": { "type": "string" }
+      }
+    },
+    "evidence_requests": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "asked_after_step", "assumed_response"],
+        "additionalProperties": false,
+        "properties": {
+          "type": { "enum": ["customer_validation", "step_up_auth", "analyst_info"] },
+          "asked_after_step": { "type": "integer", "minimum": 0 },
+          "assumed_response": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "next_best_actions": {
+      "type": "object",
+      "required": ["initial", "final", "what_changed"],
+      "additionalProperties": false,
+      "properties": {
+        "initial": { "$ref": "#/definitions/actionList" },
+        "final": { "$ref": "#/definitions/actionList" },
+        "what_changed": { "type": "string", "minLength": 1 }
+      }
+    },
+    "sar": {
+      "type": "object",
+      "required": ["file", "reason", "narrative", "subjects", "total_amount_usd", "activity_dates"],
+      "additionalProperties": false,
+      "properties": {
+        "file": { "type": "boolean" },
+        "reason": { "type": "string", "minLength": 1 },
+        "narrative": { "type": "string" },
+        "subjects": { "type": "array", "items": { "type": "string" } },
+        "total_amount_usd": { "type": "number", "minimum": 0 },
+        "activity_dates": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+          "maxItems": 2
+        }
+      }
+    },
+    "stop_reason": { "type": "string", "minLength": 1 },
+    "tool_calls": { "type": "integer", "minimum": 0 },
+    "tokens": { "type": "integer", "minimum": 0 },
+    "latency_s": { "type": "number", "minimum": 0 }
+  },
+  "definitions": {
+    "actionList": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["action", "route", "reason"],
+        "additionalProperties": false,
+        "properties": {
+          "action": { "enum": ["ALLOW_TRANSACTION", "DECLINE_TRANSACTION", "MONITOR_CARD", "MONITOR_CONNECTED_CARDS", "WARN_CUSTOMER", "VERIFY_WITH_CUSTOMER", "STEP_UP_AUTH", "BLOCK_CARD", "BLOCK_ALL_CARDS", "GENERATE_REPORT", "CREATE_CASE", "FILE_REPORT", "ESCALATE_TO_ANALYST", "CLOSE_NO_FRAUD"] },
+          "route": { "enum": ["auto", "L1", "L2"] },
+          "reason": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}

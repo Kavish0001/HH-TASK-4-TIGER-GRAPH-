@@ -1,0 +1,23 @@
+# TigerGraph Community Edition, single node.
+# I pin a tag rather than :latest so a rebuild on demo day cannot change the
+# GSQL surface under the loading jobs.
+services:
+  tigergraph:
+    image: tigergraph/community:4.2.0
+    container_name: hhgoa-tigergraph
+    platform: linux/amd64
+    ports:
+      - "14240:14240"   # GraphStudio, GSQL over HTTP, and RESTPP
+      - "9000:9000"     # RESTPP direct
+    ulimits:
+      nofile:
+        soft: 1000000
+        hard: 1000000
+    volumes:
+      - tg_data:/home/tigergraph/tigergraph/data
+      - ../data:/home/tigergraph/data:ro   # CSVs, read only, for GSQL loading jobs
+    shm_size: "2gb"
+    restart: unless-stopped
+
+volumes:
+  tg_data:
