@@ -117,10 +117,10 @@ subjects, the total, the filing reason. Then GraphStudio: find the
 earlier benchmark case.
 
 The graded `similar_prior_cases` field only accepts closed-case ids (`CC-NNNN`),
-so agent memory shows up in the internal case instead: HHG-003 retrieves
-`GC-HHG-007`, a benchmark case the agent closed earlier in calendar time. Show
-that in the case view's retrieved context, then the `GC-HHG-007` vertex in
-GraphStudio.
+so agent memory shows up in the evidence instead: HHG-004 (opened 29 Dec) cites
+`GC-HHG-016` and `GC-HHG-005`, benchmark cases the agent closed earlier in
+calendar time. Show those evidence lines in HHG-004's case view, then the
+`GC-HHG-016` vertex in GraphStudio.
 
 **Voice:**
 "The report is drafted because policy says to file when the pattern is
