@@ -93,15 +93,8 @@ CREATE LOADING JOB load_closed_cases FOR GRAPH FraudInvestigation {
     USING HEADER="true", SEPARATOR=",", QUOTE="double";
 }
 
-CREATE LOADING JOB load_documents FOR GRAPH FraudInvestigation {
-  DEFINE FILENAME f_pat = "/home/tigergraph/prepared/fraud_patterns.csv";
-  DEFINE FILENAME f_chunk = "/home/tigergraph/prepared/policy_chunks.csv";
-
-  LOAD f_pat
-    TO VERTEX FraudPattern VALUES($0, $1, $2, $3, $4)
-    USING HEADER="true", SEPARATOR=",", QUOTE="double";
-
-  LOAD f_chunk
-    TO VERTEX PolicyChunk VALUES($0, $1, $2, $3, $4, $5)
-    USING HEADER="true", SEPARATOR=",", QUOTE="double";
-}
+// FraudPattern and PolicyChunk are NOT loaded here. A policy chunk is markdown
+// and contains newlines, and TigerGraph's file loader is line based: a quoted
+// field spanning lines is dropped with ERRORS=0. The first attempt loaded 20 of
+// 30 chunks and reported success. They go in over REST from
+// graph/prep/embed_and_upsert.py instead, which also attaches the vectors.

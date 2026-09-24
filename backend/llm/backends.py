@@ -88,25 +88,57 @@ class MockBackend(LLMBackend):
         return out
 
 
+def _is_unavailable(exc: BaseException) -> bool:
+    """503 UNAVAILABLE, which on these models means high demand, not quota.
+
+    Distinct from 429: retrying the same model harder does not help, so the
+    caller falls through to the next model instead.
+    """
+    text = f"{type(exc).__name__} {exc}".lower()
+    status = getattr(exc, "status_code", None) or getattr(exc, "code", None)
+    if status == 503:
+        return True
+    return "503" in text or "unavailable" in text or "overloaded" in text or "high demand" in text
+
+
 class GoogleBackend(LLMBackend):
     """Gemini through google-genai.
 
-    Structured output uses `response_json_schema` with
-    `response_mime_type="application/json"`, which is what google-genai 2.x
-    exposes for a raw JSON Schema. Usage comes from `response.usage_metadata`,
-    which the SDK populates with real counts.
+    Structured output passes the JSON Schema dict straight to `response_schema`
+    alongside `response_mime_type="application/json"`. Usage comes from
+    `response.usage_metadata`, which carries real counts.
+
+    Model fallback: the newest flash models answer 503 under load often enough
+    that a twenty-case run will hit it. Rather than failing the case, the
+    backend walks `fallback_models` in order and records which model actually
+    answered, because that affects reproducibility.
     """
 
     provider = "google"
 
-    def __init__(self, api_key: str, model: str, temperature: float = 0.2, max_output_tokens: int = 2048) -> None:
+    def __init__(
+        self,
+        api_key: str,
+        model: str,
+        fallback_models: list[str] | None = None,
+        temperature: float = 0.2,
+        max_output_tokens: int = 2048,
+    ) -> None:
+        import logging as _logging
+
         from google import genai  # imported here so no key means no import
 
-        self._genai = genai
+        # The SDK logs an automatic-function-calling warning on every call. We
+        # pass no tools, so it is pure noise in the run log.
+        _logging.getLogger("google_genai.models").setLevel(_logging.ERROR)
+        _logging.getLogger("google.genai.models").setLevel(_logging.ERROR)
+
         self._client = genai.Client(api_key=api_key)
         self.model = model
+        self.fallback_models = fallback_models or []
         self.temperature = temperature
         self.max_output_tokens = max_output_tokens
+        self.last_model_used = model
 
     def complete_structured(
         self, system: str, messages: list[Message], schema: dict[str, Any], cache_hint: str = ""
@@ -125,34 +157,45 @@ class GoogleBackend(LLMBackend):
             temperature=self.temperature,
             max_output_tokens=self.max_output_tokens,
             response_mime_type="application/json",
-            response_json_schema=schema,
-        )
-        response = self._client.models.generate_content(
-            model=self.model, contents=contents, config=config
-        )
-        text = (response.text or "").strip()
-        try:
-            data = json.loads(text)
-        except json.JSONDecodeError as exc:
-            return LLMResult(
-                data={},
-                usage=_google_usage(response),
-                provider=self.provider,
-                model=self.model,
-                raw_text=text,
-                ok=False,
-                error=f"response was not valid JSON: {exc}",
-            )
-        return LLMResult(
-            data=data,
-            usage=_google_usage(response),
-            provider=self.provider,
-            model=self.model,
-            raw_text=text,
+            response_schema=schema,
         )
 
+        last_error: BaseException | None = None
+        for candidate in [self.model, *self.fallback_models]:
+            try:
+                response = self._client.models.generate_content(
+                    model=candidate, contents=contents, config=config
+                )
+            except BaseException as exc:  # noqa: BLE001
+                last_error = exc
+                if _is_unavailable(exc):
+                    continue  # next model; retrying this one harder will not help
+                raise
+            self.last_model_used = candidate
+            text = (response.text or "").strip()
+            usage = _google_usage(response)
+            try:
+                data = json.loads(text)
+            except json.JSONDecodeError as exc:
+                return LLMResult(
+                    data={},
+                    usage=usage,
+                    provider=self.provider,
+                    model=candidate,
+                    raw_text=text,
+                    ok=False,
+                    error=f"response was not valid JSON: {exc}",
+                )
+            return LLMResult(
+                data=data, usage=usage, provider=self.provider, model=candidate, raw_text=text
+            )
+
+        raise RuntimeError(
+            f"every Gemini model returned 503: {[self.model, *self.fallback_models]}"
+        ) from last_error
+
     def list_models(self) -> list[str]:
-        """Run once when a key lands, to confirm the configured model exists."""
+        """Confirms the configured model exists before a twenty-case run."""
         return [m.name for m in self._client.models.list()]
 
 

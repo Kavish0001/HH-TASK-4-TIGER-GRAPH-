@@ -7,4 +7,3 @@ DROP JOB load_cards
 DROP JOB load_devices
 DROP JOB load_transactions
 DROP JOB load_closed_cases
-DROP JOB load_documents

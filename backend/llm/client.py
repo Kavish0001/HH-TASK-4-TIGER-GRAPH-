@@ -27,6 +27,7 @@ class LLMClient:
         self._governor = RpmGovernor(self._settings.llm_max_rpm)
         self.ledger = CallLedger()
         self.usage = Usage()
+        self.models_used: dict[str, int] = {}
         self.fallback_reason = ""
 
     # ---- construction ----------------------------------------------------
@@ -53,6 +54,7 @@ class LLMClient:
                 return GoogleBackend(
                     api_key=s.google_api_key,
                     model=s.llm_model,
+                    fallback_models=s.fallback_models,
                     max_output_tokens=s.llm_max_tokens,
                 )
             if s.llm_provider == "openai":
@@ -109,11 +111,16 @@ class LLMClient:
 
         self.ledger.record(step, waited_s=waited, retries=retries)
         self.usage = self.usage + result.usage
+        # Which model actually answered matters for reproducibility when the
+        # primary was unavailable and a fallback served the call.
+        if result.model:
+            self.models_used[result.model] = self.models_used.get(result.model, 0) + 1
         return result
 
     def reset(self) -> None:
         self.usage = Usage()
         self.ledger = CallLedger()
+        self.models_used = {}
 
     def report(self) -> dict[str, Any]:
         return {
@@ -123,6 +130,7 @@ class LLMClient:
             "tokens": self.usage.total_tokens,
             "tokens_are_estimated": self.usage.estimated,
             "token_note": self.usage.note,
+            "models_used": dict(self.models_used),
             **self.ledger.summary(),
         }
 

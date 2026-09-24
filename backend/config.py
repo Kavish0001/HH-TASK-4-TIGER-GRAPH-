@@ -37,7 +37,9 @@ class Settings(BaseSettings):
     # LLM. Provider agnostic; the client is built lazily so the pipeline runs
     # with no key at all.
     llm_provider: Literal["google", "openai", "mock"] = "google"
-    llm_model: str = "gemini-2.5-flash"
+    llm_model: str = "gemini-3.5-flash"
+    # Tried in order when the primary model answers 503 under load.
+    llm_fallback_models: str = "gemini-3.1-flash-lite,gemini-3-flash-preview"
     google_api_key: str = ""
     openai_api_key: str = ""
     llm_max_tokens: int = 2048
@@ -78,6 +80,10 @@ class Settings(BaseSettings):
     @property
     def contracts_dir(self) -> Path:
         return REPO_ROOT / "backend" / "contracts"
+
+    @property
+    def fallback_models(self) -> list[str]:
+        return [m.strip() for m in self.llm_fallback_models.split(",") if m.strip()]
 
     @property
     def llm_key(self) -> str:
