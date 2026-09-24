@@ -3,7 +3,7 @@
   "case": {
     "status": "closed_fraud",
     "verdict": "fraud",
-    "fraud_probability": 0.931,
+    "fraud_probability": 0.898,
     "pattern": "card_not_present_new_device",
     "pattern_description": "",
     "affected_txn_ids": [
@@ -73,14 +73,6 @@
         ]
       },
       {
-        "claim": "Earlier benchmark case HHG-015, investigated by this agent, ended closed_fraud with pattern card_not_present_new_device; retrieved as memory because text similarity to the analyst notes",
-        "source": "graph",
-        "ref": "case:GC-HHG-015",
-        "entity_ids": [
-          "HHG-015"
-        ]
-      },
-      {
         "claim": "Policy R2 governs the recommended actions",
         "source": "document",
         "ref": "policy:R2",
@@ -98,7 +90,7 @@
       "CC-3057",
       "CC-0528"
     ],
-    "summary": "The bank's model flagged the transaction on card C10434-K1, transaction 3506725 ($1,000.03). The leading hypothesis is card-not-present fraud from a new device: Online purchase of $1,000.03 at the 100% percentile of this card's history, from a device profile new to this card. The cardholder, asked to validate the activity, was assumed to deny it (simulated response). Assessed fraud probability is 0.93 at confidence 0.97, verdict fraud, exposure $1,000.03. Final recommendation: BLOCK_CARD, CREATE_CASE, FILE_REPORT (R2).",
+    "summary": "The bank's model flagged the transaction on card C10434-K1, transaction 3506725 ($1,000.03). The leading hypothesis is card-not-present fraud from a new device: Online purchase of $1,000.03 at the 100% percentile of this card's history, from a device profile new to this card. The cardholder, asked to validate the activity, was assumed to deny it (simulated response). Assessed fraud probability is 0.90 at confidence 0.97, verdict fraud, exposure $1,000.03. Final recommendation: BLOCK_CARD, CREATE_CASE, FILE_REPORT (R2).",
     "written_to_graph": true,
     "graph_case_id": "GC-HHG-010"
   },
@@ -112,24 +104,19 @@
   "next_best_actions": {
     "initial": [
       {
-        "action": "BLOCK_CARD",
-        "route": "L1",
-        "reason": "Assessed probability 0.71 on corroborated evidence"
-      },
-      {
         "action": "CREATE_CASE",
         "route": "auto",
-        "reason": "Policy 3a: probability is at or above 0.30"
+        "reason": "Policy 3a: probability 0.62 is at or above 0.30 and evidence was requested"
       },
       {
-        "action": "FILE_REPORT",
-        "route": "L2",
-        "reason": "Policy 3a: exposure $1,000.03 exceeds $1,000."
+        "action": "ESCALATE_TO_ANALYST",
+        "route": "auto",
+        "reason": "R8: the verdict is uncertain and exposure $1,000.03 is over $500"
       },
       {
         "action": "STEP_UP_AUTH",
         "route": "auto",
-        "reason": "Policy section 6: probability 0.71 has not reached 0.85 or 0.15 on two independent pieces of evidence (confidence 0.93), so the agent asks before acting"
+        "reason": "Policy section 6: probability 0.62 has not reached 0.85 or 0.15 on two independent pieces of evidence (confidence 0.93), so the agent asks before acting"
       }
     ],
     "final": [
@@ -149,7 +136,7 @@
         "reason": "R2: the cardholder states they did not make the transaction; exposure or a shared link meets the reporting threshold"
       }
     ],
-    "what_changed": "The assumed response (denied) moved probability from 0.71 to 0.93, so the recommendation moved from BLOCK_CARD, CREATE_CASE, FILE_REPORT, STEP_UP_AUTH to BLOCK_CARD, CREATE_CASE, FILE_REPORT under R2."
+    "what_changed": "The assumed response (denied) moved probability from 0.62 to 0.90, so the recommendation moved from CREATE_CASE, ESCALATE_TO_ANALYST, STEP_UP_AUTH to BLOCK_CARD, CREATE_CASE, FILE_REPORT under R2."
   },
   "sar": {
     "file": true,
@@ -168,5 +155,5 @@
   "stop_reason": "The assumed cardholder response (denied) settles the question under policy section 6. Confidence 0.97. Main open question: The dataset carries no merchant name, so 'same merchant' recurrence is inferred from amount, product code and cadence rather than observed directly",
   "tool_calls": 18,
   "tokens": 0,
-  "latency_s": 66.89
+  "latency_s": 13.14
 }

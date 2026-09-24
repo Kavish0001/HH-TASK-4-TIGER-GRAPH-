@@ -3,7 +3,7 @@
   "case": {
     "status": "escalated",
     "verdict": "uncertain",
-    "fraud_probability": 0.369,
+    "fraud_probability": 0.353,
     "pattern": "out_of_region_use",
     "pattern_description": "",
     "affected_txn_ids": [
@@ -62,14 +62,6 @@
         ]
       },
       {
-        "claim": "Earlier benchmark case HHG-007, investigated by this agent, ended escalated with pattern out_of_region_use; retrieved as memory because text similarity to the analyst notes",
-        "source": "graph",
-        "ref": "case:GC-HHG-007",
-        "entity_ids": [
-          "HHG-007"
-        ]
-      },
-      {
         "claim": "Policy R4 governs the recommended actions",
         "source": "document",
         "ref": "policy:R4",
@@ -96,7 +88,7 @@
       "CC-2817",
       "CC-1589"
     ],
-    "summary": "The cardholder disputed a charge on card C08623-K2, transaction 3530164 ($49.00). The leading hypothesis is out-of-region use: Card-present use in billing region 330 seen 42 times before, while 115 transactions continued in the home region 299 over the same window. The cardholder was asked to validate the activity and no reply was assumed within 24 hours (simulated). Assessed fraud probability is 0.37 at confidence 0.66, verdict uncertain, exposure $49.00. Final recommendation: CREATE_CASE, MONITOR_CARD, ESCALATE_TO_ANALYST (R4, R8).",
+    "summary": "The cardholder disputed a charge on card C08623-K2, transaction 3530164 ($49.00). The leading hypothesis is out-of-region use: Card-present use in billing region 330 seen 42 times before, while 115 transactions continued in the home region 299 over the same window. The cardholder was asked to validate the activity and no reply was assumed within 24 hours (simulated). Assessed fraud probability is 0.35 at confidence 0.69, verdict uncertain, exposure $49.00. Final recommendation: CREATE_CASE, MONITOR_CARD, ESCALATE_TO_ANALYST (R4, R8).",
     "written_to_graph": true,
     "graph_case_id": "GC-HHG-003"
   },
@@ -112,17 +104,17 @@
       {
         "action": "STEP_UP_AUTH",
         "route": "auto",
-        "reason": "R1: the case rests on a single signal and probability is 0.37, below 0.70, so verification comes before any block"
+        "reason": "R1: the case rests on a single signal and probability is 0.35, below 0.70, so verification comes before any block"
       },
       {
         "action": "VERIFY_WITH_CUSTOMER",
         "route": "auto",
-        "reason": "R1: the case rests on a single signal and probability is 0.37, below 0.70, so verification comes before any block"
+        "reason": "R1: the case rests on a single signal and probability is 0.35, below 0.70, so verification comes before any block"
       },
       {
         "action": "CREATE_CASE",
         "route": "auto",
-        "reason": "Policy 3a: probability 0.37 is at or above 0.30 and evidence was requested and the customer disputes a charge"
+        "reason": "Policy 3a: probability 0.35 is at or above 0.30 and evidence was requested and the customer disputes a charge"
       },
       {
         "action": "ESCALATE_TO_ANALYST",
@@ -134,7 +126,7 @@
       {
         "action": "CREATE_CASE",
         "route": "auto",
-        "reason": "Policy 3a: probability 0.37 is at or above 0.30 and evidence was requested and the customer disputes a charge"
+        "reason": "Policy 3a: probability 0.35 is at or above 0.30 and evidence was requested and the customer disputes a charge"
       },
       {
         "action": "MONITOR_CARD",
@@ -147,18 +139,18 @@
         "reason": "R8: the verdict is uncertain and the evidence conflicts"
       }
     ],
-    "what_changed": "The assumed response (no_reply) left probability at 0.37, so the recommendation moved from STEP_UP_AUTH, VERIFY_WITH_CUSTOMER, CREATE_CASE, ESCALATE_TO_ANALYST to CREATE_CASE, MONITOR_CARD, ESCALATE_TO_ANALYST under R4, R8."
+    "what_changed": "The assumed response (no_reply) left probability at 0.35, so the recommendation moved from STEP_UP_AUTH, VERIFY_WITH_CUSTOMER, CREATE_CASE, ESCALATE_TO_ANALYST to CREATE_CASE, MONITOR_CARD, ESCALATE_TO_ANALYST under R4, R8."
   },
   "sar": {
     "file": false,
-    "reason": "Policy 3a: a report requires fraud confirmed or strongly suspected. Assessed probability 0.37 with verdict uncertain, so no report.",
+    "reason": "Policy 3a: a report requires fraud confirmed or strongly suspected. Assessed probability 0.35 with verdict uncertain, so no report.",
     "narrative": "",
     "subjects": [],
     "total_amount_usd": 0.0,
     "activity_dates": []
   },
-  "stop_reason": "No reply was assumed, and further graph queries are unlikely to change the decision, so the case rests on R4 and R8 rather than on more querying. Confidence 0.66. Main open question: No identity record on the flagged transaction, so device, proxy and screen are unknown",
+  "stop_reason": "No reply was assumed, and further graph queries are unlikely to change the decision, so the case rests on R4 and R8 rather than on more querying. Confidence 0.69. Main open question: No identity record on the flagged transaction, so device, proxy and screen are unknown",
   "tool_calls": 16,
   "tokens": 0,
-  "latency_s": 57.03
+  "latency_s": 11.81
 }

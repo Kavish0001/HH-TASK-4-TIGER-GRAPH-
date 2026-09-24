@@ -42,7 +42,10 @@ WEIGHTS: dict[str, tuple[float, float]] = {
     # The bank model is useful and wrong in both directions. 6.2 percent of
     # confirmed-fraud transactions score below 0.10, so this is deliberately the
     # smallest inculpatory weight in the blend and a low score barely suppresses.
-    "bank_risk_score": (0.30, 1.2),
+    # The README is explicit that above 0.7 most flagged transactions turn
+    # out legitimate, and the backtest showed this term adding about +0.7
+    # log-odds to every cleared alert. It stays as a weak input.
+    "bank_risk_score": (0.30, 0.5),
     # The graph analysis doing the work: how well the leading typology fits.
     "pattern_match": (0.35, 3.0),
     # A shared device is only evidence when the profile is specific, new on the

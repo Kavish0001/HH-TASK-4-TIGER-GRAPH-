@@ -3,7 +3,7 @@
   "case": {
     "status": "open",
     "verdict": "uncertain",
-    "fraud_probability": 0.553,
+    "fraud_probability": 0.473,
     "pattern": "account_takeover",
     "pattern_description": "",
     "affected_txn_ids": [
@@ -94,7 +94,7 @@
       "CC-3216",
       "CC-1475"
     ],
-    "summary": "The bank's model flagged the transaction on card C07671-K2, transaction 3526826 ($35.66). The leading hypothesis is account takeover: Activity in 2 channel(s) within 48 hours; the flagged channel accounts for 1.5% of this card's history; 1 of 1 match flags disagree with the card's usual values. The cardholder was asked to validate the activity and no reply was assumed within 24 hours (simulated). Assessed fraud probability is 0.55 at confidence 0.89, verdict uncertain, exposure $35.66. Final recommendation: DECLINE_TRANSACTION, CREATE_CASE, MONITOR_CARD (R4).",
+    "summary": "The bank's model flagged the transaction on card C07671-K2, transaction 3526826 ($35.66). The leading hypothesis is account takeover: Activity in 2 channel(s) within 48 hours; the flagged channel accounts for 1.5% of this card's history; 1 of 1 match flags disagree with the card's usual values. The cardholder was asked to validate the activity and no reply was assumed within 24 hours (simulated). Assessed fraud probability is 0.47 at confidence 0.81, verdict uncertain, exposure $35.66. Final recommendation: DECLINE_TRANSACTION, CREATE_CASE, MONITOR_CARD (R4).",
     "written_to_graph": true,
     "graph_case_id": "GC-HHG-013"
   },
@@ -110,17 +110,17 @@
       {
         "action": "STEP_UP_AUTH",
         "route": "auto",
-        "reason": "R1: the case rests on a single signal and probability is 0.55, below 0.70, so verification comes before any block"
+        "reason": "R1: the case rests on a single signal and probability is 0.47, below 0.70, so verification comes before any block"
       },
       {
         "action": "VERIFY_WITH_CUSTOMER",
         "route": "auto",
-        "reason": "R1: the case rests on a single signal and probability is 0.55, below 0.70, so verification comes before any block"
+        "reason": "R1: the case rests on a single signal and probability is 0.47, below 0.70, so verification comes before any block"
       },
       {
         "action": "CREATE_CASE",
         "route": "auto",
-        "reason": "Policy 3a: probability 0.55 is at or above 0.30 and evidence was requested"
+        "reason": "Policy 3a: probability 0.47 is at or above 0.30 and evidence was requested"
       }
     ],
     "final": [
@@ -132,7 +132,7 @@
       {
         "action": "CREATE_CASE",
         "route": "auto",
-        "reason": "Policy 3a: probability 0.55 is at or above 0.30 and evidence was requested"
+        "reason": "Policy 3a: probability 0.47 is at or above 0.30 and evidence was requested"
       },
       {
         "action": "MONITOR_CARD",
@@ -140,18 +140,18 @@
         "reason": "R4: no reply within 24 hours"
       }
     ],
-    "what_changed": "The assumed response (no_reply) left probability at 0.55, so the recommendation moved from STEP_UP_AUTH, VERIFY_WITH_CUSTOMER, CREATE_CASE to DECLINE_TRANSACTION, CREATE_CASE, MONITOR_CARD under R4."
+    "what_changed": "The assumed response (no_reply) left probability at 0.47, so the recommendation moved from STEP_UP_AUTH, VERIFY_WITH_CUSTOMER, CREATE_CASE to DECLINE_TRANSACTION, CREATE_CASE, MONITOR_CARD under R4."
   },
   "sar": {
     "file": false,
-    "reason": "Policy 3a: a report requires fraud confirmed or strongly suspected. Assessed probability 0.55 with verdict uncertain, so no report.",
+    "reason": "Policy 3a: a report requires fraud confirmed or strongly suspected. Assessed probability 0.47 with verdict uncertain, so no report.",
     "narrative": "",
     "subjects": [],
     "total_amount_usd": 0.0,
     "activity_dates": []
   },
-  "stop_reason": "No reply was assumed, and further graph queries are unlikely to change the decision, so the case rests on R4 and R8 rather than on more querying. Confidence 0.89. Main open question: No billing region recorded on the flagged transaction, so out-of-region reasoning is unavailable",
+  "stop_reason": "No reply was assumed, and further graph queries are unlikely to change the decision, so the case rests on R4 and R8 rather than on more querying. Confidence 0.81. Main open question: No billing region recorded on the flagged transaction, so out-of-region reasoning is unavailable",
   "tool_calls": 17,
   "tokens": 0,
-  "latency_s": 54.34
+  "latency_s": 12.82
 }

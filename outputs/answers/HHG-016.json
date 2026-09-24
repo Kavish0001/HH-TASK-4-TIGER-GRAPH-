@@ -3,7 +3,7 @@
   "case": {
     "status": "open",
     "verdict": "uncertain",
-    "fraud_probability": 0.572,
+    "fraud_probability": 0.56,
     "pattern": "card_not_present_new_device",
     "pattern_description": "",
     "affected_txn_ids": [
@@ -57,11 +57,11 @@
         ]
       },
       {
-        "claim": "Earlier benchmark case HHG-015, investigated by this agent, ended closed_fraud with pattern card_not_present_new_device; retrieved as memory because text similarity to the analyst notes",
+        "claim": "Earlier benchmark case HHG-010, investigated by this agent, ended closed_fraud with pattern card_not_present_new_device; retrieved as memory because text similarity to the analyst notes",
         "source": "graph",
-        "ref": "case:GC-HHG-015",
+        "ref": "case:GC-HHG-010",
         "entity_ids": [
-          "HHG-015"
+          "HHG-010"
         ]
       },
       {
@@ -80,9 +80,10 @@
     "similar_prior_cases": [
       "CC-4290",
       "CC-0078",
-      "CC-1990"
+      "CC-1990",
+      "CC-4082"
     ],
-    "summary": "The cardholder disputed a charge on card C09988-K1, transaction 3534820 ($59.67). The leading hypothesis is card-not-present fraud from a new device: Online purchase of $59.67 at the 75% percentile of this card's history, from a device profile new to this card. The cardholder was asked to validate the activity and no reply was assumed within 24 hours (simulated). Assessed fraud probability is 0.57 at confidence 0.77, verdict uncertain, exposure $59.67. Final recommendation: CREATE_CASE, MONITOR_CARD (R4).",
+    "summary": "The cardholder disputed a charge on card C09988-K1, transaction 3534820 ($59.67). The leading hypothesis is card-not-present fraud from a new device: Online purchase of $59.67 at the 75% percentile of this card's history, from a device profile new to this card. The cardholder was asked to validate the activity and no reply was assumed within 24 hours (simulated). Assessed fraud probability is 0.56 at confidence 0.77, verdict uncertain, exposure $59.67. Final recommendation: CREATE_CASE, MONITOR_CARD (R4).",
     "written_to_graph": true,
     "graph_case_id": "GC-HHG-016"
   },
@@ -98,24 +99,24 @@
       {
         "action": "STEP_UP_AUTH",
         "route": "auto",
-        "reason": "R1: the case rests on a single signal and probability is 0.57, below 0.70, so verification comes before any block"
+        "reason": "R1: the case rests on a single signal and probability is 0.56, below 0.70, so verification comes before any block"
       },
       {
         "action": "VERIFY_WITH_CUSTOMER",
         "route": "auto",
-        "reason": "R1: the case rests on a single signal and probability is 0.57, below 0.70, so verification comes before any block"
+        "reason": "R1: the case rests on a single signal and probability is 0.56, below 0.70, so verification comes before any block"
       },
       {
         "action": "CREATE_CASE",
         "route": "auto",
-        "reason": "Policy 3a: probability 0.57 is at or above 0.30 and evidence was requested and the customer disputes a charge"
+        "reason": "Policy 3a: probability 0.56 is at or above 0.30 and evidence was requested and the customer disputes a charge"
       }
     ],
     "final": [
       {
         "action": "CREATE_CASE",
         "route": "auto",
-        "reason": "Policy 3a: probability 0.57 is at or above 0.30 and evidence was requested and the customer disputes a charge"
+        "reason": "Policy 3a: probability 0.56 is at or above 0.30 and evidence was requested and the customer disputes a charge"
       },
       {
         "action": "MONITOR_CARD",
@@ -123,11 +124,11 @@
         "reason": "R4: no reply within 24 hours"
       }
     ],
-    "what_changed": "The assumed response (no_reply) left probability at 0.57, so the recommendation moved from STEP_UP_AUTH, VERIFY_WITH_CUSTOMER, CREATE_CASE to CREATE_CASE, MONITOR_CARD under R4."
+    "what_changed": "The assumed response (no_reply) left probability at 0.56, so the recommendation moved from STEP_UP_AUTH, VERIFY_WITH_CUSTOMER, CREATE_CASE to CREATE_CASE, MONITOR_CARD under R4."
   },
   "sar": {
     "file": false,
-    "reason": "Policy 3a: a report requires fraud confirmed or strongly suspected. Assessed probability 0.57 with verdict uncertain, so no report.",
+    "reason": "Policy 3a: a report requires fraud confirmed or strongly suspected. Assessed probability 0.56 with verdict uncertain, so no report.",
     "narrative": "",
     "subjects": [],
     "total_amount_usd": 0.0,
@@ -136,5 +137,5 @@
   "stop_reason": "No reply was assumed, and further graph queries are unlikely to change the decision, so the case rests on R4 and R8 rather than on more querying. Confidence 0.77. Main open question: No billing region recorded on the flagged transaction, so out-of-region reasoning is unavailable",
   "tool_calls": 16,
   "tokens": 0,
-  "latency_s": 61.59
+  "latency_s": 11.87
 }

@@ -109,6 +109,52 @@ def detect_recurring_charge(store: Store, card_id: str, txn_id: str, as_of: str)
     )
 
 
+AWAY_SHARE_MAX = 0.10
+CLONE_WINDOW_HOURS = 12
+
+
+def detect_away_from_home(store: Store, card_id: str, txn_id: str, as_of: str) -> dict[str, Any]:
+    """Card-relative travel reading of the flagged charge's billing region.
+
+    Returns value 0..1 and a detail string. Zero when there is no region on the
+    charge (no region data is not the same as a new region), when the card has
+    no regional history to compare against, when the region is one the card
+    uses routinely, or when the card was active in a different region within
+    twelve hours, which is the shape of a cloned card rather than a trip.
+    """
+    row = store.txn(txn_id)
+    if row is None or pd.isna(row["addr1"]):
+        return {"value": 0.0, "detail": "no billing region on the flagged charge"}
+    hist = store.card_txns(card_id, as_of)
+    ts = pd.Timestamp(row["ts"])
+    prior = hist[(hist["ts"] < ts) & hist["addr1"].notna()]
+    if prior.empty:
+        return {"value": 0.0, "detail": "no earlier regional history on this card"}
+    region = float(row["addr1"])
+    share = float((prior["addr1"].astype(float) == region).mean())
+    if share >= AWAY_SHARE_MAX:
+        return {"value": 0.0, "detail": f"region {region:.0f} carries {share:.0%} of this card's history"}
+    near = hist[
+        (hist["ts"] >= ts - pd.Timedelta(hours=CLONE_WINDOW_HOURS))
+        & (hist["ts"] <= ts + pd.Timedelta(hours=CLONE_WINDOW_HOURS))
+        & hist["addr1"].notna()
+    ]
+    elsewhere = near[near["addr1"].astype(float) != region]
+    if len(elsewhere):
+        return {
+            "value": 0.0,
+            "detail": f"card also active in region {float(elsewhere['addr1'].iloc[0]):.0f} within {CLONE_WINDOW_HOURS} hours, which reads as a clone",
+        }
+    return {
+        "value": 0.7,
+        "detail": (
+            f"billed in region {region:.0f}, which carries {share:.0%} of this card's {len(prior)} earlier "
+            "regional transactions, with no activity elsewhere in the same twelve hours; the bank's most "
+            "common false alarm is a travelling cardholder"
+        ),
+    }
+
+
 def behaviour_shift_value(shift: dict[str, Any]) -> tuple[float, str]:
     """Collapse the behavior_shift tool output into one 0..1 signal."""
     if not shift:
@@ -213,6 +259,17 @@ def assess_case(
             f"{region_pattern.detail.get('span_days_in_region')} days of activity in one new region with no "
             "overlapping home-region activity, which is the shape of a trip"
         )
+
+    # The multi-day in-person trip above is rare. The common shape in the
+    # bank's own history (716 of 900 cleared alerts were a travelling
+    # cardholder) is simpler: the flagged charge is billed in a region this card
+    # has almost never used, and nothing on the card is happening back home at
+    # the same moment. A same-day charge in another region is the clone test and
+    # vetoes the explanation.
+    away = detect_away_from_home(store, card_id, txn_id, as_of)
+    if away["value"] > travel:
+        travel = away["value"]
+        travel_detail = away["detail"]
 
     risk_score = float(row["risk_score"]) if row is not None else 0.3
 

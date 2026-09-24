@@ -3,7 +3,7 @@
   "case": {
     "status": "escalated",
     "verdict": "uncertain",
-    "fraud_probability": 0.424,
+    "fraud_probability": 0.411,
     "pattern": "card_not_present_fraud",
     "pattern_description": "",
     "affected_txn_ids": [
@@ -92,7 +92,7 @@
       "CC-3079",
       "CC-3566"
     ],
-    "summary": "The cardholder disputed a charge on card C13171-K2, transaction 3558054 ($55.68). The leading hypothesis is card-not-present fraud: Online purchase of $55.68 at the 68% percentile of this card's history, 14 online transactions in the preceding 48 hours. The cardholder was asked to validate the activity and no reply was assumed within 24 hours (simulated). Assessed fraud probability is 0.42 at confidence 0.68, verdict uncertain, exposure $55.68. Final recommendation: CREATE_CASE, MONITOR_CARD, ESCALATE_TO_ANALYST (R4, R8).",
+    "summary": "The cardholder disputed a charge on card C13171-K2, transaction 3558054 ($55.68). The leading hypothesis is card-not-present fraud: Online purchase of $55.68 at the 68% percentile of this card's history, 14 online transactions in the preceding 48 hours. The cardholder was asked to validate the activity and no reply was assumed within 24 hours (simulated). Assessed fraud probability is 0.41 at confidence 0.70, verdict uncertain, exposure $55.68. Final recommendation: CREATE_CASE, MONITOR_CARD, ESCALATE_TO_ANALYST (R4, R8).",
     "written_to_graph": true,
     "graph_case_id": "GC-HHG-008"
   },
@@ -108,17 +108,17 @@
       {
         "action": "STEP_UP_AUTH",
         "route": "auto",
-        "reason": "R1: the case rests on a single signal and probability is 0.42, below 0.70, so verification comes before any block"
+        "reason": "R1: the case rests on a single signal and probability is 0.41, below 0.70, so verification comes before any block"
       },
       {
         "action": "VERIFY_WITH_CUSTOMER",
         "route": "auto",
-        "reason": "R1: the case rests on a single signal and probability is 0.42, below 0.70, so verification comes before any block"
+        "reason": "R1: the case rests on a single signal and probability is 0.41, below 0.70, so verification comes before any block"
       },
       {
         "action": "CREATE_CASE",
         "route": "auto",
-        "reason": "Policy 3a: probability 0.42 is at or above 0.30 and evidence was requested and the customer disputes a charge"
+        "reason": "Policy 3a: probability 0.41 is at or above 0.30 and evidence was requested and the customer disputes a charge"
       },
       {
         "action": "ESCALATE_TO_ANALYST",
@@ -130,7 +130,7 @@
       {
         "action": "CREATE_CASE",
         "route": "auto",
-        "reason": "Policy 3a: probability 0.42 is at or above 0.30 and evidence was requested and the customer disputes a charge"
+        "reason": "Policy 3a: probability 0.41 is at or above 0.30 and evidence was requested and the customer disputes a charge"
       },
       {
         "action": "MONITOR_CARD",
@@ -143,18 +143,18 @@
         "reason": "R8: the verdict is uncertain and the evidence conflicts"
       }
     ],
-    "what_changed": "The assumed response (no_reply) left probability at 0.42, so the recommendation moved from STEP_UP_AUTH, VERIFY_WITH_CUSTOMER, CREATE_CASE, ESCALATE_TO_ANALYST to CREATE_CASE, MONITOR_CARD, ESCALATE_TO_ANALYST under R4, R8."
+    "what_changed": "The assumed response (no_reply) left probability at 0.41, so the recommendation moved from STEP_UP_AUTH, VERIFY_WITH_CUSTOMER, CREATE_CASE, ESCALATE_TO_ANALYST to CREATE_CASE, MONITOR_CARD, ESCALATE_TO_ANALYST under R4, R8."
   },
   "sar": {
     "file": false,
-    "reason": "Policy 3a: a report requires fraud confirmed or strongly suspected. Assessed probability 0.42 with verdict uncertain, so no report.",
+    "reason": "Policy 3a: a report requires fraud confirmed or strongly suspected. Assessed probability 0.41 with verdict uncertain, so no report.",
     "narrative": "",
     "subjects": [],
     "total_amount_usd": 0.0,
     "activity_dates": []
   },
-  "stop_reason": "No reply was assumed, and further graph queries are unlikely to change the decision, so the case rests on R4 and R8 rather than on more querying. Confidence 0.68. Main open question: No billing region recorded on the flagged transaction, so out-of-region reasoning is unavailable",
+  "stop_reason": "No reply was assumed, and further graph queries are unlikely to change the decision, so the case rests on R4 and R8 rather than on more querying. Confidence 0.70. Main open question: No billing region recorded on the flagged transaction, so out-of-region reasoning is unavailable",
   "tool_calls": 17,
   "tokens": 0,
-  "latency_s": 64.5
+  "latency_s": 12.91
 }

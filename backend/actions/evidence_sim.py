@@ -87,11 +87,16 @@ def simulate_customer_response(
         return SimulatedResponse(
             response=CustomerResponse.CONFIRMED,
             assumed_response=(
-                "Assumed the cardholder confirms the purchases and states they were travelling. Activity in the "
-                f"new billing region runs across {ctx.region_span_days:.0f} days with no overlapping activity in "
-                "the home region, which is a trip rather than a cloned card."
+                "Assumed the cardholder confirms the purchases and states they were travelling. "
+                + (
+                    f"Activity in the new billing region runs across {ctx.region_span_days:.0f} days with no "
+                    "overlapping activity in the home region, which is a trip rather than a cloned card."
+                    if ctx.region_span_days >= 1
+                    else "The charge is billed in a region this card rarely uses, with no activity elsewhere in "
+                    "the same twelve hours, which is a trip rather than a cloned card."
+                )
             ),
-            basis=["sustained_multi_day_presence", "no_overlapping_home_activity"],
+            basis=["away_from_home_region", "no_overlapping_home_activity"],
             request_type=request_type,
         )
 

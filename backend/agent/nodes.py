@@ -517,8 +517,8 @@ def nba_initial(s: AgentState) -> AgentState:
                     action=Action.ALLOW_TRANSACTION.value,
                     route="auto",
                     reason=(
-                        f"Probability {p:.2f} at confidence {a.risk.confidence:.2f} on {s.independent} independent "
-                        "pieces of evidence; nothing supports holding the transaction"
+                        f"Policy section 6: probability {p:.2f} at confidence {a.risk.confidence:.2f} on "
+                        f"{s.independent} independent pieces of evidence; nothing supports holding the transaction"
                     ),
                 ),
                 RecommendedAction(
@@ -591,7 +591,10 @@ def _evidence_context(s: AgentState, a: Assessment, scope: dict[str, Any]) -> Ev
     region_pattern = next((h for h in a.hypotheses if h.pattern == Pattern.OUT_OF_REGION_USE.value), None)
     _, incul = _independent_count(a)
     travel = any(c.name == "travel_explanation" and c.observed and c.value >= 0.5 for c in a.risk.components)
-    reads_as_trip = bool(region.get("reads_as_trip")) and (region_pattern is not None and region_pattern.score >= 0.3 or travel)
+    # Either the tool's multi-day trip reading or the card-relative travel
+    # signal from scoring; both are the "confirmed travel" branch of the
+    # simulation contract.
+    reads_as_trip = (bool(region.get("reads_as_trip")) and (region_pattern is not None and region_pattern.score >= 0.3)) or travel
     return EvidenceContext(
         pattern_score=a.leading.score,
         pattern_name=a.answer_pattern,

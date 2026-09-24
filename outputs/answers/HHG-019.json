@@ -3,7 +3,7 @@
   "case": {
     "status": "closed_legitimate",
     "verdict": "legitimate",
-    "fraud_probability": 0.168,
+    "fraud_probability": 0.036,
     "pattern": "none",
     "pattern_description": "",
     "affected_txn_ids": [],
@@ -83,14 +83,6 @@
           "CC-2011",
           "CC-2087"
         ]
-      },
-      {
-        "claim": "Earlier benchmark case HHG-015, investigated by this agent, ended closed_fraud with pattern card_not_present_new_device; retrieved as memory because text similarity to the analyst notes",
-        "source": "graph",
-        "ref": "case:GC-HHG-015",
-        "entity_ids": [
-          "HHG-015"
-        ]
       }
     ],
     "similar_prior_cases": [
@@ -99,7 +91,7 @@
       "CC-2011",
       "CC-2087"
     ],
-    "summary": "The bank's model flagged the transaction on card C07987-K2, transaction 3503878 ($99.92). The graph evidence does not support fraud: Online purchase of $99.92 at the 40% percentile of this card's history, from a device profile new to this card. Assessed fraud probability is 0.17 at confidence 0.75, verdict legitimate, exposure $0.00. Final recommendation: ALLOW_TRANSACTION, CLOSE_NO_FRAUD (policy 3a).",
+    "summary": "The bank's model flagged the transaction on card C07987-K2, transaction 3503878 ($99.92). The graph evidence does not support fraud: Online purchase of $99.92 at the 40% percentile of this card's history, from a device profile new to this card. Assessed fraud probability is 0.04 at confidence 0.89, verdict legitimate, exposure $0.00. Final recommendation: ALLOW_TRANSACTION, CLOSE_NO_FRAUD (policy 3a).",
     "written_to_graph": true,
     "graph_case_id": "GC-HHG-019"
   },
@@ -109,38 +101,38 @@
       {
         "action": "ALLOW_TRANSACTION",
         "route": "auto",
-        "reason": "Probability 0.17 at confidence 0.75 on 3 independent pieces of evidence; nothing supports holding the transaction"
+        "reason": "Policy section 6: probability 0.04 at confidence 0.89 on 4 independent pieces of evidence; nothing supports holding the transaction"
       },
       {
         "action": "CLOSE_NO_FRAUD",
         "route": "auto",
-        "reason": "Policy section 6: probability 0.17 with no pattern scoring above 0.44; further steps are unlikely to change the decision, so the alert closes"
+        "reason": "Policy section 6: probability 0.04 is at or below 0.15 on 4 independent pieces of evidence, so the alert closes"
       }
     ],
     "final": [
       {
         "action": "ALLOW_TRANSACTION",
         "route": "auto",
-        "reason": "Probability 0.17 at confidence 0.75 on 3 independent pieces of evidence; nothing supports holding the transaction"
+        "reason": "Policy section 6: probability 0.04 at confidence 0.89 on 4 independent pieces of evidence; nothing supports holding the transaction"
       },
       {
         "action": "CLOSE_NO_FRAUD",
         "route": "auto",
-        "reason": "Policy section 6: probability 0.17 with no pattern scoring above 0.44; further steps are unlikely to change the decision, so the alert closes"
+        "reason": "Policy section 6: probability 0.04 is at or below 0.15 on 4 independent pieces of evidence, so the alert closes"
       }
     ],
     "what_changed": "nothing"
   },
   "sar": {
     "file": false,
-    "reason": "Policy 3a: a report requires fraud confirmed or strongly suspected. Assessed probability 0.17 with verdict legitimate, so no report.",
+    "reason": "Policy 3a: a report requires fraud confirmed or strongly suspected. Assessed probability 0.04 with verdict legitimate, so no report.",
     "narrative": "",
     "subjects": [],
     "total_amount_usd": 0.0,
     "activity_dates": []
   },
-  "stop_reason": "Further graph steps are unlikely to change the decision. Confidence 0.75. Main open question: Cardholder has not been asked whether they made the transaction",
+  "stop_reason": "Probability 0.04 is at or below 0.15 with 4 independent pieces of evidence. Confidence 0.89. Main open question: Cardholder has not been asked whether they made the transaction",
   "tool_calls": 17,
   "tokens": 0,
-  "latency_s": 64.91
+  "latency_s": 12.16
 }

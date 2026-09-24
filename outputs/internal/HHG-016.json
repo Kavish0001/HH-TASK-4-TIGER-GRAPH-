@@ -14,22 +14,22 @@
   "status_history": [
     {
       "status": "open",
-      "at": "2026-09-24T13:12:26.889155",
+      "at": "2026-09-24T16:11:37.036220",
       "note": "alert received, investigation opened"
     },
     {
       "status": "open",
-      "at": "2026-09-24T13:12:26.889155",
+      "at": "2026-09-24T16:11:37.036220",
       "note": "investigating"
     },
     {
       "status": "open",
-      "at": "2026-09-24T13:12:35.246362",
+      "at": "2026-09-24T16:11:45.773103",
       "note": "awaiting evidence: customer_validation"
     },
     {
       "status": "open",
-      "at": "2026-09-24T13:13:25.910185",
+      "at": "2026-09-24T16:11:46.083613",
       "note": "investigation complete"
     }
   ],
@@ -37,14 +37,14 @@
   "pattern": "card_not_present_new_device",
   "pattern_description": "",
   "risk_assessment": {
-    "fraud_probability": 0.572,
-    "confidence": 0.769,
+    "fraud_probability": 0.56,
+    "confidence": 0.765,
     "components": [
       {
         "name": "bank_risk_score",
         "value": 0.37,
-        "weight": 1.2,
-        "contribution": 0.084,
+        "weight": 0.5,
+        "contribution": 0.035,
         "observed": true,
         "detail": "bank model scored the flagged transaction 0.37; an input, not a verdict"
       },
@@ -112,7 +112,7 @@
       "The dataset carries no merchant name, so 'same merchant' recurrence is inferred from amount, product code and cadence rather than observed directly"
     ],
     "evidence_coverage": 1.0,
-    "signal_agreement": 0.803,
+    "signal_agreement": 0.786,
     "prior": 0.45,
     "method": "log-odds blend from a trigger prior, weights in backend/scoring/probability.py",
     "checked_signals": [
@@ -293,11 +293,11 @@
       ]
     },
     {
-      "claim": "Earlier benchmark case HHG-015, investigated by this agent, ended closed_fraud with pattern card_not_present_new_device; retrieved as memory because text similarity to the analyst notes",
+      "claim": "Earlier benchmark case HHG-010, investigated by this agent, ended closed_fraud with pattern card_not_present_new_device; retrieved as memory because text similarity to the analyst notes",
       "source": "graph",
-      "ref": "case:GC-HHG-015",
+      "ref": "case:GC-HHG-010",
       "entity_ids": [
-        "HHG-015"
+        "HHG-010"
       ]
     },
     {
@@ -316,7 +316,8 @@
   "similar_prior_cases": [
     "CC-4290",
     "CC-0078",
-    "CC-1990"
+    "CC-1990",
+    "CC-4082"
   ],
   "retrieved_chunks": [
     {
@@ -381,9 +382,18 @@
       "outcome": "confirmed_fraud",
       "pattern": "card_not_present_new_device",
       "exposure_usd": 475.03
+    },
+    {
+      "ref": "case:CC-4082",
+      "text": "Case CC-4082: cardholder C09939 reported unrecognized activity on card C09939-K1. 1 transaction(s) between 2016-09-28 and 2016-09-28 totaling $25.09 were confirmed fraudulent. Online purchases from a device not previously seen on this account, inconsistent with the cardholder's history. Card blocked and reissued. Customer reimbursed.",
+      "score": 0.8542,
+      "kind": "closed_case",
+      "outcome": "confirmed_fraud",
+      "pattern": "card_not_present_new_device",
+      "exposure_usd": 25.09
     }
   ],
-  "summary": "The cardholder disputed a charge on card C09988-K1, transaction 3534820 ($59.67). The leading hypothesis is card-not-present fraud from a new device: Online purchase of $59.67 at the 75% percentile of this card's history, from a device profile new to this card. The cardholder was asked to validate the activity and no reply was assumed within 24 hours (simulated). Assessed fraud probability is 0.57 at confidence 0.77, verdict uncertain, exposure $59.67. Final recommendation: CREATE_CASE, MONITOR_CARD (R4).",
+  "summary": "The cardholder disputed a charge on card C09988-K1, transaction 3534820 ($59.67). The leading hypothesis is card-not-present fraud from a new device: Online purchase of $59.67 at the 75% percentile of this card's history, from a device profile new to this card. The cardholder was asked to validate the activity and no reply was assumed within 24 hours (simulated). Assessed fraud probability is 0.56 at confidence 0.77, verdict uncertain, exposure $59.67. Final recommendation: CREATE_CASE, MONITOR_CARD (R4).",
   "written_to_graph": true,
   "graph_case_id": "GC-HHG-016",
   "evidence_requests": [
@@ -402,24 +412,24 @@
     {
       "action": "STEP_UP_AUTH",
       "route": "auto",
-      "reason": "R1: the case rests on a single signal and probability is 0.57, below 0.70, so verification comes before any block"
+      "reason": "R1: the case rests on a single signal and probability is 0.56, below 0.70, so verification comes before any block"
     },
     {
       "action": "VERIFY_WITH_CUSTOMER",
       "route": "auto",
-      "reason": "R1: the case rests on a single signal and probability is 0.57, below 0.70, so verification comes before any block"
+      "reason": "R1: the case rests on a single signal and probability is 0.56, below 0.70, so verification comes before any block"
     },
     {
       "action": "CREATE_CASE",
       "route": "auto",
-      "reason": "Policy 3a: probability 0.57 is at or above 0.30 and evidence was requested and the customer disputes a charge"
+      "reason": "Policy 3a: probability 0.56 is at or above 0.30 and evidence was requested and the customer disputes a charge"
     }
   ],
   "final_actions": [
     {
       "action": "CREATE_CASE",
       "route": "auto",
-      "reason": "Policy 3a: probability 0.57 is at or above 0.30 and evidence was requested and the customer disputes a charge"
+      "reason": "Policy 3a: probability 0.56 is at or above 0.30 and evidence was requested and the customer disputes a charge"
     },
     {
       "action": "MONITOR_CARD",
@@ -427,10 +437,10 @@
       "reason": "R4: no reply within 24 hours"
     }
   ],
-  "what_changed": "The assumed response (no_reply) left probability at 0.57, so the recommendation moved from STEP_UP_AUTH, VERIFY_WITH_CUSTOMER, CREATE_CASE to CREATE_CASE, MONITOR_CARD under R4.",
+  "what_changed": "The assumed response (no_reply) left probability at 0.56, so the recommendation moved from STEP_UP_AUTH, VERIFY_WITH_CUSTOMER, CREATE_CASE to CREATE_CASE, MONITOR_CARD under R4.",
   "sar": {
     "file": false,
-    "reason": "Policy 3a: a report requires fraud confirmed or strongly suspected. Assessed probability 0.57 with verdict uncertain, so no report.",
+    "reason": "Policy 3a: a report requires fraud confirmed or strongly suspected. Assessed probability 0.56 with verdict uncertain, so no report.",
     "narrative": "",
     "subjects": [],
     "total_amount_usd": 0.0,
@@ -443,7 +453,7 @@
       "tool": "",
       "args": {},
       "summary": "customer_report trigger on C09988-K1, transaction 3534820: Customer C09988 message: 'I never made this $59.67 purchase. Please check my card.' Refers to 3534820.",
-      "at": "2026-09-24T13:12:26.889155",
+      "at": "2026-09-24T16:11:37.035216",
       "duration_s": 0.0,
       "ok": true
     },
@@ -453,7 +463,7 @@
       "tool": "",
       "args": {},
       "summary": "case HHG-016 opened as of 2016-12-12 01:39:08; no data after this time is read",
-      "at": "2026-09-24T13:12:26.889155",
+      "at": "2026-09-24T16:11:37.036220",
       "duration_s": 0.0,
       "ok": true
     },
@@ -463,7 +473,7 @@
       "tool": "",
       "args": {},
       "summary": "round 1: tx_context, customer_profile, behavior_shift, card_window, prior_cases_for_entities",
-      "at": "2026-09-24T13:12:26.889155",
+      "at": "2026-09-24T16:11:37.036220",
       "duration_s": 0.0,
       "ok": true
     },
@@ -475,8 +485,8 @@
         "txn_id": "3534820"
       },
       "summary": "transaction 3534820 $59.67 online risk 0.37",
-      "at": "2026-09-24T13:12:28.008431",
-      "duration_s": 1.118,
+      "at": "2026-09-24T16:11:38.237860",
+      "duration_s": 1.202,
       "ok": true
     },
     {
@@ -487,8 +497,8 @@
         "customer_id": "C09988"
       },
       "summary": "49 transactions on the customer, cards ['C09988-K1']",
-      "at": "2026-09-24T13:12:28.608297",
-      "duration_s": 0.6,
+      "at": "2026-09-24T16:11:38.830241",
+      "duration_s": 0.592,
       "ok": true
     },
     {
@@ -500,8 +510,8 @@
         "txn_id": "3534820"
       },
       "summary": "amount percentile 0.75, new device True, new product False",
-      "at": "2026-09-24T13:12:29.211779",
-      "duration_s": 0.604,
+      "at": "2026-09-24T16:11:39.411217",
+      "duration_s": 0.581,
       "ok": true
     },
     {
@@ -513,8 +523,8 @@
         "hours": 48
       },
       "summary": "1 transactions on the card in window hours=48",
-      "at": "2026-09-24T13:12:29.800308",
-      "duration_s": 0.588,
+      "at": "2026-09-24T16:11:40.012113",
+      "duration_s": 0.601,
       "ok": true
     },
     {
@@ -528,8 +538,8 @@
         ]
       },
       "summary": "0 closed cases on these entities, confirmed rate 0.0",
-      "at": "2026-09-24T13:12:30.417507",
-      "duration_s": 0.617,
+      "at": "2026-09-24T16:11:40.662964",
+      "duration_s": 0.651,
       "ok": true
     },
     {
@@ -537,8 +547,8 @@
       "node": "assess",
       "tool": "",
       "args": {},
-      "summary": "round 1: probability 0.57, confidence 0.67, leading card_not_present_new_device 0.44, independent evidence 1, checklist missing ['shared_device_profile', 'pattern_match:card_not_present_new_device']; next round: shared_device_profile, ring_detect, velocity, pattern_match, pattern_match, similar_cases, policy_lookup",
-      "at": "2026-09-24T13:12:30.735872",
+      "summary": "round 1: probability 0.56, confidence 0.66, leading card_not_present_new_device 0.44, independent evidence 1, checklist missing ['shared_device_profile', 'pattern_match:card_not_present_new_device']; next round: shared_device_profile, ring_detect, velocity, pattern_match, pattern_match, similar_cases, policy_lookup",
+      "at": "2026-09-24T16:11:40.937336",
       "duration_s": 0.0,
       "ok": true
     },
@@ -550,8 +560,8 @@
         "device_profile": "Windows | unknown | edge 16.0 | unknown"
       },
       "summary": "device profile on 160 cards / 158 customers, rare=False",
-      "at": "2026-09-24T13:12:31.328709",
-      "duration_s": 0.593,
+      "at": "2026-09-24T16:11:41.577821",
+      "duration_s": 0.639,
       "ok": true
     },
     {
@@ -562,8 +572,8 @@
         "card_id": "C09988-K1"
       },
       "summary": "ring size 1, is_ring=False, confirmed-fraud members 0",
-      "at": "2026-09-24T13:12:31.968774",
-      "duration_s": 0.639,
+      "at": "2026-09-24T16:11:42.219965",
+      "duration_s": 0.643,
       "ok": true
     },
     {
@@ -579,8 +589,8 @@
         ]
       },
       "summary": "velocity 1h n=0, 24h n=1, 168h n=1",
-      "at": "2026-09-24T13:12:32.586237",
-      "duration_s": 0.617,
+      "at": "2026-09-24T16:11:42.819041",
+      "duration_s": 0.598,
       "ok": true
     },
     {
@@ -593,8 +603,8 @@
         "txn_id": "3534820"
       },
       "summary": "card_not_present_new_device score 0.44",
-      "at": "2026-09-24T13:12:33.174298",
-      "duration_s": 0.588,
+      "at": "2026-09-24T16:11:43.433776",
+      "duration_s": 0.616,
       "ok": true
     },
     {
@@ -607,8 +617,8 @@
         "txn_id": "3534820"
       },
       "summary": "card_not_present_fraud score 0.23",
-      "at": "2026-09-24T13:12:33.765833",
-      "duration_s": 0.592,
+      "at": "2026-09-24T16:11:44.066742",
+      "duration_s": 0.633,
       "ok": true
     },
     {
@@ -624,9 +634,9 @@
         ],
         "k": 8
       },
-      "summary": "8 similar cases: HHG-005, HHG-015, CC-4290, CC-0078, CC-1990",
-      "at": "2026-09-24T13:12:34.435021",
-      "duration_s": 0.67,
+      "summary": "8 similar cases: HHG-005, CC-4290, CC-0078, CC-1990, CC-4082",
+      "at": "2026-09-24T16:11:44.781688",
+      "duration_s": 0.714,
       "ok": true
     },
     {
@@ -638,8 +648,8 @@
         "k": 4
       },
       "summary": "policy chunks pattern:card_not_present_new_device, pattern:none, readme:known_patterns, answer:part_1_case",
-      "at": "2026-09-24T13:12:35.067650",
-      "duration_s": 0.633,
+      "at": "2026-09-24T16:11:45.479925",
+      "duration_s": 0.699,
       "ok": true
     },
     {
@@ -647,8 +657,8 @@
       "node": "assess",
       "tool": "",
       "args": {},
-      "summary": "round 2: probability 0.57, confidence 0.77, leading card_not_present_new_device 0.44, independent evidence 1, checklist missing nothing; stop gathering",
-      "at": "2026-09-24T13:12:35.244363",
+      "summary": "round 2: probability 0.56, confidence 0.77, leading card_not_present_new_device 0.44, independent evidence 1, checklist missing nothing; stop gathering",
+      "at": "2026-09-24T16:11:45.767502",
       "duration_s": 0.0,
       "ok": true
     },
@@ -658,7 +668,7 @@
       "tool": "",
       "args": {},
       "summary": "before evidence: STEP_UP_AUTH(auto), VERIFY_WITH_CUSTOMER(auto), CREATE_CASE(auto); rules R1; verdict uncertain; request evidence: True",
-      "at": "2026-09-24T13:12:35.245362",
+      "at": "2026-09-24T16:11:45.770496",
       "duration_s": 0.0,
       "ok": true
     },
@@ -668,7 +678,7 @@
       "tool": "",
       "args": {},
       "summary": "initial: 3 auto, 0 held for approval",
-      "at": "2026-09-24T13:12:35.245362",
+      "at": "2026-09-24T16:11:45.771492",
       "duration_s": 0.0,
       "ok": true
     },
@@ -678,7 +688,7 @@
       "tool": "request_customer_validation",
       "args": {},
       "summary": "customer_validation requested; simulated response: no_reply",
-      "at": "2026-09-24T13:12:35.246362",
+      "at": "2026-09-24T16:11:45.773103",
       "duration_s": 0.0,
       "ok": true
     },
@@ -687,8 +697,8 @@
       "node": "reassess",
       "tool": "",
       "args": {},
-      "summary": "after no_reply: probability 0.57 -> 0.57, confidence 0.77 -> 0.77",
-      "at": "2026-09-24T13:12:35.476529",
+      "summary": "after no_reply: probability 0.56 -> 0.56, confidence 0.77 -> 0.77",
+      "at": "2026-09-24T16:11:46.076071",
       "duration_s": 0.0,
       "ok": true
     },
@@ -698,7 +708,7 @@
       "tool": "",
       "args": {},
       "summary": "after evidence: CREATE_CASE(auto), MONITOR_CARD(auto); rules R4; verdict uncertain",
-      "at": "2026-09-24T13:12:35.477529",
+      "at": "2026-09-24T16:11:46.078086",
       "duration_s": 0.0,
       "ok": true
     },
@@ -708,7 +718,7 @@
       "tool": "",
       "args": {},
       "summary": "executed ['CREATE_CASE(auto)', 'MONITOR_CARD(auto)']; routed for approval nothing",
-      "at": "2026-09-24T13:12:35.478528",
+      "at": "2026-09-24T16:11:46.079543",
       "duration_s": 0.0,
       "ok": true
     },
@@ -717,8 +727,8 @@
       "node": "sar_check",
       "tool": "",
       "args": {},
-      "summary": "SAR not required: Policy 3a: a report requires fraud confirmed or strongly suspected. Assessed probability 0.57 with verdict uncertain, so no report.",
-      "at": "2026-09-24T13:12:35.478528",
+      "summary": "SAR not required: Policy 3a: a report requires fraud confirmed or strongly suspected. Assessed probability 0.56 with verdict uncertain, so no report.",
+      "at": "2026-09-24T16:11:46.081601",
       "duration_s": 0.0,
       "ok": true
     },
@@ -727,8 +737,8 @@
       "node": "explain",
       "tool": "",
       "args": {},
-      "summary": "templated write-up; notes: LLM call failed, templated text used: ClientError: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more i",
-      "at": "2026-09-24T13:13:25.909186",
+      "summary": "templated write-up; notes: LLM in mock mode (DRY_RUN is set, so no provider call is made), templated text used",
+      "at": "2026-09-24T16:11:46.082609",
       "duration_s": 0.0,
       "ok": true
     },
@@ -738,7 +748,7 @@
       "tool": "write_case",
       "args": {},
       "summary": "written_to_graph=True as GC-HHG-016",
-      "at": "2026-09-24T13:13:28.477127",
+      "at": "2026-09-24T16:11:48.903853",
       "duration_s": 0.0,
       "ok": true
     },
@@ -748,7 +758,7 @@
       "tool": "",
       "args": {},
       "summary": "HHG-016 is now memory for investigations opened after 2016-12-12 01:39:08",
-      "at": "2026-09-24T13:13:28.478128",
+      "at": "2026-09-24T16:11:48.906859",
       "duration_s": 0.0,
       "ok": true
     },
@@ -757,8 +767,8 @@
       "node": "answer_file",
       "tool": "",
       "args": {},
-      "summary": "tool_calls=16, tokens=5706, latency=61.59s",
-      "at": "2026-09-24T13:13:28.479128",
+      "summary": "tool_calls=16, tokens=0, latency=11.87s",
+      "at": "2026-09-24T16:11:48.907856",
       "duration_s": 0.0,
       "ok": true
     }
@@ -770,10 +780,10 @@
       "route": "auto",
       "authorized": true,
       "executed": false,
-      "reason": "R1: the case rests on a single signal and probability is 0.57, below 0.70, so verification comes before any block",
+      "reason": "R1: the case rests on a single signal and probability is 0.56, below 0.70, so verification comes before any block",
       "phase": "initial",
       "approval_status": "not_required",
-      "at": "2026-09-24T13:12:35.245362"
+      "at": "2026-09-24T16:11:45.771492"
     },
     {
       "actor": "agent",
@@ -781,10 +791,10 @@
       "route": "auto",
       "authorized": true,
       "executed": false,
-      "reason": "R1: the case rests on a single signal and probability is 0.57, below 0.70, so verification comes before any block",
+      "reason": "R1: the case rests on a single signal and probability is 0.56, below 0.70, so verification comes before any block",
       "phase": "initial",
       "approval_status": "not_required",
-      "at": "2026-09-24T13:12:35.245362"
+      "at": "2026-09-24T16:11:45.771492"
     },
     {
       "actor": "agent",
@@ -792,10 +802,10 @@
       "route": "auto",
       "authorized": true,
       "executed": false,
-      "reason": "Policy 3a: probability 0.57 is at or above 0.30 and evidence was requested and the customer disputes a charge",
+      "reason": "Policy 3a: probability 0.56 is at or above 0.30 and evidence was requested and the customer disputes a charge",
       "phase": "initial",
       "approval_status": "not_required",
-      "at": "2026-09-24T13:12:35.245362"
+      "at": "2026-09-24T16:11:45.771492"
     },
     {
       "actor": "agent",
@@ -806,7 +816,7 @@
       "reason": "Evidence request customer_validation, allowed without approval under policy section 5",
       "phase": "evidence",
       "approval_status": "not_required",
-      "at": "2026-09-24T13:12:35.246362"
+      "at": "2026-09-24T16:11:45.773103"
     },
     {
       "actor": "agent",
@@ -814,10 +824,10 @@
       "route": "auto",
       "authorized": true,
       "executed": true,
-      "reason": "Policy 3a: probability 0.57 is at or above 0.30 and evidence was requested and the customer disputes a charge",
+      "reason": "Policy 3a: probability 0.56 is at or above 0.30 and evidence was requested and the customer disputes a charge",
       "phase": "final",
       "approval_status": "not_required",
-      "at": "2026-09-24T13:12:35.477529"
+      "at": "2026-09-24T16:11:46.078086"
     },
     {
       "actor": "agent",
@@ -828,11 +838,11 @@
       "reason": "R4: no reply within 24 hours",
       "phase": "final",
       "approval_status": "not_required",
-      "at": "2026-09-24T13:12:35.477529"
+      "at": "2026-09-24T16:11:46.078086"
     }
   ],
   "stop_reason": "No reply was assumed, and further graph queries are unlikely to change the decision, so the case rests on R4 and R8 rather than on more querying. Confidence 0.77. Main open question: No billing region recorded on the flagged transaction, so out-of-region reasoning is unavailable",
   "tool_calls": 16,
   "tokens": 0,
-  "latency_s": 61.59
+  "latency_s": 11.87
 }

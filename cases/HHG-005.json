@@ -3,7 +3,7 @@
   "case": {
     "status": "open",
     "verdict": "uncertain",
-    "fraud_probability": 0.406,
+    "fraud_probability": 0.366,
     "pattern": "card_not_present_new_device",
     "pattern_description": "",
     "affected_txn_ids": [
@@ -100,7 +100,7 @@
       "CC-2717",
       "CC-2400"
     ],
-    "summary": "The bank's model flagged the transaction on card C02923-K1, transaction 3523199 ($100.07). The leading hypothesis is card-not-present fraud from a new device: Online purchase of $100.07 at the 23% percentile of this card's history, from a device profile new to this card. The cardholder was asked to validate the activity and no reply was assumed within 24 hours (simulated). Assessed fraud probability is 0.41 at confidence 0.93, verdict uncertain, exposure $100.07. Final recommendation: DECLINE_TRANSACTION, CREATE_CASE, MONITOR_CARD (R4).",
+    "summary": "The bank's model flagged the transaction on card C02923-K1, transaction 3523199 ($100.07). The leading hypothesis is card-not-present fraud from a new device: Online purchase of $100.07 at the 23% percentile of this card's history, from a device profile new to this card. The cardholder was asked to validate the activity and no reply was assumed within 24 hours (simulated). Assessed fraud probability is 0.37 at confidence 0.86, verdict uncertain, exposure $100.07. Final recommendation: DECLINE_TRANSACTION, CREATE_CASE, MONITOR_CARD (R4).",
     "written_to_graph": true,
     "graph_case_id": "GC-HHG-005"
   },
@@ -116,17 +116,17 @@
       {
         "action": "STEP_UP_AUTH",
         "route": "auto",
-        "reason": "R1: the case rests on a single signal and probability is 0.41, below 0.70, so verification comes before any block"
+        "reason": "R1: the case rests on a single signal and probability is 0.37, below 0.70, so verification comes before any block"
       },
       {
         "action": "VERIFY_WITH_CUSTOMER",
         "route": "auto",
-        "reason": "R1: the case rests on a single signal and probability is 0.41, below 0.70, so verification comes before any block"
+        "reason": "R1: the case rests on a single signal and probability is 0.37, below 0.70, so verification comes before any block"
       },
       {
         "action": "CREATE_CASE",
         "route": "auto",
-        "reason": "Policy 3a: probability 0.41 is at or above 0.30 and evidence was requested"
+        "reason": "Policy 3a: probability 0.37 is at or above 0.30 and evidence was requested"
       }
     ],
     "final": [
@@ -138,7 +138,7 @@
       {
         "action": "CREATE_CASE",
         "route": "auto",
-        "reason": "Policy 3a: probability 0.41 is at or above 0.30 and evidence was requested"
+        "reason": "Policy 3a: probability 0.37 is at or above 0.30 and evidence was requested"
       },
       {
         "action": "MONITOR_CARD",
@@ -146,18 +146,18 @@
         "reason": "R4: no reply within 24 hours"
       }
     ],
-    "what_changed": "The assumed response (no_reply) left probability at 0.41, so the recommendation moved from STEP_UP_AUTH, VERIFY_WITH_CUSTOMER, CREATE_CASE to DECLINE_TRANSACTION, CREATE_CASE, MONITOR_CARD under R4."
+    "what_changed": "The assumed response (no_reply) left probability at 0.37, so the recommendation moved from STEP_UP_AUTH, VERIFY_WITH_CUSTOMER, CREATE_CASE to DECLINE_TRANSACTION, CREATE_CASE, MONITOR_CARD under R4."
   },
   "sar": {
     "file": false,
-    "reason": "Policy 3a: a report requires fraud confirmed or strongly suspected. Assessed probability 0.41 with verdict uncertain, so no report.",
+    "reason": "Policy 3a: a report requires fraud confirmed or strongly suspected. Assessed probability 0.37 with verdict uncertain, so no report.",
     "narrative": "",
     "subjects": [],
     "total_amount_usd": 0.0,
     "activity_dates": []
   },
-  "stop_reason": "No reply was assumed, and further graph queries are unlikely to change the decision, so the case rests on R4 and R8 rather than on more querying. Confidence 0.93. Main open question: Cardholder did not reply, so the dispute is unresolved",
+  "stop_reason": "No reply was assumed, and further graph queries are unlikely to change the decision, so the case rests on R4 and R8 rather than on more querying. Confidence 0.86. Main open question: Cardholder did not reply, so the dispute is unresolved",
   "tool_calls": 18,
   "tokens": 0,
-  "latency_s": 64.71
+  "latency_s": 13.08
 }

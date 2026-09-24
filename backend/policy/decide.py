@@ -93,8 +93,8 @@ def _baseline_actions(state: CaseState, verdict: str) -> list[tuple[str, str]]:
         out.append(
             (
                 Action.ALLOW_TRANSACTION.value,
-                f"Assessed probability {state.fraud_probability:.2f} with no corroborating signal, so the "
-                "transaction stands",
+                f"Policy section 6: assessed probability {state.fraud_probability:.2f} with no corroborating "
+                "signal, so the transaction stands",
             )
         )
         out.append(
@@ -108,7 +108,8 @@ def _baseline_actions(state: CaseState, verdict: str) -> list[tuple[str, str]]:
         out.append(
             (
                 Action.BLOCK_CARD.value,
-                f"Assessed probability {state.fraud_probability:.2f} on corroborated evidence",
+                f"R1 does not bar a block: probability {state.fraud_probability:.2f} rests on more than one "
+                "independent signal; route per policy section 2",
             )
         )
         out.append((Action.CREATE_CASE.value, "Policy 3a: probability is at or above 0.30"))
@@ -116,8 +117,8 @@ def _baseline_actions(state: CaseState, verdict: str) -> list[tuple[str, str]]:
     out.append(
         (
             Action.MONITOR_CARD.value,
-            f"Probability {state.fraud_probability:.2f} is inconclusive; monitoring keeps the card usable "
-            "while the picture is unclear",
+            f"R1 and section 6: probability {state.fraud_probability:.2f} is inconclusive, so monitoring keeps "
+            "the card usable while the picture is unclear",
         )
     )
     return out
@@ -219,9 +220,9 @@ def compose_actions(
     ordered = sorted(kept, key=lambda a: ACTION_ORDER.index(a) if a in ACTION_ORDER else 99)
     actions = []
     for action in ordered:
-        record = engine.authorize(action, state, reasons.get(action, "policy recommendation"))
+        record = engine.authorize(action, state, reasons.get(action, "Policy section 1: recommended action"))
         record.executed = record.authorized
-        actions.append(engine.recommend(action, state, reasons.get(action, "policy recommendation")))
+        actions.append(engine.recommend(action, state, reasons.get(action, "Policy section 1: recommended action")))
 
     status = decide_status(
         verdict,

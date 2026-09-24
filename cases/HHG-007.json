@@ -1,18 +1,16 @@
 {
   "case_id": "HHG-007",
   "case": {
-    "status": "escalated",
-    "verdict": "uncertain",
-    "fraud_probability": 0.314,
-    "pattern": "out_of_region_use",
+    "status": "closed_legitimate",
+    "verdict": "legitimate",
+    "fraud_probability": 0.235,
+    "pattern": "none",
     "pattern_description": "",
-    "affected_txn_ids": [
-      "3514948"
-    ],
-    "first_suspicious_txn_id": "3514948",
+    "affected_txn_ids": [],
+    "first_suspicious_txn_id": "",
     "connected_card_ids": [],
     "connected_device_profiles": [],
-    "exposure_usd": 111.92,
+    "exposure_usd": 0.0,
     "evidence": [
       {
         "claim": "Flagged transaction 3514948 on card C09933-K2: $111.92, in_person channel, product code W, billing region 264.0. The bank model scored it 0.87, which is a reason to look, not a finding",
@@ -37,7 +35,14 @@
         "source": "graph",
         "ref": "query:pattern_match(pattern=out_of_region_use, card_id=C09933-K2, txn_id=3514948)",
         "entity_ids": [
-          "3514948"
+          "3002300",
+          "3002431",
+          "3002742",
+          "3002926",
+          "3002940",
+          "3002976",
+          "3002998",
+          "3003003"
         ]
       },
       {
@@ -62,24 +67,6 @@
           "CC-4196",
           "CC-3821"
         ]
-      },
-      {
-        "claim": "Policy R4 governs the recommended actions",
-        "source": "document",
-        "ref": "policy:R4",
-        "entity_ids": []
-      },
-      {
-        "claim": "Policy R8 governs the recommended actions",
-        "source": "document",
-        "ref": "policy:R8",
-        "entity_ids": []
-      },
-      {
-        "claim": "Evidence request customer_validation: Simulated, the dataset supplies no replies. Assumed no reply within 24 hours. The evidence is thin or conflicting: the leading pattern scores 0.16 with no independent corroboration, and there is no recurring-charge or travel explanation either, so neither a denial nor a confirmation can be assumed.",
-        "source": "customer",
-        "ref": "evidence_request:1",
-        "entity_ids": []
       }
     ],
     "similar_prior_cases": [
@@ -92,74 +79,48 @@
       "CC-4196",
       "CC-3821"
     ],
-    "summary": "The bank's model flagged the transaction on card C09933-K2, transaction 3514948 ($111.92). The leading hypothesis is out-of-region use: Card-present use in billing region 264 seen 2224 times before, while 2225 transactions continued in the home region 264 over the same window. The cardholder was asked to validate the activity and no reply was assumed within 24 hours (simulated). Assessed fraud probability is 0.31 at confidence 0.76, verdict uncertain, exposure $111.92. Final recommendation: DECLINE_TRANSACTION, CREATE_CASE, MONITOR_CARD, ESCALATE_TO_ANALYST (R4, R8).",
+    "summary": "The bank's model flagged the transaction on card C09933-K2, transaction 3514948 ($111.92). The graph evidence does not support fraud: Card-present use in billing region 264 seen 2224 times before, while 2225 transactions continued in the home region 264 over the same window. Assessed fraud probability is 0.23 at confidence 0.70, verdict legitimate, exposure $0.00. Final recommendation: ALLOW_TRANSACTION, CLOSE_NO_FRAUD (policy 3a).",
     "written_to_graph": true,
     "graph_case_id": "GC-HHG-007"
   },
-  "evidence_requests": [
-    {
-      "type": "customer_validation",
-      "asked_after_step": 18,
-      "assumed_response": "Simulated, the dataset supplies no replies. Assumed no reply within 24 hours. The evidence is thin or conflicting: the leading pattern scores 0.16 with no independent corroboration, and there is no recurring-charge or travel explanation either, so neither a denial nor a confirmation can be assumed."
-    }
-  ],
+  "evidence_requests": [],
   "next_best_actions": {
     "initial": [
       {
-        "action": "STEP_UP_AUTH",
+        "action": "ALLOW_TRANSACTION",
         "route": "auto",
-        "reason": "R1: the case rests on a single signal and probability is 0.31, below 0.70, so verification comes before any block"
+        "reason": "Policy section 6: probability 0.23 at confidence 0.70 on 3 independent pieces of evidence; nothing supports holding the transaction"
       },
       {
-        "action": "VERIFY_WITH_CUSTOMER",
+        "action": "CLOSE_NO_FRAUD",
         "route": "auto",
-        "reason": "R1: the case rests on a single signal and probability is 0.31, below 0.70, so verification comes before any block"
-      },
-      {
-        "action": "CREATE_CASE",
-        "route": "auto",
-        "reason": "Policy 3a: probability 0.31 is at or above 0.30 and evidence was requested"
-      },
-      {
-        "action": "ESCALATE_TO_ANALYST",
-        "route": "auto",
-        "reason": "R8: the verdict is uncertain and the evidence conflicts"
+        "reason": "Policy section 6: probability 0.23 with no pattern scoring above 0.16; further steps are unlikely to change the decision, so the alert closes"
       }
     ],
     "final": [
       {
-        "action": "DECLINE_TRANSACTION",
-        "route": "L1",
-        "reason": "R4: no reply within 24 hours"
+        "action": "ALLOW_TRANSACTION",
+        "route": "auto",
+        "reason": "Policy section 6: probability 0.23 at confidence 0.70 on 3 independent pieces of evidence; nothing supports holding the transaction"
       },
       {
-        "action": "CREATE_CASE",
+        "action": "CLOSE_NO_FRAUD",
         "route": "auto",
-        "reason": "Policy 3a: probability 0.31 is at or above 0.30 and evidence was requested"
-      },
-      {
-        "action": "MONITOR_CARD",
-        "route": "auto",
-        "reason": "R4: no reply within 24 hours"
-      },
-      {
-        "action": "ESCALATE_TO_ANALYST",
-        "route": "auto",
-        "reason": "R8: the verdict is uncertain and the evidence conflicts"
+        "reason": "Policy section 6: probability 0.23 with no pattern scoring above 0.16; further steps are unlikely to change the decision, so the alert closes"
       }
     ],
-    "what_changed": "The assumed response (no_reply) left probability at 0.31, so the recommendation moved from STEP_UP_AUTH, VERIFY_WITH_CUSTOMER, CREATE_CASE, ESCALATE_TO_ANALYST to DECLINE_TRANSACTION, CREATE_CASE, MONITOR_CARD, ESCALATE_TO_ANALYST under R4, R8."
+    "what_changed": "nothing"
   },
   "sar": {
     "file": false,
-    "reason": "Policy 3a: a report requires fraud confirmed or strongly suspected. Assessed probability 0.31 with verdict uncertain, so no report.",
+    "reason": "Policy 3a: a report requires fraud confirmed or strongly suspected. Assessed probability 0.23 with verdict legitimate, so no report.",
     "narrative": "",
     "subjects": [],
     "total_amount_usd": 0.0,
     "activity_dates": []
   },
-  "stop_reason": "No reply was assumed, and further graph queries are unlikely to change the decision, so the case rests on R4 and R8 rather than on more querying. Confidence 0.76. Main open question: No identity record on the flagged transaction, so device, proxy and screen are unknown",
-  "tool_calls": 17,
+  "stop_reason": "Further graph steps are unlikely to change the decision. Confidence 0.70. Main open question: No identity record on the flagged transaction, so device, proxy and screen are unknown",
+  "tool_calls": 15,
   "tokens": 0,
-  "latency_s": 67.55
+  "latency_s": 11.55
 }

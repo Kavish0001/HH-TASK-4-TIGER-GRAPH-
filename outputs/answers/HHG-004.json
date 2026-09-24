@@ -120,7 +120,7 @@
       {
         "action": "BLOCK_CARD",
         "route": "L1",
-        "reason": "Assessed probability 0.87 on corroborated evidence"
+        "reason": "R1 does not bar a block: probability 0.87 rests on more than one independent signal; route per policy section 2"
       },
       {
         "action": "CREATE_CASE",
@@ -158,5 +158,5 @@
   "stop_reason": "The assumed cardholder response (denied) settles the question under policy section 6. Confidence 0.97. Main open question: No billing region recorded on the flagged transaction, so out-of-region reasoning is unavailable",
   "tool_calls": 16,
   "tokens": 0,
-  "latency_s": 63.39
+  "latency_s": 11.96
 }

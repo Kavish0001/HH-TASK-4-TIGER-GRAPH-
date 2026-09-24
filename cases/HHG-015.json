@@ -1,18 +1,16 @@
 {
   "case_id": "HHG-015",
   "case": {
-    "status": "closed_fraud",
-    "verdict": "fraud",
-    "fraud_probability": 0.942,
-    "pattern": "card_not_present_new_device",
+    "status": "closed_legitimate",
+    "verdict": "legitimate",
+    "fraud_probability": 0.052,
+    "pattern": "none",
     "pattern_description": "",
-    "affected_txn_ids": [
-      "3464869"
-    ],
-    "first_suspicious_txn_id": "3464869",
+    "affected_txn_ids": [],
+    "first_suspicious_txn_id": "",
     "connected_card_ids": [],
     "connected_device_profiles": [],
-    "exposure_usd": 599.94,
+    "exposure_usd": 0.0,
     "evidence": [
       {
         "claim": "Flagged transaction 3464869 on card C03042-K1: $599.94, online channel, product code R, billing region 327.0. The bank model scored it 0.77, which is a reason to look, not a finding",
@@ -75,13 +73,13 @@
         ]
       },
       {
-        "claim": "Policy R2 governs the recommended actions",
+        "claim": "Policy R3 governs the recommended actions",
         "source": "document",
-        "ref": "policy:R2",
+        "ref": "policy:R3",
         "entity_ids": []
       },
       {
-        "claim": "Evidence request step_up_auth: Simulated, the dataset supplies no replies. Assumed the cardholder denies the transaction and still holds the card. The activity matches the card_not_present_new_device pattern and is corroborated by 2 independent signals pointing the same way, with no competing legitimate explanation in the cardholder's own history.",
+        "claim": "Evidence request step_up_auth: Simulated, the dataset supplies no replies. Assumed the cardholder confirms the purchases and states they were travelling. The charge is billed in a region this card rarely uses, with no activity elsewhere in the same twelve hours, which is a trip rather than a cloned card.",
         "source": "customer",
         "ref": "evidence_request:1",
         "entity_ids": []
@@ -90,11 +88,9 @@
     "similar_prior_cases": [
       "CC-3886",
       "CC-1313",
-      "CC-0615",
-      "CC-0528",
-      "CC-4982"
+      "CC-0615"
     ],
-    "summary": "The bank's model flagged the transaction on card C03042-K1, transaction 3464869 ($599.94). The leading hypothesis is card-not-present fraud from a new device: Online purchase of $599.94 at the 100% percentile of this card's history, from a device profile new to this card. The cardholder, asked to validate the activity, was assumed to deny it (simulated response). Assessed fraud probability is 0.94 at confidence 1.00, verdict fraud, exposure $599.94. Final recommendation: BLOCK_CARD, CREATE_CASE (R2).",
+    "summary": "The bank's model flagged the transaction on card C03042-K1, transaction 3464869 ($599.94). The graph evidence does not support fraud: Online purchase of $599.94 at the 100% percentile of this card's history, from a device profile new to this card. The cardholder, asked to validate the activity, was assumed to confirm it (simulated response). Assessed fraud probability is 0.05 at confidence 0.82, verdict legitimate, exposure $0.00. Final recommendation: CREATE_CASE, CLOSE_NO_FRAUD (R3).",
     "written_to_graph": true,
     "graph_case_id": "GC-HHG-015"
   },
@@ -102,51 +98,51 @@
     {
       "type": "step_up_auth",
       "asked_after_step": 20,
-      "assumed_response": "Simulated, the dataset supplies no replies. Assumed the cardholder denies the transaction and still holds the card. The activity matches the card_not_present_new_device pattern and is corroborated by 2 independent signals pointing the same way, with no competing legitimate explanation in the cardholder's own history."
+      "assumed_response": "Simulated, the dataset supplies no replies. Assumed the cardholder confirms the purchases and states they were travelling. The charge is billed in a region this card rarely uses, with no activity elsewhere in the same twelve hours, which is a trip rather than a cloned card."
     }
   ],
   "next_best_actions": {
     "initial": [
       {
-        "action": "BLOCK_CARD",
-        "route": "L1",
-        "reason": "Assessed probability 0.75 on corroborated evidence"
-      },
-      {
         "action": "CREATE_CASE",
         "route": "auto",
-        "reason": "Policy 3a: probability is at or above 0.30"
+        "reason": "Policy 3a: probability 0.38 is at or above 0.30 and evidence was requested"
+      },
+      {
+        "action": "ESCALATE_TO_ANALYST",
+        "route": "auto",
+        "reason": "R8: the verdict is uncertain and exposure $599.94 is over $500"
       },
       {
         "action": "STEP_UP_AUTH",
         "route": "auto",
-        "reason": "Policy section 6: probability 0.75 has not reached 0.85 or 0.15 on two independent pieces of evidence (confidence 0.97), so the agent asks before acting"
+        "reason": "Policy section 6: probability 0.38 has not reached 0.85 or 0.15 on two independent pieces of evidence (confidence 0.78), so the agent asks before acting"
       }
     ],
     "final": [
       {
-        "action": "BLOCK_CARD",
-        "route": "L1",
-        "reason": "R2: the cardholder states they did not make the transaction"
-      },
-      {
         "action": "CREATE_CASE",
         "route": "auto",
-        "reason": "R2: the cardholder states they did not make the transaction"
+        "reason": "Policy 3a: evidence was requested"
+      },
+      {
+        "action": "CLOSE_NO_FRAUD",
+        "route": "auto",
+        "reason": "R3: the cardholder confirms the transaction, so the alert closes as legitimate"
       }
     ],
-    "what_changed": "The assumed response (denied) moved probability from 0.75 to 0.94, so the recommendation moved from BLOCK_CARD, CREATE_CASE, STEP_UP_AUTH to BLOCK_CARD, CREATE_CASE under R2."
+    "what_changed": "The assumed response (confirmed) moved probability from 0.38 to 0.05, so the recommendation moved from CREATE_CASE, ESCALATE_TO_ANALYST, STEP_UP_AUTH to CREATE_CASE, CLOSE_NO_FRAUD under R3."
   },
   "sar": {
     "file": false,
-    "reason": "Policy 3a: fraud is suspected but no filing trigger holds. Exposure is at or below $1,000, no connected card, no shared origin and the pattern is documented. Case only, no report.",
+    "reason": "Policy 3a: a report requires fraud confirmed or strongly suspected. Assessed probability 0.05 with verdict legitimate, so no report.",
     "narrative": "",
     "subjects": [],
     "total_amount_usd": 0.0,
     "activity_dates": []
   },
-  "stop_reason": "The assumed cardholder response (denied) settles the question under policy section 6. Confidence 1.00. Main open question: The dataset carries no merchant name, so 'same merchant' recurrence is inferred from amount, product code and cadence rather than observed directly",
+  "stop_reason": "The assumed cardholder response (confirmed) settles the question under policy section 6. Confidence 0.82. Main open question: Inculpatory and exculpatory signals are close to balanced",
   "tool_calls": 17,
   "tokens": 0,
-  "latency_s": 77.33
+  "latency_s": 12.39
 }

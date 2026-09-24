@@ -14,17 +14,17 @@
   "status_history": [
     {
       "status": "open",
-      "at": "2026-09-24T13:01:13.772239",
+      "at": "2026-09-24T16:09:23.093817",
       "note": "alert received, investigation opened"
     },
     {
       "status": "open",
-      "at": "2026-09-24T13:01:13.773221",
+      "at": "2026-09-24T16:09:23.094889",
       "note": "investigating"
     },
     {
       "status": "escalated",
-      "at": "2026-09-24T13:02:17.520446",
+      "at": "2026-09-24T16:09:31.742199",
       "note": "investigation complete"
     }
   ],
@@ -32,14 +32,14 @@
   "pattern": "undocumented",
   "pattern_description": "Device profile SM-G935F Build/NRD90M | Android 7.0 | chrome 62.0 for android | 1920x1080 appears on 52 cards across 52 cardholders, marked new on 100% of its transactions and behind an anonymous proxy on 100%; 95 prior confirmed-fraud cases touch cards on this device. It fits none of the five documented patterns because the cards involved belong to unrelated cardholders and the link is the shared origin rather than anything on one card's own history. The agent found it by expanding from the flagged card to every card on the same rare device profile and reading their closed-case outcomes.",
   "risk_assessment": {
-    "fraud_probability": 0.856,
-    "confidence": 0.916,
+    "fraud_probability": 0.876,
+    "confidence": 0.906,
     "components": [
       {
         "name": "bank_risk_score",
         "value": 0.05,
-        "weight": 1.2,
-        "contribution": -0.3,
+        "weight": 0.5,
+        "contribution": -0.125,
         "observed": true,
         "detail": "bank model scored the flagged transaction 0.05; an input, not a verdict"
       },
@@ -98,7 +98,7 @@
       "The dataset carries no merchant name, so 'same merchant' recurrence is inferred from amount, product code and cadence rather than observed directly"
     ],
     "evidence_coverage": 1.0,
-    "signal_agreement": 0.785,
+    "signal_agreement": 0.904,
     "prior": 0.4,
     "method": "log-odds blend from a trigger prior, weights in backend/scoring/probability.py",
     "checked_signals": [
@@ -361,14 +361,14 @@
       "source": "graph",
       "ref": "query:ring_detect(seed=C13487-K1)",
       "entity_ids": [
+        "C09174-K1",
         "C04311-K1",
         "C03551-K2",
         "C03528-K1",
-        "C11687-K2",
         "C11468-K2",
-        "C09174-K1",
-        "C07762-K1",
-        "C06197-K2"
+        "C06197-K2",
+        "C06617-K1",
+        "C01935-K1"
       ]
     },
     {
@@ -504,7 +504,7 @@
       "exposure_usd": 354.71
     }
   ],
-  "summary": "An analyst asked for a review of shared-device activity on card C13487-K1, transaction 3478561 ($74.96). The leading hypothesis is undocumented coordinated abuse: Device profile SM-G935F Build/NRD90M | Android 7.0 | chrome 62.0 for android | 1920x1080 appears on 52 cards across 52 cardholders, marked new on 100% of its transactions and behind an anonymous proxy on 100%; 95 prior confirmed-fraud cases touch cards on this device. Assessed fraud probability is 0.86 at confidence 0.92, verdict fraud, exposure $187.33. Final recommendation: CREATE_CASE, FILE_REPORT, MONITOR_CONNECTED_CARDS, ESCALATE_TO_ANALYST (R6, R9).",
+  "summary": "An analyst asked for a review of shared-device activity on card C13487-K1, transaction 3478561 ($74.96). The leading hypothesis is undocumented coordinated abuse: Device profile SM-G935F Build/NRD90M | Android 7.0 | chrome 62.0 for android | 1920x1080 appears on 52 cards across 52 cardholders, marked new on 100% of its transactions and behind an anonymous proxy on 100%; 95 prior confirmed-fraud cases touch cards on this device. Assessed fraud probability is 0.88 at confidence 0.91, verdict fraud, exposure $187.33. Final recommendation: CREATE_CASE, FILE_REPORT, MONITOR_CONNECTED_CARDS, ESCALATE_TO_ANALYST (R6, R9).",
   "written_to_graph": true,
   "graph_case_id": "GC-HHG-014",
   "evidence_requests": [],
@@ -582,7 +582,7 @@
       "tool": "",
       "args": {},
       "summary": "analyst_request trigger on C13487-K1, transaction 3478561: Analyst request: several cards this month show purchases from the same unusual device profile. Review transaction 3478561 on card C13487-K1 and look for related",
-      "at": "2026-09-24T13:01:13.771226",
+      "at": "2026-09-24T16:09:23.093253",
       "duration_s": 0.0,
       "ok": true
     },
@@ -592,7 +592,7 @@
       "tool": "",
       "args": {},
       "summary": "case HHG-014 opened as of 2016-11-22 20:11:00; no data after this time is read",
-      "at": "2026-09-24T13:01:13.772239",
+      "at": "2026-09-24T16:09:23.093817",
       "duration_s": 0.0,
       "ok": true
     },
@@ -602,7 +602,7 @@
       "tool": "",
       "args": {},
       "summary": "round 1: tx_context, customer_profile, behavior_shift, card_window, prior_cases_for_entities",
-      "at": "2026-09-24T13:01:13.773221",
+      "at": "2026-09-24T16:09:23.094889",
       "duration_s": 0.0,
       "ok": true
     },
@@ -614,8 +614,8 @@
         "txn_id": "3478561"
       },
       "summary": "transaction 3478561 $74.96 online risk 0.05",
-      "at": "2026-09-24T13:01:15.036142",
-      "duration_s": 1.263,
+      "at": "2026-09-24T16:09:24.276898",
+      "duration_s": 1.188,
       "ok": true
     },
     {
@@ -626,8 +626,8 @@
         "customer_id": "C13487"
       },
       "summary": "73 transactions on the customer, cards ['C13487-K1']",
-      "at": "2026-09-24T13:01:15.612930",
-      "duration_s": 0.577,
+      "at": "2026-09-24T16:09:24.837008",
+      "duration_s": 0.568,
       "ok": true
     },
     {
@@ -639,8 +639,8 @@
         "txn_id": "3478561"
       },
       "summary": "amount percentile 0.792, new device False, new product False",
-      "at": "2026-09-24T13:01:16.217818",
-      "duration_s": 0.605,
+      "at": "2026-09-24T16:09:25.462877",
+      "duration_s": 0.624,
       "ok": true
     },
     {
@@ -652,8 +652,8 @@
         "hours": 48
       },
       "summary": "3 transactions on the card in window hours=48",
-      "at": "2026-09-24T13:01:16.886693",
-      "duration_s": 0.669,
+      "at": "2026-09-24T16:09:26.067245",
+      "duration_s": 0.593,
       "ok": true
     },
     {
@@ -667,8 +667,8 @@
         ]
       },
       "summary": "0 closed cases on these entities, confirmed rate 0.0",
-      "at": "2026-09-24T13:01:17.505135",
-      "duration_s": 0.619,
+      "at": "2026-09-24T16:09:26.678072",
+      "duration_s": 0.611,
       "ok": true
     },
     {
@@ -676,8 +676,8 @@
       "node": "assess",
       "tool": "",
       "args": {},
-      "summary": "round 1: probability 0.86, confidence 0.77, leading undocumented_proxy_device_ring 0.90, independent evidence 3, checklist missing ['shared_device_profile', 'ring_detect', 'pattern_match:undocumented_proxy_device_ring']; next round: shared_device_profile, ring_detect, region_history, velocity, pattern_match, similar_cases, policy_lookup",
-      "at": "2026-09-24T13:01:17.865407",
+      "summary": "round 1: probability 0.88, confidence 0.76, leading undocumented_proxy_device_ring 0.90, independent evidence 2, checklist missing ['shared_device_profile', 'ring_detect', 'pattern_match:undocumented_proxy_device_ring']; next round: shared_device_profile, ring_detect, region_history, velocity, pattern_match, similar_cases, policy_lookup",
+      "at": "2026-09-24T16:09:27.004490",
       "duration_s": 0.0,
       "ok": true
     },
@@ -689,8 +689,8 @@
         "device_profile": "SM-G935F Build/NRD90M | Android 7.0 | chrome 62.0 for android | 1920x1080"
       },
       "summary": "device profile on 52 cards / 52 customers, rare=False",
-      "at": "2026-09-24T13:01:18.486653",
-      "duration_s": 0.62,
+      "at": "2026-09-24T16:09:27.635620",
+      "duration_s": 0.641,
       "ok": true
     },
     {
@@ -701,8 +701,8 @@
         "card_id": "C13487-K1"
       },
       "summary": "ring size 44, is_ring=True, confirmed-fraud members 33",
-      "at": "2026-09-24T13:01:19.122571",
-      "duration_s": 0.636,
+      "at": "2026-09-24T16:09:28.265828",
+      "duration_s": 0.625,
       "ok": true
     },
     {
@@ -714,8 +714,8 @@
         "addr1": "191.0"
       },
       "summary": "region history found=True, has_history=True, trip=True",
-      "at": "2026-09-24T13:01:19.758706",
-      "duration_s": 0.636,
+      "at": "2026-09-24T16:09:28.858202",
+      "duration_s": 0.587,
       "ok": true
     },
     {
@@ -731,8 +731,8 @@
         ]
       },
       "summary": "velocity 1h n=0, 24h n=3, 168h n=5",
-      "at": "2026-09-24T13:01:20.391679",
-      "duration_s": 0.633,
+      "at": "2026-09-24T16:09:29.480125",
+      "duration_s": 0.623,
       "ok": true
     },
     {
@@ -745,8 +745,8 @@
         "txn_id": "3478561"
       },
       "summary": "account_takeover score 0.6",
-      "at": "2026-09-24T13:01:20.990823",
-      "duration_s": 0.598,
+      "at": "2026-09-24T16:09:30.048960",
+      "duration_s": 0.582,
       "ok": true
     },
     {
@@ -763,8 +763,8 @@
         "k": 8
       },
       "summary": "8 similar cases: CC-2985, CC-3035, CC-2649, CC-2971, CC-3683",
-      "at": "2026-09-24T13:01:21.638844",
-      "duration_s": 0.648,
+      "at": "2026-09-24T16:09:30.738605",
+      "duration_s": 0.681,
       "ok": true
     },
     {
@@ -776,8 +776,8 @@
         "k": 4
       },
       "summary": "policy chunks policy:R9, answer:part_1_case, answer:part_2_sar, policy:2_approval_routing",
-      "at": "2026-09-24T13:01:22.290637",
-      "duration_s": 0.652,
+      "at": "2026-09-24T16:09:31.409426",
+      "duration_s": 0.678,
       "ok": true
     },
     {
@@ -785,8 +785,8 @@
       "node": "assess",
       "tool": "",
       "args": {},
-      "summary": "round 2: probability 0.86, confidence 0.92, leading undocumented_proxy_device_ring 0.90, independent evidence 3, checklist missing nothing; stop gathering",
-      "at": "2026-09-24T13:01:22.616001",
+      "summary": "round 2: probability 0.88, confidence 0.91, leading undocumented_proxy_device_ring 0.90, independent evidence 2, checklist missing nothing; stop gathering",
+      "at": "2026-09-24T16:09:31.725280",
       "duration_s": 0.0,
       "ok": true
     },
@@ -796,7 +796,7 @@
       "tool": "",
       "args": {},
       "summary": "before evidence: CREATE_CASE(auto), FILE_REPORT(L2), MONITOR_CONNECTED_CARDS(auto), ESCALATE_TO_ANALYST(auto); rules R6, R9; verdict fraud; request evidence: False",
-      "at": "2026-09-24T13:01:22.618000",
+      "at": "2026-09-24T16:09:31.736142",
       "duration_s": 0.0,
       "ok": true
     },
@@ -806,7 +806,7 @@
       "tool": "",
       "args": {},
       "summary": "initial: 3 auto, 1 held for approval",
-      "at": "2026-09-24T13:01:22.619001",
+      "at": "2026-09-24T16:09:31.736142",
       "duration_s": 0.0,
       "ok": true
     },
@@ -816,7 +816,7 @@
       "tool": "",
       "args": {},
       "summary": "no evidence requested, final recommendation equals the initial one",
-      "at": "2026-09-24T13:01:22.620000",
+      "at": "2026-09-24T16:09:31.736142",
       "duration_s": 0.0,
       "ok": true
     },
@@ -826,7 +826,7 @@
       "tool": "",
       "args": {},
       "summary": "executed ['CREATE_CASE(auto)', 'MONITOR_CONNECTED_CARDS(auto)', 'ESCALATE_TO_ANALYST(auto)']; routed for approval ['FILE_REPORT(L2)']",
-      "at": "2026-09-24T13:01:22.621001",
+      "at": "2026-09-24T16:09:31.736142",
       "duration_s": 0.0,
       "ok": true
     },
@@ -836,7 +836,7 @@
       "tool": "",
       "args": {},
       "summary": "SAR required: Policy 3a: the case names 19 connected card(s); the activity connects to a shared device profile; the activity connects to another customer's fraud; the pattern is coordinated or undocumented, rule R9",
-      "at": "2026-09-24T13:01:22.623004",
+      "at": "2026-09-24T16:09:31.741359",
       "duration_s": 0.0,
       "ok": true
     },
@@ -845,8 +845,8 @@
       "node": "explain",
       "tool": "",
       "args": {},
-      "summary": "templated write-up; notes: LLM call failed, templated text used: ClientError: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more i",
-      "at": "2026-09-24T13:02:17.519448",
+      "summary": "templated write-up; notes: LLM in mock mode (DRY_RUN is set, so no provider call is made), templated text used",
+      "at": "2026-09-24T16:09:31.742199",
       "duration_s": 0.0,
       "ok": true
     },
@@ -856,7 +856,7 @@
       "tool": "write_case",
       "args": {},
       "summary": "written_to_graph=True as GC-HHG-014",
-      "at": "2026-09-24T13:02:21.500835",
+      "at": "2026-09-24T16:09:35.840395",
       "duration_s": 0.0,
       "ok": true
     },
@@ -866,7 +866,7 @@
       "tool": "",
       "args": {},
       "summary": "HHG-014 is now memory for investigations opened after 2016-11-22 20:11:00",
-      "at": "2026-09-24T13:02:21.504830",
+      "at": "2026-09-24T16:09:35.840395",
       "duration_s": 0.0,
       "ok": true
     },
@@ -875,8 +875,8 @@
       "node": "answer_file",
       "tool": "",
       "args": {},
-      "summary": "tool_calls=18, tokens=6787, latency=67.74s",
-      "at": "2026-09-24T13:02:21.506831",
+      "summary": "tool_calls=18, tokens=0, latency=12.76s",
+      "at": "2026-09-24T16:09:35.840395",
       "duration_s": 0.0,
       "ok": true
     }
@@ -891,7 +891,7 @@
       "reason": "R6: several cards show fraud from device profile SM-G935F Build/NRD90M | Android 7.0 | chrome 62.0 for android | 1920x1080",
       "phase": "initial",
       "approval_status": "not_required",
-      "at": "2026-09-24T13:01:22.619001"
+      "at": "2026-09-24T16:09:31.736142"
     },
     {
       "actor": "agent",
@@ -902,7 +902,7 @@
       "reason": "R6: several cards show fraud from device profile SM-G935F Build/NRD90M | Android 7.0 | chrome 62.0 for android | 1920x1080",
       "phase": "initial",
       "approval_status": "superseded",
-      "at": "2026-09-24T13:01:22.619001"
+      "at": "2026-09-24T16:09:31.736142"
     },
     {
       "actor": "agent",
@@ -913,7 +913,7 @@
       "reason": "R6: several cards show fraud from device profile SM-G935F Build/NRD90M | Android 7.0 | chrome 62.0 for android | 1920x1080",
       "phase": "initial",
       "approval_status": "not_required",
-      "at": "2026-09-24T13:01:22.619001"
+      "at": "2026-09-24T16:09:31.736142"
     },
     {
       "actor": "agent",
@@ -924,7 +924,7 @@
       "reason": "R9: the evidence shows coordinated or repeated abuse that fits none of the five documented patterns",
       "phase": "initial",
       "approval_status": "not_required",
-      "at": "2026-09-24T13:01:22.619001"
+      "at": "2026-09-24T16:09:31.736142"
     },
     {
       "actor": "agent",
@@ -935,7 +935,7 @@
       "reason": "R6: several cards show fraud from device profile SM-G935F Build/NRD90M | Android 7.0 | chrome 62.0 for android | 1920x1080",
       "phase": "final",
       "approval_status": "not_required",
-      "at": "2026-09-24T13:01:22.620000"
+      "at": "2026-09-24T16:09:31.736142"
     },
     {
       "actor": "agent",
@@ -946,7 +946,7 @@
       "reason": "R6: several cards show fraud from device profile SM-G935F Build/NRD90M | Android 7.0 | chrome 62.0 for android | 1920x1080",
       "phase": "final",
       "approval_status": "pending",
-      "at": "2026-09-24T13:01:22.620000"
+      "at": "2026-09-24T16:09:31.736142"
     },
     {
       "actor": "agent",
@@ -957,7 +957,7 @@
       "reason": "R6: several cards show fraud from device profile SM-G935F Build/NRD90M | Android 7.0 | chrome 62.0 for android | 1920x1080",
       "phase": "final",
       "approval_status": "not_required",
-      "at": "2026-09-24T13:01:22.620000"
+      "at": "2026-09-24T16:09:31.736142"
     },
     {
       "actor": "agent",
@@ -968,11 +968,11 @@
       "reason": "R9: the evidence shows coordinated or repeated abuse that fits none of the five documented patterns",
       "phase": "final",
       "approval_status": "not_required",
-      "at": "2026-09-24T13:01:22.620000"
+      "at": "2026-09-24T16:09:31.736142"
     }
   ],
-  "stop_reason": "Probability 0.86 is at or above 0.85 with 3 independent pieces of evidence. Confidence 0.92. Main open question: Cardholder has not been asked whether they made the transaction",
+  "stop_reason": "Probability 0.88 is at or above 0.85 with 2 independent pieces of evidence. Confidence 0.91. Main open question: Cardholder has not been asked whether they made the transaction",
   "tool_calls": 18,
   "tokens": 0,
-  "latency_s": 67.74
+  "latency_s": 12.76
 }

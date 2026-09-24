@@ -14,17 +14,17 @@
   "status_history": [
     {
       "status": "open",
-      "at": "2026-09-24T13:13:28.491666",
+      "at": "2026-09-24T16:11:48.924384",
       "note": "alert received, investigation opened"
     },
     {
       "status": "open",
-      "at": "2026-09-24T13:13:28.491666",
+      "at": "2026-09-24T16:11:48.925375",
       "note": "investigating"
     },
     {
       "status": "closed_legitimate",
-      "at": "2026-09-24T13:14:30.489167",
+      "at": "2026-09-24T16:11:57.010331",
       "note": "investigation complete"
     }
   ],
@@ -32,14 +32,14 @@
   "pattern": "none",
   "pattern_description": "",
   "risk_assessment": {
-    "fraud_probability": 0.165,
-    "confidence": 0.737,
+    "fraud_probability": 0.143,
+    "confidence": 0.744,
     "components": [
       {
         "name": "bank_risk_score",
         "value": 0.55,
-        "weight": 1.2,
-        "contribution": 0.3,
+        "weight": 0.5,
+        "contribution": 0.125,
         "observed": true,
         "detail": "bank model scored the flagged transaction 0.55; an input, not a verdict"
       },
@@ -95,11 +95,10 @@
     "unknowns": [
       "No identity record on the flagged transaction, so device, proxy and screen are unknown",
       "Cardholder has not been asked whether they made the transaction",
-      "Inculpatory and exculpatory signals are close to balanced",
       "The dataset carries no merchant name, so 'same merchant' recurrence is inferred from amount, product code and cadence rather than observed directly"
     ],
     "evidence_coverage": 1.0,
-    "signal_agreement": 0.371,
+    "signal_agreement": 0.679,
     "prior": 0.22,
     "method": "log-odds blend from a trigger prior, weights in backend/scoring/probability.py",
     "checked_signals": [
@@ -303,14 +302,6 @@
       ]
     },
     {
-      "claim": "Earlier benchmark case HHG-007, investigated by this agent, ended escalated with pattern out_of_region_use; retrieved as memory because text similarity to the analyst notes",
-      "source": "graph",
-      "ref": "case:GC-HHG-007",
-      "entity_ids": [
-        "HHG-007"
-      ]
-    },
-    {
       "claim": "Earlier benchmark case HHG-003, investigated by this agent, ended escalated with pattern out_of_region_use; retrieved as memory because text similarity to the analyst notes",
       "source": "graph",
       "ref": "case:GC-HHG-003",
@@ -379,7 +370,7 @@
       "exposure_usd": 0.0
     }
   ],
-  "summary": "The bank's model flagged the transaction on card C05876-K2, transaction 3553342 ($30.91). The graph evidence does not support fraud: Card-present use in billing region 494 seen 21 times before, while 116 transactions continued in the home region 325 over the same window. Assessed fraud probability is 0.17 at confidence 0.74, verdict legitimate, exposure $0.00. Final recommendation: ALLOW_TRANSACTION, CLOSE_NO_FRAUD (policy 3a).",
+  "summary": "The bank's model flagged the transaction on card C05876-K2, transaction 3553342 ($30.91). The graph evidence does not support fraud: Card-present use in billing region 494 seen 21 times before, while 116 transactions continued in the home region 325 over the same window. Assessed fraud probability is 0.14 at confidence 0.74, verdict legitimate, exposure $0.00. Final recommendation: ALLOW_TRANSACTION, CLOSE_NO_FRAUD (policy 3a).",
   "written_to_graph": true,
   "graph_case_id": "GC-HHG-012",
   "evidence_requests": [],
@@ -388,30 +379,30 @@
     {
       "action": "ALLOW_TRANSACTION",
       "route": "auto",
-      "reason": "Probability 0.17 at confidence 0.74 on 2 independent pieces of evidence; nothing supports holding the transaction"
+      "reason": "Policy section 6: probability 0.14 at confidence 0.74 on 1 independent pieces of evidence; nothing supports holding the transaction"
     },
     {
       "action": "CLOSE_NO_FRAUD",
       "route": "auto",
-      "reason": "Policy section 6: probability 0.17 with no pattern scoring above 0.16; further steps are unlikely to change the decision, so the alert closes"
+      "reason": "Policy section 6: probability 0.14 with no pattern scoring above 0.16; further steps are unlikely to change the decision, so the alert closes"
     }
   ],
   "final_actions": [
     {
       "action": "ALLOW_TRANSACTION",
       "route": "auto",
-      "reason": "Probability 0.17 at confidence 0.74 on 2 independent pieces of evidence; nothing supports holding the transaction"
+      "reason": "Policy section 6: probability 0.14 at confidence 0.74 on 1 independent pieces of evidence; nothing supports holding the transaction"
     },
     {
       "action": "CLOSE_NO_FRAUD",
       "route": "auto",
-      "reason": "Policy section 6: probability 0.17 with no pattern scoring above 0.16; further steps are unlikely to change the decision, so the alert closes"
+      "reason": "Policy section 6: probability 0.14 with no pattern scoring above 0.16; further steps are unlikely to change the decision, so the alert closes"
     }
   ],
   "what_changed": "nothing",
   "sar": {
     "file": false,
-    "reason": "Policy 3a: a report requires fraud confirmed or strongly suspected. Assessed probability 0.17 with verdict legitimate, so no report.",
+    "reason": "Policy 3a: a report requires fraud confirmed or strongly suspected. Assessed probability 0.14 with verdict legitimate, so no report.",
     "narrative": "",
     "subjects": [],
     "total_amount_usd": 0.0,
@@ -424,7 +415,7 @@
       "tool": "",
       "args": {},
       "summary": "risk_score trigger on C05876-K2, transaction 3553342: Real-time model scored transaction 3553342 ($30.91, in billing region 494.0) at 0.55. Review and decide.",
-      "at": "2026-09-24T13:13:28.491666",
+      "at": "2026-09-24T16:11:48.924384",
       "duration_s": 0.0,
       "ok": true
     },
@@ -434,7 +425,7 @@
       "tool": "",
       "args": {},
       "summary": "case HHG-012 opened as of 2016-12-18 05:00:31; no data after this time is read",
-      "at": "2026-09-24T13:13:28.491666",
+      "at": "2026-09-24T16:11:48.924384",
       "duration_s": 0.0,
       "ok": true
     },
@@ -444,7 +435,7 @@
       "tool": "",
       "args": {},
       "summary": "round 1: tx_context, customer_profile, behavior_shift, card_window, prior_cases_for_entities",
-      "at": "2026-09-24T13:13:28.491666",
+      "at": "2026-09-24T16:11:48.925375",
       "duration_s": 0.0,
       "ok": true
     },
@@ -456,8 +447,8 @@
         "txn_id": "3553342"
       },
       "summary": "transaction 3553342 $30.91 in_person risk 0.55",
-      "at": "2026-09-24T13:13:29.678888",
-      "duration_s": 1.187,
+      "at": "2026-09-24T16:11:50.130691",
+      "duration_s": 1.205,
       "ok": true
     },
     {
@@ -468,8 +459,8 @@
         "customer_id": "C05876"
       },
       "summary": "914 transactions on the customer, cards ['C05876-K1', 'C05876-K2']",
-      "at": "2026-09-24T13:13:30.300081",
-      "duration_s": 0.621,
+      "at": "2026-09-24T16:11:50.750809",
+      "duration_s": 0.62,
       "ok": true
     },
     {
@@ -481,8 +472,8 @@
         "txn_id": "3553342"
       },
       "summary": "amount percentile 0.249, new device False, new product False",
-      "at": "2026-09-24T13:13:30.941268",
-      "duration_s": 0.642,
+      "at": "2026-09-24T16:11:51.424053",
+      "duration_s": 0.673,
       "ok": true
     },
     {
@@ -494,8 +485,8 @@
         "hours": 48
       },
       "summary": "13 transactions on the card in window hours=48",
-      "at": "2026-09-24T13:13:31.510938",
-      "duration_s": 0.569,
+      "at": "2026-09-24T16:11:52.033703",
+      "duration_s": 0.609,
       "ok": true
     },
     {
@@ -509,8 +500,8 @@
         ]
       },
       "summary": "2 closed cases on these entities, confirmed rate 0.5",
-      "at": "2026-09-24T13:13:32.133217",
-      "duration_s": 0.622,
+      "at": "2026-09-24T16:11:52.674464",
+      "duration_s": 0.641,
       "ok": true
     },
     {
@@ -518,8 +509,8 @@
       "node": "assess",
       "tool": "",
       "args": {},
-      "summary": "round 1: probability 0.17, confidence 0.64, leading out_of_region_use 0.16, independent evidence 2, checklist missing ['region_history', 'pattern_match:out_of_region_use']; next round: region_history, velocity, pattern_match, pattern_match, similar_cases, policy_lookup",
-      "at": "2026-09-24T13:13:32.289163",
+      "summary": "round 1: probability 0.14, confidence 0.64, leading out_of_region_use 0.16, independent evidence 1, checklist missing ['region_history', 'pattern_match:out_of_region_use']; next round: region_history, velocity, pattern_match, pattern_match, similar_cases, policy_lookup",
+      "at": "2026-09-24T16:11:52.945806",
       "duration_s": 0.0,
       "ok": true
     },
@@ -532,8 +523,8 @@
         "addr1": "494.0"
       },
       "summary": "region history found=True, has_history=True, trip=False",
-      "at": "2026-09-24T13:13:32.916142",
-      "duration_s": 0.627,
+      "at": "2026-09-24T16:11:53.626953",
+      "duration_s": 0.68,
       "ok": true
     },
     {
@@ -549,8 +540,8 @@
         ]
       },
       "summary": "velocity 1h n=1, 24h n=5, 168h n=59",
-      "at": "2026-09-24T13:13:33.526034",
-      "duration_s": 0.609,
+      "at": "2026-09-24T16:11:54.219798",
+      "duration_s": 0.594,
       "ok": true
     },
     {
@@ -563,8 +554,8 @@
         "txn_id": "3553342"
       },
       "summary": "out_of_region_use score 0.16",
-      "at": "2026-09-24T13:13:34.157341",
-      "duration_s": 0.632,
+      "at": "2026-09-24T16:11:54.832994",
+      "duration_s": 0.612,
       "ok": true
     },
     {
@@ -577,8 +568,8 @@
         "txn_id": "3553342"
       },
       "summary": "card_testing score 0",
-      "at": "2026-09-24T13:13:34.759302",
-      "duration_s": 0.602,
+      "at": "2026-09-24T16:11:55.404933",
+      "duration_s": 0.573,
       "ok": true
     },
     {
@@ -593,9 +584,9 @@
         ],
         "k": 8
       },
-      "summary": "8 similar cases: CC-0003, CC-2370, HHG-007, HHG-003, CC-2708",
-      "at": "2026-09-24T13:13:35.405497",
-      "duration_s": 0.646,
+      "summary": "8 similar cases: CC-0003, CC-2370, HHG-003, CC-2708, CC-3578",
+      "at": "2026-09-24T16:11:56.068563",
+      "duration_s": 0.663,
       "ok": true
     },
     {
@@ -607,8 +598,8 @@
         "k": 4
       },
       "summary": "policy chunks pattern:out_of_region_use, answer:part_2_sar, policy:2_approval_routing, policy:R1",
-      "at": "2026-09-24T13:13:36.074105",
-      "duration_s": 0.669,
+      "at": "2026-09-24T16:11:56.739498",
+      "duration_s": 0.671,
       "ok": true
     },
     {
@@ -616,8 +607,8 @@
       "node": "assess",
       "tool": "",
       "args": {},
-      "summary": "round 2: probability 0.17, confidence 0.74, leading out_of_region_use 0.16, independent evidence 2, checklist missing nothing; stop gathering",
-      "at": "2026-09-24T13:13:36.273979",
+      "summary": "round 2: probability 0.14, confidence 0.74, leading out_of_region_use 0.16, independent evidence 1, checklist missing nothing; stop gathering",
+      "at": "2026-09-24T16:11:57.003519",
       "duration_s": 0.0,
       "ok": true
     },
@@ -627,7 +618,7 @@
       "tool": "",
       "args": {},
       "summary": "before evidence: ALLOW_TRANSACTION(auto), CLOSE_NO_FRAUD(auto); rules none; verdict legitimate; request evidence: False",
-      "at": "2026-09-24T13:13:36.275978",
+      "at": "2026-09-24T16:11:57.004502",
       "duration_s": 0.0,
       "ok": true
     },
@@ -637,7 +628,7 @@
       "tool": "",
       "args": {},
       "summary": "initial: 2 auto, 0 held for approval",
-      "at": "2026-09-24T13:13:36.275978",
+      "at": "2026-09-24T16:11:57.005507",
       "duration_s": 0.0,
       "ok": true
     },
@@ -647,7 +638,7 @@
       "tool": "",
       "args": {},
       "summary": "no evidence requested, final recommendation equals the initial one",
-      "at": "2026-09-24T13:13:36.276978",
+      "at": "2026-09-24T16:11:57.005507",
       "duration_s": 0.0,
       "ok": true
     },
@@ -657,7 +648,7 @@
       "tool": "",
       "args": {},
       "summary": "executed ['ALLOW_TRANSACTION(auto)', 'CLOSE_NO_FRAUD(auto)']; routed for approval nothing",
-      "at": "2026-09-24T13:13:36.277973",
+      "at": "2026-09-24T16:11:57.007499",
       "duration_s": 0.0,
       "ok": true
     },
@@ -666,8 +657,8 @@
       "node": "sar_check",
       "tool": "",
       "args": {},
-      "summary": "SAR not required: Policy 3a: a report requires fraud confirmed or strongly suspected. Assessed probability 0.17 with verdict legitimate, so no report.",
-      "at": "2026-09-24T13:13:36.277973",
+      "summary": "SAR not required: Policy 3a: a report requires fraud confirmed or strongly suspected. Assessed probability 0.14 with verdict legitimate, so no report.",
+      "at": "2026-09-24T16:11:57.007499",
       "duration_s": 0.0,
       "ok": true
     },
@@ -676,8 +667,8 @@
       "node": "explain",
       "tool": "",
       "args": {},
-      "summary": "templated write-up; notes: LLM call failed, templated text used: ClientError: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more i",
-      "at": "2026-09-24T13:14:30.487172",
+      "summary": "templated write-up; notes: LLM in mock mode (DRY_RUN is set, so no provider call is made), templated text used",
+      "at": "2026-09-24T16:11:57.009498",
       "duration_s": 0.0,
       "ok": true
     },
@@ -687,7 +678,7 @@
       "tool": "write_case",
       "args": {},
       "summary": "written_to_graph=True as GC-HHG-012",
-      "at": "2026-09-24T13:14:33.233981",
+      "at": "2026-09-24T16:11:59.901472",
       "duration_s": 0.0,
       "ok": true
     },
@@ -697,7 +688,7 @@
       "tool": "",
       "args": {},
       "summary": "HHG-012 is now memory for investigations opened after 2016-12-18 05:00:31",
-      "at": "2026-09-24T13:14:33.237996",
+      "at": "2026-09-24T16:11:59.903465",
       "duration_s": 0.0,
       "ok": true
     },
@@ -706,8 +697,8 @@
       "node": "answer_file",
       "tool": "",
       "args": {},
-      "summary": "tool_calls=15, tokens=4782, latency=64.75s",
-      "at": "2026-09-24T13:14:33.239002",
+      "summary": "tool_calls=15, tokens=0, latency=10.98s",
+      "at": "2026-09-24T16:11:59.904478",
       "duration_s": 0.0,
       "ok": true
     }
@@ -719,10 +710,10 @@
       "route": "auto",
       "authorized": true,
       "executed": false,
-      "reason": "Probability 0.17 at confidence 0.74 on 2 independent pieces of evidence; nothing supports holding the transaction",
+      "reason": "Policy section 6: probability 0.14 at confidence 0.74 on 1 independent pieces of evidence; nothing supports holding the transaction",
       "phase": "initial",
       "approval_status": "not_required",
-      "at": "2026-09-24T13:13:36.275978"
+      "at": "2026-09-24T16:11:57.005507"
     },
     {
       "actor": "agent",
@@ -730,10 +721,10 @@
       "route": "auto",
       "authorized": true,
       "executed": false,
-      "reason": "Policy section 6: probability 0.17 with no pattern scoring above 0.16; further steps are unlikely to change the decision, so the alert closes",
+      "reason": "Policy section 6: probability 0.14 with no pattern scoring above 0.16; further steps are unlikely to change the decision, so the alert closes",
       "phase": "initial",
       "approval_status": "not_required",
-      "at": "2026-09-24T13:13:36.275978"
+      "at": "2026-09-24T16:11:57.005507"
     },
     {
       "actor": "agent",
@@ -741,10 +732,10 @@
       "route": "auto",
       "authorized": true,
       "executed": true,
-      "reason": "Probability 0.17 at confidence 0.74 on 2 independent pieces of evidence; nothing supports holding the transaction",
+      "reason": "Policy section 6: probability 0.14 at confidence 0.74 on 1 independent pieces of evidence; nothing supports holding the transaction",
       "phase": "final",
       "approval_status": "not_required",
-      "at": "2026-09-24T13:13:36.276978"
+      "at": "2026-09-24T16:11:57.006502"
     },
     {
       "actor": "agent",
@@ -752,14 +743,14 @@
       "route": "auto",
       "authorized": true,
       "executed": true,
-      "reason": "Policy section 6: probability 0.17 with no pattern scoring above 0.16; further steps are unlikely to change the decision, so the alert closes",
+      "reason": "Policy section 6: probability 0.14 with no pattern scoring above 0.16; further steps are unlikely to change the decision, so the alert closes",
       "phase": "final",
       "approval_status": "not_required",
-      "at": "2026-09-24T13:13:36.276978"
+      "at": "2026-09-24T16:11:57.006502"
     }
   ],
   "stop_reason": "Further graph steps are unlikely to change the decision. Confidence 0.74. Main open question: No identity record on the flagged transaction, so device, proxy and screen are unknown",
   "tool_calls": 15,
   "tokens": 0,
-  "latency_s": 64.75
+  "latency_s": 10.98
 }
