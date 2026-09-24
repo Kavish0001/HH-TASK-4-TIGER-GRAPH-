@@ -148,5 +148,5 @@
   "stop_reason": "The assumed cardholder response (denied) settles the question under policy section 6. Confidence 1.00. Main open question: The dataset carries no merchant name, so 'same merchant' recurrence is inferred from amount, product code and cadence rather than observed directly",
   "tool_calls": 17,
   "tokens": 0,
-  "latency_s": 82.88
+  "latency_s": 77.33
 }

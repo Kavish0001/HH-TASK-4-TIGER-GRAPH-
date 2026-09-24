@@ -14,22 +14,22 @@
   "status_history": [
     {
       "status": "open",
-      "at": "2026-09-24T12:58:48.202474",
+      "at": "2026-09-24T15:36:18.056471",
       "note": "alert received, investigation opened"
     },
     {
       "status": "open",
-      "at": "2026-09-24T12:58:48.202981",
+      "at": "2026-09-24T15:36:18.056471",
       "note": "investigating"
     },
     {
       "status": "open",
-      "at": "2026-09-24T12:58:58.176929",
+      "at": "2026-09-24T15:36:27.342576",
       "note": "awaiting evidence: step_up_auth"
     },
     {
       "status": "closed_fraud",
-      "at": "2026-09-24T13:00:08.455486",
+      "at": "2026-09-24T15:37:32.907107",
       "note": "investigation complete"
     }
   ],
@@ -479,7 +479,7 @@
       "tool": "",
       "args": {},
       "summary": "risk_score trigger on C03042-K1, transaction 3464869: Real-time model scored transaction 3464869 ($599.94, online) at 0.77. Review and decide.",
-      "at": "2026-09-24T12:58:48.194704",
+      "at": "2026-09-24T15:36:18.056471",
       "duration_s": 0.0,
       "ok": true
     },
@@ -489,7 +489,7 @@
       "tool": "",
       "args": {},
       "summary": "case HHG-015 opened as of 2016-11-17 19:03:36; no data after this time is read",
-      "at": "2026-09-24T12:58:48.202474",
+      "at": "2026-09-24T15:36:18.056471",
       "duration_s": 0.0,
       "ok": true
     },
@@ -499,7 +499,7 @@
       "tool": "",
       "args": {},
       "summary": "round 1: tx_context, customer_profile, behavior_shift, card_window, prior_cases_for_entities",
-      "at": "2026-09-24T12:58:48.202981",
+      "at": "2026-09-24T15:36:18.056471",
       "duration_s": 0.0,
       "ok": true
     },
@@ -511,8 +511,8 @@
         "txn_id": "3464869"
       },
       "summary": "transaction 3464869 $599.94 online risk 0.77",
-      "at": "2026-09-24T12:58:49.439839",
-      "duration_s": 1.236,
+      "at": "2026-09-24T15:36:19.391738",
+      "duration_s": 1.331,
       "ok": true
     },
     {
@@ -523,8 +523,8 @@
         "customer_id": "C03042"
       },
       "summary": "69 transactions on the customer, cards ['C03042-K1']",
-      "at": "2026-09-24T12:58:50.004027",
-      "duration_s": 0.565,
+      "at": "2026-09-24T15:36:20.023179",
+      "duration_s": 0.633,
       "ok": true
     },
     {
@@ -536,8 +536,8 @@
         "txn_id": "3464869"
       },
       "summary": "amount percentile 1, new device True, new product False",
-      "at": "2026-09-24T12:58:50.598110",
-      "duration_s": 0.594,
+      "at": "2026-09-24T15:36:20.601215",
+      "duration_s": 0.576,
       "ok": true
     },
     {
@@ -549,8 +549,8 @@
         "hours": 48
       },
       "summary": "4 transactions on the card in window hours=48",
-      "at": "2026-09-24T12:58:51.203047",
-      "duration_s": 0.605,
+      "at": "2026-09-24T15:36:21.226100",
+      "duration_s": 0.628,
       "ok": true
     },
     {
@@ -564,8 +564,8 @@
         ]
       },
       "summary": "3 closed cases on these entities, confirmed rate 0.667",
-      "at": "2026-09-24T12:58:51.855006",
-      "duration_s": 0.652,
+      "at": "2026-09-24T15:36:21.815770",
+      "duration_s": 0.586,
       "ok": true
     },
     {
@@ -574,7 +574,7 @@
       "tool": "",
       "args": {},
       "summary": "round 1: probability 0.75, confidence 0.87, leading card_not_present_new_device 0.64, independent evidence 3, checklist missing ['shared_device_profile', 'pattern_match:card_not_present_new_device']; next round: shared_device_profile, ring_detect, region_history, velocity, pattern_match, pattern_match, similar_cases, policy_lookup",
-      "at": "2026-09-24T12:58:52.734591",
+      "at": "2026-09-24T15:36:22.150596",
       "duration_s": 0.0,
       "ok": true
     },
@@ -586,8 +586,8 @@
         "device_profile": "Trident/7.0 | Windows 8.1 | ie 11.0 for desktop | 1680x1050"
       },
       "summary": "device profile on 8 cards / 8 customers, rare=True",
-      "at": "2026-09-24T12:58:53.387235",
-      "duration_s": 0.65,
+      "at": "2026-09-24T15:36:22.736200",
+      "duration_s": 0.58,
       "ok": true
     },
     {
@@ -598,8 +598,8 @@
         "card_id": "C03042-K1"
       },
       "summary": "ring size 1, is_ring=False, confirmed-fraud members 1",
-      "at": "2026-09-24T12:58:53.997117",
-      "duration_s": 0.61,
+      "at": "2026-09-24T15:36:23.331696",
+      "duration_s": 0.595,
       "ok": true
     },
     {
@@ -611,8 +611,8 @@
         "addr1": "327.0"
       },
       "summary": "region history found=True, has_history=True, trip=False",
-      "at": "2026-09-24T12:58:54.622490",
-      "duration_s": 0.625,
+      "at": "2026-09-24T15:36:23.958087",
+      "duration_s": 0.627,
       "ok": true
     },
     {
@@ -628,8 +628,8 @@
         ]
       },
       "summary": "velocity 1h n=0, 24h n=1, 168h n=4",
-      "at": "2026-09-24T12:58:55.224973",
-      "duration_s": 0.603,
+      "at": "2026-09-24T15:36:24.520652",
+      "duration_s": 0.564,
       "ok": true
     },
     {
@@ -642,8 +642,8 @@
         "txn_id": "3464869"
       },
       "summary": "card_not_present_new_device score 0.64",
-      "at": "2026-09-24T12:58:55.817115",
-      "duration_s": 0.592,
+      "at": "2026-09-24T15:36:25.146515",
+      "duration_s": 0.629,
       "ok": true
     },
     {
@@ -656,8 +656,8 @@
         "txn_id": "3464869"
       },
       "summary": "card_not_present_fraud score 0.43",
-      "at": "2026-09-24T12:58:56.424330",
-      "duration_s": 0.608,
+      "at": "2026-09-24T15:36:25.770285",
+      "duration_s": 0.619,
       "ok": true
     },
     {
@@ -674,8 +674,8 @@
         "k": 8
       },
       "summary": "8 similar cases: CC-0615, CC-3886, CC-1313, CC-0528, CC-4982",
-      "at": "2026-09-24T12:58:57.112666",
-      "duration_s": 0.688,
+      "at": "2026-09-24T15:36:26.406636",
+      "duration_s": 0.649,
       "ok": true
     },
     {
@@ -687,8 +687,8 @@
         "k": 4
       },
       "summary": "policy chunks pattern:card_not_present_new_device, pattern:none, readme:known_patterns, answer:part_1_case",
-      "at": "2026-09-24T12:58:57.743218",
-      "duration_s": 0.63,
+      "at": "2026-09-24T15:36:27.057377",
+      "duration_s": 0.641,
       "ok": true
     },
     {
@@ -697,7 +697,7 @@
       "tool": "",
       "args": {},
       "summary": "round 2: probability 0.75, confidence 0.97, leading card_not_present_new_device 0.64, independent evidence 3, checklist missing nothing; stop gathering",
-      "at": "2026-09-24T12:58:58.172412",
+      "at": "2026-09-24T15:36:27.342576",
       "duration_s": 0.0,
       "ok": true
     },
@@ -707,7 +707,7 @@
       "tool": "",
       "args": {},
       "summary": "before evidence: BLOCK_CARD(L1), CREATE_CASE(auto), STEP_UP_AUTH(auto); rules none; verdict fraud; request evidence: True",
-      "at": "2026-09-24T12:58:58.174413",
+      "at": "2026-09-24T15:36:27.342576",
       "duration_s": 0.0,
       "ok": true
     },
@@ -717,7 +717,7 @@
       "tool": "",
       "args": {},
       "summary": "initial: 2 auto, 1 held for approval",
-      "at": "2026-09-24T12:58:58.175920",
+      "at": "2026-09-24T15:36:27.342576",
       "duration_s": 0.0,
       "ok": true
     },
@@ -727,7 +727,7 @@
       "tool": "request_step_up_auth",
       "args": {},
       "summary": "step_up_auth requested; simulated response: denied",
-      "at": "2026-09-24T12:58:58.176929",
+      "at": "2026-09-24T15:36:27.342576",
       "duration_s": 0.0,
       "ok": true
     },
@@ -737,7 +737,7 @@
       "tool": "",
       "args": {},
       "summary": "after denied: probability 0.75 -> 0.94, confidence 0.97 -> 1.00",
-      "at": "2026-09-24T12:58:58.565134",
+      "at": "2026-09-24T15:36:27.625974",
       "duration_s": 0.0,
       "ok": true
     },
@@ -747,7 +747,7 @@
       "tool": "",
       "args": {},
       "summary": "after evidence: BLOCK_CARD(L1), CREATE_CASE(auto); rules R2; verdict fraud",
-      "at": "2026-09-24T12:58:58.567656",
+      "at": "2026-09-24T15:36:27.625974",
       "duration_s": 0.0,
       "ok": true
     },
@@ -757,7 +757,7 @@
       "tool": "",
       "args": {},
       "summary": "executed ['CREATE_CASE(auto)']; routed for approval ['BLOCK_CARD(L1)']",
-      "at": "2026-09-24T12:58:58.571145",
+      "at": "2026-09-24T15:36:27.625974",
       "duration_s": 0.0,
       "ok": true
     },
@@ -767,7 +767,7 @@
       "tool": "",
       "args": {},
       "summary": "SAR not required: Policy 3a: fraud is suspected but no filing trigger holds. Exposure is at or below $1,000, no connected card, no shared origin and the pattern is documented. Case only, no report.",
-      "at": "2026-09-24T12:58:58.573148",
+      "at": "2026-09-24T15:36:27.625974",
       "duration_s": 0.0,
       "ok": true
     },
@@ -776,8 +776,8 @@
       "node": "explain",
       "tool": "",
       "args": {},
-      "summary": "templated write-up; notes: LLM call failed, templated text used: response was not valid JSON: Unterminated string starting at: line 2 column 14 (char 15)",
-      "at": "2026-09-24T13:00:08.455486",
+      "summary": "templated write-up; notes: LLM call failed, templated text used: RuntimeError: every Gemini model returned 503 or quota: ['gemini-3-flash-preview', 'gemini-3.1-flash-lite']",
+      "at": "2026-09-24T15:37:32.907107",
       "duration_s": 0.0,
       "ok": true
     },
@@ -787,7 +787,7 @@
       "tool": "write_case",
       "args": {},
       "summary": "written_to_graph=True as GC-HHG-015",
-      "at": "2026-09-24T13:00:11.072598",
+      "at": "2026-09-24T15:37:35.388170",
       "duration_s": 0.0,
       "ok": true
     },
@@ -797,7 +797,7 @@
       "tool": "",
       "args": {},
       "summary": "HHG-015 is now memory for investigations opened after 2016-11-17 19:03:36",
-      "at": "2026-09-24T13:00:11.074601",
+      "at": "2026-09-24T15:37:35.388170",
       "duration_s": 0.0,
       "ok": true
     },
@@ -806,8 +806,8 @@
       "node": "answer_file",
       "tool": "",
       "args": {},
-      "summary": "tool_calls=17, tokens=7731, latency=82.88s",
-      "at": "2026-09-24T13:00:11.074601",
+      "summary": "tool_calls=17, tokens=0, latency=77.33s",
+      "at": "2026-09-24T15:37:35.388170",
       "duration_s": 0.0,
       "ok": true
     }
@@ -822,7 +822,7 @@
       "reason": "Assessed probability 0.75 on corroborated evidence",
       "phase": "initial",
       "approval_status": "superseded",
-      "at": "2026-09-24T12:58:58.175920"
+      "at": "2026-09-24T15:36:27.342576"
     },
     {
       "actor": "agent",
@@ -833,7 +833,7 @@
       "reason": "Policy 3a: probability is at or above 0.30",
       "phase": "initial",
       "approval_status": "not_required",
-      "at": "2026-09-24T12:58:58.175920"
+      "at": "2026-09-24T15:36:27.342576"
     },
     {
       "actor": "agent",
@@ -844,7 +844,7 @@
       "reason": "Policy section 6: probability 0.75 has not reached 0.85 or 0.15 on two independent pieces of evidence (confidence 0.97), so the agent asks before acting",
       "phase": "initial",
       "approval_status": "not_required",
-      "at": "2026-09-24T12:58:58.175920"
+      "at": "2026-09-24T15:36:27.342576"
     },
     {
       "actor": "agent",
@@ -855,7 +855,7 @@
       "reason": "Evidence request step_up_auth, allowed without approval under policy section 5",
       "phase": "evidence",
       "approval_status": "not_required",
-      "at": "2026-09-24T12:58:58.176929"
+      "at": "2026-09-24T15:36:27.342576"
     },
     {
       "actor": "agent",
@@ -866,7 +866,7 @@
       "reason": "R2: the cardholder states they did not make the transaction",
       "phase": "final",
       "approval_status": "pending",
-      "at": "2026-09-24T12:58:58.570063"
+      "at": "2026-09-24T15:36:27.625974"
     },
     {
       "actor": "agent",
@@ -877,11 +877,11 @@
       "reason": "R2: the cardholder states they did not make the transaction",
       "phase": "final",
       "approval_status": "not_required",
-      "at": "2026-09-24T12:58:58.570063"
+      "at": "2026-09-24T15:36:27.625974"
     }
   ],
   "stop_reason": "The assumed cardholder response (denied) settles the question under policy section 6. Confidence 1.00. Main open question: The dataset carries no merchant name, so 'same merchant' recurrence is inferred from amount, product code and cadence rather than observed directly",
   "tool_calls": 17,
   "tokens": 0,
-  "latency_s": 82.88
+  "latency_s": 77.33
 }

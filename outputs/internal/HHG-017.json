@@ -14,17 +14,17 @@
   "status_history": [
     {
       "status": "open",
-      "at": "2026-09-24T12:58:21.453133",
+      "at": "2026-09-24T15:34:05.225372",
       "note": "alert received, investigation opened"
     },
     {
       "status": "open",
-      "at": "2026-09-24T12:58:21.454132",
+      "at": "2026-09-24T15:34:05.225372",
       "note": "investigating"
     },
     {
       "status": "closed_legitimate",
-      "at": "2026-09-24T12:58:45.508068",
+      "at": "2026-09-24T15:36:15.269916",
       "note": "investigation complete"
     }
   ],
@@ -253,7 +253,7 @@
   "exposure_usd": 0.0,
   "evidence": [
     {
-      "claim": "Transaction 3450629 on card C04570-K1 was flagged for review due to an online purchase of $100.09.",
+      "claim": "Flagged transaction 3450629 on card C04570-K1: $100.09, online channel, product code R, billing region 204.0. The bank model scored it 0.57, which is a reason to look, not a finding",
       "source": "graph",
       "ref": "query:tx_context(txn_id=3450629, as_of=2016-11-12 00:46:24)",
       "entity_ids": [
@@ -262,7 +262,7 @@
       ]
     },
     {
-      "claim": "The transaction amount is at the 21st percentile of the card's history, showing no significant deviation from the customer's baseline.",
+      "claim": "Against 52 earlier transactions on the card, the amount sits at the 21% percentile; no material deviation from the card's baseline",
       "source": "graph",
       "ref": "query:behavior_shift(customer_id=C04570, txn_id=3450629)",
       "entity_ids": [
@@ -271,7 +271,7 @@
       ]
     },
     {
-      "claim": "The card-not-present fraud pattern score is 0.34, reflecting three online transactions in the preceding 48 hours.",
+      "claim": "Pattern check card-not-present fraud scored 0.34: Online purchase of $100.09 at the 21% percentile of this card's history, 3 online transactions in the preceding 48 hours",
       "source": "graph",
       "ref": "query:pattern_match(pattern=card_not_present_fraud, card_id=C04570-K1, txn_id=3450629)",
       "entity_ids": [
@@ -281,7 +281,7 @@
       ]
     },
     {
-      "claim": "The billing region 204.0 is consistent with the customer's historical activity, having six prior transactions over 106.23 days.",
+      "claim": "Billing region 204.0: has earlier history for this customer (6 transactions, span 106.23 days); home region 325.0; neither a trip nor a clone pattern",
       "source": "graph",
       "ref": "query:region_history(customer_id=C04570, addr1=204.0)",
       "entity_ids": [
@@ -289,7 +289,7 @@
       ]
     },
     {
-      "claim": "The device profile is shared across 299 cards, indicating it is a common profile rather than a unique indicator of fraud.",
+      "claim": "Device profile Windows | Windows 10 | chrome 65.0 | 1920x1080 appears on 299 cards across 299 customers; the profile is common, so sharing alone is not evidence",
       "source": "graph",
       "ref": "query:shared_device_profile(device_profile=Windows | Windows 10 | chrome 65.0 | 1920x1080)",
       "entity_ids": [
@@ -297,7 +297,7 @@
       ]
     },
     {
-      "claim": "There is one prior closed case for this customer, which was cleared as non-fraudulent.",
+      "claim": "1 closed case(s) before this alert touch this card or customer: 0 confirmed fraud, 1 cleared",
       "source": "graph",
       "ref": "query:prior_cases_for_entities(n_entities=2, as_of=2016-11-12 00:46:24)",
       "entity_ids": [
@@ -395,7 +395,7 @@
       "exposure_usd": 0.0
     }
   ],
-  "summary": "The transaction 3450629 for $100.09 on card C04570-K1 was flagged by the model with a fraud probability of 0.24. Analysis of the cardholder's history and transaction patterns indicates the activity is consistent with established behavior. No evidence of fraud was identified, and the case has been closed as legitimate.",
+  "summary": "The bank's model flagged the transaction on card C04570-K1, transaction 3450629 ($100.09). The graph evidence does not support fraud: Online purchase of $100.09 at the 21% percentile of this card's history, 3 online transactions in the preceding 48 hours. Assessed fraud probability is 0.24 at confidence 0.64, verdict legitimate, exposure $0.00. Final recommendation: ALLOW_TRANSACTION, CLOSE_NO_FRAUD (policy 3a).",
   "written_to_graph": true,
   "graph_case_id": "GC-HHG-017",
   "evidence_requests": [],
@@ -440,7 +440,7 @@
       "tool": "",
       "args": {},
       "summary": "risk_score trigger on C04570-K1, transaction 3450629: Real-time model scored transaction 3450629 ($100.09, online) at 0.57. Review and decide.",
-      "at": "2026-09-24T12:58:21.452134",
+      "at": "2026-09-24T15:34:05.224372",
       "duration_s": 0.0,
       "ok": true
     },
@@ -450,7 +450,7 @@
       "tool": "",
       "args": {},
       "summary": "case HHG-017 opened as of 2016-11-12 00:46:24; no data after this time is read",
-      "at": "2026-09-24T12:58:21.453133",
+      "at": "2026-09-24T15:34:05.225372",
       "duration_s": 0.0,
       "ok": true
     },
@@ -460,7 +460,7 @@
       "tool": "",
       "args": {},
       "summary": "round 1: tx_context, customer_profile, behavior_shift, card_window, prior_cases_for_entities",
-      "at": "2026-09-24T12:58:21.454132",
+      "at": "2026-09-24T15:34:05.225372",
       "duration_s": 0.0,
       "ok": true
     },
@@ -472,8 +472,8 @@
         "txn_id": "3450629"
       },
       "summary": "transaction 3450629 $100.09 online risk 0.57",
-      "at": "2026-09-24T12:58:23.423999",
-      "duration_s": 1.969,
+      "at": "2026-09-24T15:34:07.238366",
+      "duration_s": 2.012,
       "ok": true
     },
     {
@@ -484,8 +484,8 @@
         "customer_id": "C04570"
       },
       "summary": "53 transactions on the customer, cards ['C04570-K1']",
-      "at": "2026-09-24T12:58:24.038805",
-      "duration_s": 0.614,
+      "at": "2026-09-24T15:34:07.798078",
+      "duration_s": 0.559,
       "ok": true
     },
     {
@@ -497,8 +497,8 @@
         "txn_id": "3450629"
       },
       "summary": "amount percentile 0.212, new device False, new product False",
-      "at": "2026-09-24T12:58:24.697937",
-      "duration_s": 0.659,
+      "at": "2026-09-24T15:34:08.356767",
+      "duration_s": 0.562,
       "ok": true
     },
     {
@@ -510,8 +510,8 @@
         "hours": 48
       },
       "summary": "3 transactions on the card in window hours=48",
-      "at": "2026-09-24T12:58:25.426873",
-      "duration_s": 0.729,
+      "at": "2026-09-24T15:34:08.911162",
+      "duration_s": 0.552,
       "ok": true
     },
     {
@@ -525,8 +525,8 @@
         ]
       },
       "summary": "1 closed cases on these entities, confirmed rate 0.0",
-      "at": "2026-09-24T12:58:26.071775",
-      "duration_s": 0.645,
+      "at": "2026-09-24T15:34:09.480079",
+      "duration_s": 0.569,
       "ok": true
     },
     {
@@ -535,7 +535,7 @@
       "tool": "",
       "args": {},
       "summary": "round 1: probability 0.24, confidence 0.59, leading card_not_present_fraud 0.34, independent evidence 1, checklist missing ['pattern_match:card_not_present_fraud']; next round: shared_device_profile, ring_detect, region_history, velocity, pattern_match, pattern_match, similar_cases, policy_lookup",
-      "at": "2026-09-24T12:58:28.085956",
+      "at": "2026-09-24T15:34:11.357518",
       "duration_s": 0.0,
       "ok": true
     },
@@ -547,8 +547,8 @@
         "device_profile": "Windows | Windows 10 | chrome 65.0 | 1920x1080"
       },
       "summary": "device profile on 299 cards / 299 customers, rare=False",
-      "at": "2026-09-24T12:58:28.661449",
-      "duration_s": 0.574,
+      "at": "2026-09-24T15:34:11.967425",
+      "duration_s": 0.609,
       "ok": true
     },
     {
@@ -559,8 +559,8 @@
         "card_id": "C04570-K1"
       },
       "summary": "ring size 1, is_ring=False, confirmed-fraud members 0",
-      "at": "2026-09-24T12:58:29.222980",
-      "duration_s": 0.561,
+      "at": "2026-09-24T15:34:12.601447",
+      "duration_s": 0.639,
       "ok": true
     },
     {
@@ -572,8 +572,8 @@
         "addr1": "204.0"
       },
       "summary": "region history found=True, has_history=True, trip=False",
-      "at": "2026-09-24T12:58:29.796920",
-      "duration_s": 0.574,
+      "at": "2026-09-24T15:34:13.178722",
+      "duration_s": 0.576,
       "ok": true
     },
     {
@@ -589,8 +589,8 @@
         ]
       },
       "summary": "velocity 1h n=1, 24h n=3, 168h n=3",
-      "at": "2026-09-24T12:58:30.384347",
-      "duration_s": 0.587,
+      "at": "2026-09-24T15:34:13.843273",
+      "duration_s": 0.664,
       "ok": true
     },
     {
@@ -603,8 +603,8 @@
         "txn_id": "3450629"
       },
       "summary": "card_not_present_fraud score 0.34",
-      "at": "2026-09-24T12:58:30.925932",
-      "duration_s": 0.542,
+      "at": "2026-09-24T15:34:14.495561",
+      "duration_s": 0.649,
       "ok": true
     },
     {
@@ -617,8 +617,8 @@
         "txn_id": "3450629"
       },
       "summary": "card_not_present_new_device score 0.25",
-      "at": "2026-09-24T12:58:31.484972",
-      "duration_s": 0.558,
+      "at": "2026-09-24T15:34:15.098251",
+      "duration_s": 0.603,
       "ok": true
     },
     {
@@ -635,8 +635,8 @@
         "k": 8
       },
       "summary": "8 similar cases: CC-1383, CC-2594, CC-4591, CC-1311, CC-0682",
-      "at": "2026-09-24T12:58:32.093436",
-      "duration_s": 0.608,
+      "at": "2026-09-24T15:34:16.051868",
+      "duration_s": 0.953,
       "ok": true
     },
     {
@@ -648,8 +648,8 @@
         "k": 4
       },
       "summary": "policy chunks pattern:card_not_present_new_device, policy:2_approval_routing, policy:R1, pattern:none",
-      "at": "2026-09-24T12:58:32.716105",
-      "duration_s": 0.624,
+      "at": "2026-09-24T15:34:16.714200",
+      "duration_s": 0.662,
       "ok": true
     },
     {
@@ -658,7 +658,7 @@
       "tool": "",
       "args": {},
       "summary": "round 2: probability 0.24, confidence 0.64, leading card_not_present_fraud 0.34, independent evidence 1, checklist missing nothing; stop gathering",
-      "at": "2026-09-24T12:58:32.948793",
+      "at": "2026-09-24T15:34:17.030255",
       "duration_s": 0.0,
       "ok": true
     },
@@ -668,7 +668,7 @@
       "tool": "",
       "args": {},
       "summary": "before evidence: ALLOW_TRANSACTION(auto), CLOSE_NO_FRAUD(auto); rules none; verdict legitimate; request evidence: False",
-      "at": "2026-09-24T12:58:32.968355",
+      "at": "2026-09-24T15:34:17.060296",
       "duration_s": 0.0,
       "ok": true
     },
@@ -678,7 +678,7 @@
       "tool": "",
       "args": {},
       "summary": "initial: 2 auto, 0 held for approval",
-      "at": "2026-09-24T12:58:32.969454",
+      "at": "2026-09-24T15:34:17.060296",
       "duration_s": 0.0,
       "ok": true
     },
@@ -688,7 +688,7 @@
       "tool": "",
       "args": {},
       "summary": "no evidence requested, final recommendation equals the initial one",
-      "at": "2026-09-24T12:58:32.969454",
+      "at": "2026-09-24T15:34:17.060296",
       "duration_s": 0.0,
       "ok": true
     },
@@ -698,7 +698,7 @@
       "tool": "",
       "args": {},
       "summary": "executed ['ALLOW_TRANSACTION(auto)', 'CLOSE_NO_FRAUD(auto)']; routed for approval nothing",
-      "at": "2026-09-24T12:58:32.969454",
+      "at": "2026-09-24T15:34:17.060296",
       "duration_s": 0.0,
       "ok": true
     },
@@ -708,7 +708,7 @@
       "tool": "",
       "args": {},
       "summary": "SAR not required: Policy 3a: a report requires fraud confirmed or strongly suspected. Assessed probability 0.24 with verdict legitimate, so no report.",
-      "at": "2026-09-24T12:58:32.969454",
+      "at": "2026-09-24T15:34:17.060296",
       "duration_s": 0.0,
       "ok": true
     },
@@ -717,8 +717,8 @@
       "node": "explain",
       "tool": "",
       "args": {},
-      "summary": "LLM write-up merged",
-      "at": "2026-09-24T12:58:45.507048",
+      "summary": "templated write-up; notes: LLM call failed, templated text used: RuntimeError: every Gemini model returned 503 or quota: ['gemini-3-flash-preview', 'gemini-3.1-flash-lite']",
+      "at": "2026-09-24T15:36:15.269916",
       "duration_s": 0.0,
       "ok": true
     },
@@ -728,7 +728,7 @@
       "tool": "write_case",
       "args": {},
       "summary": "written_to_graph=True as GC-HHG-017",
-      "at": "2026-09-24T12:58:48.121001",
+      "at": "2026-09-24T15:36:18.038690",
       "duration_s": 0.0,
       "ok": true
     },
@@ -738,7 +738,7 @@
       "tool": "",
       "args": {},
       "summary": "HHG-017 is now memory for investigations opened after 2016-11-12 00:46:24",
-      "at": "2026-09-24T12:58:48.126624",
+      "at": "2026-09-24T15:36:18.040751",
       "duration_s": 0.0,
       "ok": true
     },
@@ -747,8 +747,8 @@
       "node": "answer_file",
       "tool": "",
       "args": {},
-      "summary": "tool_calls=17, tokens=4606, latency=26.68s",
-      "at": "2026-09-24T12:58:48.127638",
+      "summary": "tool_calls=17, tokens=0, latency=132.82s",
+      "at": "2026-09-24T15:36:18.041752",
       "duration_s": 0.0,
       "ok": true
     }
@@ -763,7 +763,7 @@
       "reason": "Probability 0.24 at confidence 0.64 on 1 independent pieces of evidence; nothing supports holding the transaction",
       "phase": "initial",
       "approval_status": "not_required",
-      "at": "2026-09-24T12:58:32.969454"
+      "at": "2026-09-24T15:34:17.060296"
     },
     {
       "actor": "agent",
@@ -774,7 +774,7 @@
       "reason": "Policy section 6: probability 0.24 with no pattern scoring above 0.34; further steps are unlikely to change the decision, so the alert closes",
       "phase": "initial",
       "approval_status": "not_required",
-      "at": "2026-09-24T12:58:32.969454"
+      "at": "2026-09-24T15:34:17.060296"
     },
     {
       "actor": "agent",
@@ -785,7 +785,7 @@
       "reason": "Probability 0.24 at confidence 0.64 on 1 independent pieces of evidence; nothing supports holding the transaction",
       "phase": "final",
       "approval_status": "not_required",
-      "at": "2026-09-24T12:58:32.969454"
+      "at": "2026-09-24T15:34:17.060296"
     },
     {
       "actor": "agent",
@@ -796,11 +796,11 @@
       "reason": "Policy section 6: probability 0.24 with no pattern scoring above 0.34; further steps are unlikely to change the decision, so the alert closes",
       "phase": "final",
       "approval_status": "not_required",
-      "at": "2026-09-24T12:58:32.969454"
+      "at": "2026-09-24T15:34:17.060296"
     }
   ],
-  "stop_reason": "The investigation concluded with a confidence level of 0.64, as the evidence consistently points to legitimate activity. The primary unknown remains the cardholder's direct confirmation, which was not sought due to the low probability of fraud.",
+  "stop_reason": "Further graph steps are unlikely to change the decision. Confidence 0.64. Main open question: Cardholder has not been asked whether they made the transaction",
   "tool_calls": 17,
-  "tokens": 4606,
-  "latency_s": 26.68
+  "tokens": 0,
+  "latency_s": 132.82
 }
