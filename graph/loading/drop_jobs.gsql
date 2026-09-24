@@ -1,0 +1,10 @@
+// Run before re-running load_all.gsql. 4.2.5 rejects CREATE OR REPLACE on a
+// loading job, and CREATE on an existing name is a hard error, so a reload
+// starts here.
+USE GRAPH FraudInvestigation
+DROP JOB load_customers
+DROP JOB load_cards
+DROP JOB load_devices
+DROP JOB load_transactions
+DROP JOB load_closed_cases
+DROP JOB load_documents

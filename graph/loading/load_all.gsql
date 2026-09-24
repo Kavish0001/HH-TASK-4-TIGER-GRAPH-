@@ -18,6 +18,9 @@
 
 USE GRAPH FraudInvestigation
 
+// 4.2.5 has no CREATE OR REPLACE for a loading job, so re-running this file
+// needs the old ones gone first. graph/loading/drop_jobs.gsql does that.
+
 CREATE LOADING JOB load_customers FOR GRAPH FraudInvestigation {
   DEFINE FILENAME f = "/home/tigergraph/prepared/customers.csv";
   LOAD f
@@ -56,7 +59,9 @@ CREATE LOADING JOB load_transactions FOR GRAPH FraudInvestigation {
     TO EDGE PURCHASER_EMAIL VALUES($0, $14) WHERE $14 != "",
     TO VERTEX EmailDomain VALUES($15) WHERE $15 != "",
     TO EDGE RECIPIENT_EMAIL VALUES($0, $15) WHERE $15 != "",
-    TO EDGE FROM_DEVICE VALUES($0, $17) WHERE $17 != "",
+    // FROM_DEVICE and the other multi-pair edges need the endpoint types
+    // spelled out; the loader will not infer them from a pair list.
+    TO EDGE FROM_DEVICE VALUES($0 Transaction, $17 DeviceProfile) WHERE $17 != "",
     // NEXT points forward in ts order, so the predecessor carried on this row
     // is the source and this row is the target.
     TO EDGE NEXT VALUES($53, $0) WHERE $53 != ""

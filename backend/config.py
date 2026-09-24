@@ -34,11 +34,17 @@ class Settings(BaseSettings):
     tg_password: str = ""
     tg_graph_name: str = "FraudInvestigation"
 
-    # LLM. No key is expected yet, so every consumer must construct lazily.
-    llm_provider: str = "anthropic"
-    llm_model: str = "claude-opus-5"
-    anthropic_api_key: str = ""
+    # LLM. Provider agnostic; the client is built lazily so the pipeline runs
+    # with no key at all.
+    llm_provider: Literal["google", "openai", "mock"] = "google"
+    llm_model: str = "gemini-2.5-flash"
+    google_api_key: str = ""
+    openai_api_key: str = ""
     llm_max_tokens: int = 2048
+    # Free-tier requests per minute are the binding constraint on a 20-case run.
+    llm_max_rpm: int = 10
+    llm_max_retries: int = 5
+    llm_backoff_base_s: float = 2.0
     dry_run: bool = True
 
     # Embeddings
@@ -74,10 +80,16 @@ class Settings(BaseSettings):
         return REPO_ROOT / "backend" / "contracts"
 
     @property
+    def llm_key(self) -> str:
+        return {"google": self.google_api_key, "openai": self.openai_api_key}.get(
+            self.llm_provider, ""
+        )
+
+    @property
     def llm_enabled(self) -> bool:
         # A key can appear later without a code change; until then every
         # decision node falls back to its deterministic path.
-        return bool(self.anthropic_api_key) and not self.dry_run
+        return bool(self.llm_key) and not self.dry_run
 
 
 @lru_cache(maxsize=1)
