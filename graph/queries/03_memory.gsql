@@ -1,0 +1,153 @@
+// Case memory and document retrieval: prior_cases_for_entities, similar_cases
+// and policy_search (the policy_lookup tool).
+//
+// Two kinds of case live in the graph. ClosedCase is the July to October
+// history, visible once closed_at <= as_of. InvestigationCase is what the
+// agent wrote, visible once its own opened_at < as_of. The benchmark runs in
+// opened_at order, so this rule lets HHG-014 see HHG-006 and never the reverse.
+
+USE GRAPH FraudInvestigation
+
+CREATE OR REPLACE QUERY prior_cases_for_entities(SET<STRING> entity_ids, DATETIME as_of, INT max_cases = 25)
+FOR GRAPH FraudInvestigation SYNTAX v2 {
+  // rank 0: the case is on a named card or customer. rank 1: it is only
+  // reached through a named device profile. I sort on it so a hub profile's
+  // hundreds of unrelated cases never push the cardholder's own history out.
+  MinAccum<INT> @rank;
+  SetAccum<STRING> @matched_on, @txn_ids, @connected;
+  SumAccum<INT> @@n, @@fraud;
+  SetAccum<STRING> @@patterns;
+
+  Cards = SELECT c FROM Card:c WHERE entity_ids.contains(c.card_id)
+          ACCUM c.@matched_on += c.card_id;
+  Custs = SELECT u FROM Customer:u WHERE entity_ids.contains(u.customer_id);
+  Sib = SELECT c FROM Custs:u -(OWNS>)- Card:c ACCUM c.@matched_on += u.customer_id;
+  Cards = Cards UNION Sib;
+  Devs = SELECT d FROM DeviceProfile:d WHERE entity_ids.contains(d.device_profile);
+
+  CC = SELECT k FROM Cards:c -((CARD_OF_CASE>|CONNECTED_FROM>))- ClosedCase:k
+       WHERE k.closed_at <= as_of
+       ACCUM k.@rank += 0, k.@matched_on += c.@matched_on;
+  CD = SELECT k FROM Devs:d -(DEVICE_USED_BY>)- Transaction:t -(INVOLVED_IN>)- ClosedCase:k
+       WHERE t.ts <= as_of AND k.closed_at <= as_of
+       ACCUM k.@rank += 1, k.@matched_on += d.device_profile;
+  CC = CC UNION CD;
+  CC = SELECT k FROM CC:k
+       POST-ACCUM @@n += 1,
+                  IF k.outcome == "confirmed_fraud" THEN @@fraud += 1, @@patterns += k.pattern END;
+  CC = SELECT k FROM CC:k ORDER BY k.@rank ASC, k.closed_at DESC LIMIT max_cases;
+  X = SELECT t FROM CC:k -(INVOLVES>)- Transaction:t ACCUM k.@txn_ids += t.txn_id;
+  X = SELECT c FROM CC:k -(CONNECTED_TO>)- Card:c ACCUM k.@connected += c.card_id;
+
+  IC = SELECT k FROM Cards:c -((CARD_OF_CASE>|CONNECTED_FROM>))- InvestigationCase:k
+       WHERE k.opened_at < as_of
+       ACCUM k.@matched_on += c.@matched_on;
+  ID = SELECT k FROM Devs:d -(DEVICE_USED_BY>)- InvestigationCase:k
+       WHERE k.opened_at < as_of
+       ACCUM k.@matched_on += d.device_profile;
+  IC = IC UNION ID;
+  IC = SELECT k FROM IC:k
+       POST-ACCUM @@n += 1,
+                  IF k.verdict == "fraud" THEN @@fraud += 1, @@patterns += k.pattern END;
+
+  PRINT @@n AS n, @@fraud AS n_confirmed_fraud, @@patterns AS patterns;
+  PRINT CC[CC.case_id AS case_id, CC.customer_id AS customer_id, CC.card_id AS card_id,
+           CC.outcome AS outcome, CC.pattern AS pattern, CC.exposure_usd AS exposure_usd,
+           CC.n_txns AS n_txns, CC.opened_at AS opened_at, CC.closed_at AS closed_at,
+           CC.actions_taken AS actions_taken, CC.report_filed AS report_filed,
+           CC.analyst_notes AS analyst_notes, CC.@txn_ids AS txn_ids,
+           CC.@connected AS connected_card_ids, CC.@matched_on AS matched_on] AS cases;
+  PRINT IC[IC.case_id AS case_id, IC.graph_case_id AS graph_case_id, IC.customer_id AS customer_id,
+           IC.card_id AS card_id, IC.status AS outcome, IC.verdict AS verdict, IC.pattern AS pattern,
+           IC.exposure_usd AS exposure_usd, IC.opened_at AS opened_at, IC.summary AS summary,
+           IC.affected_txn_ids AS txn_ids, IC.connected_card_ids AS connected_card_ids,
+           IC.@matched_on AS matched_on] AS agent_cases;
+}
+
+CREATE OR REPLACE QUERY similar_cases(LIST<FLOAT> query_vector, SET<STRING> entity_ids, INT k = 5,
+                                      DATETIME as_of, FLOAT entity_weight = 0.45, FLOAT max_bonus = 0.9)
+FOR GRAPH FraudInvestigation SYNTAX v2 {
+  // I blend vector similarity with entity overlap because the analyst notes
+  // are template text: pure vectors rank every "cardholder travelling" note
+  // alike, while the case that solves an investigation is usually the one on
+  // the same card or customer. The weights match backend/graphrag/retriever.py
+  // so the mock and the graph rank the same way.
+  MapAccum<VERTEX, FLOAT> @@dist, @@dist2;
+  SetAccum<STRING> @ov, @txn_ids, @connected;
+  SumAccum<FLOAT> @sim, @blend;
+  OrAccum @top;
+  INT fetch = k * 6;
+
+  IF fetch < 30 THEN fetch = 30; END;
+
+  CandC = SELECT s FROM ClosedCase:s WHERE s.closed_at <= as_of;
+  CandI = SELECT s FROM InvestigationCase:s WHERE s.opened_at < as_of;
+  Cand = CandC UNION CandI;
+
+  V = vectorSearch({ClosedCase.emb, InvestigationCase.emb}, query_vector, fetch,
+                   {distance_map: @@dist, candidate_set: Cand});
+
+  Cards = SELECT c FROM Card:c WHERE entity_ids.contains(c.card_id) OR entity_ids.contains(c.customer_id);
+  EC = SELECT s FROM Cards:c -((CARD_OF_CASE>|CONNECTED_FROM>))- ClosedCase:s
+       WHERE s.closed_at <= as_of
+       ACCUM IF entity_ids.contains(c.card_id) THEN s.@ov += c.card_id END,
+             IF entity_ids.contains(c.customer_id) THEN s.@ov += c.customer_id END;
+  EI = SELECT s FROM Cards:c -((CARD_OF_CASE>|CONNECTED_FROM>))- InvestigationCase:s
+       WHERE s.opened_at < as_of
+       ACCUM IF entity_ids.contains(c.card_id) THEN s.@ov += c.card_id END,
+             IF entity_ids.contains(c.customer_id) THEN s.@ov += c.customer_id END;
+  E = EC UNION EI;
+
+  // An entity hit outside the text top-k still needs a cosine score, so I
+  // run a second search restricted to exactly those cases.
+  IF E.size() > 0 THEN
+    V2 = vectorSearch({ClosedCase.emb, InvestigationCase.emb}, query_vector, E.size(),
+                      {distance_map: @@dist2, candidate_set: E});
+  END;
+
+  All = V UNION E;
+  All = SELECT s FROM All:s
+        POST-ACCUM
+          IF @@dist.containsKey(s) THEN s.@sim = 1 - @@dist.get(s)
+          ELSE IF @@dist2.containsKey(s) THEN s.@sim = 1 - @@dist2.get(s) END,
+          IF entity_weight * s.@ov.size() > max_bonus THEN s.@blend = s.@sim + max_bonus
+          ELSE s.@blend = s.@sim + entity_weight * s.@ov.size() END;
+  Top = SELECT s FROM All:s ORDER BY s.@blend DESC LIMIT k;
+  Top = SELECT s FROM Top:s POST-ACCUM s.@top = TRUE;
+
+  TC = SELECT s FROM ClosedCase:s WHERE s.@top;
+  X = SELECT t FROM TC:s -(INVOLVES>)- Transaction:t ACCUM s.@txn_ids += t.txn_id;
+  X = SELECT c FROM TC:s -(CONNECTED_TO>)- Card:c ACCUM s.@connected += c.card_id;
+  TI = SELECT s FROM InvestigationCase:s WHERE s.@top;
+
+  PRINT TC[TC.case_id AS case_id, TC.@sim AS similarity, TC.@blend AS blended_score,
+           TC.outcome AS outcome, TC.pattern AS pattern, TC.exposure_usd AS exposure_usd,
+           TC.closed_at AS closed_at, TC.@ov AS shared_entities, TC.@txn_ids AS txn_ids,
+           TC.@connected AS connected_card_ids, TC.analyst_notes AS text] AS closed_cases;
+  PRINT TI[TI.case_id AS case_id, TI.graph_case_id AS graph_case_id, TI.@sim AS similarity,
+           TI.@blend AS blended_score, TI.status AS outcome, TI.pattern AS pattern,
+           TI.exposure_usd AS exposure_usd, TI.opened_at AS closed_at, TI.@ov AS shared_entities,
+           TI.affected_txn_ids AS txn_ids, TI.connected_card_ids AS connected_card_ids,
+           TI.summary AS text] AS agent_cases;
+}
+
+CREATE OR REPLACE QUERY policy_search(LIST<FLOAT> query_vector, INT k = 4)
+FOR GRAPH FraudInvestigation SYNTAX v2 {
+  // The document half of GraphRAG. Pattern vertices are searched alongside
+  // policy chunks because an analyst asking "what does card testing look like"
+  // wants the pattern definition as much as rule R5.
+  MapAccum<VERTEX, FLOAT> @@dist;
+  SumAccum<FLOAT> @score;
+
+  R = vectorSearch({PolicyChunk.emb, FraudPattern.emb}, query_vector, k, {distance_map: @@dist});
+  R = SELECT s FROM R:s POST-ACCUM s.@score = 1 - @@dist.get(s);
+  P = SELECT s FROM PolicyChunk:s WHERE @@dist.containsKey(s);
+  F = SELECT s FROM FraudPattern:s WHERE @@dist.containsKey(s);
+  P = SELECT s FROM P:s POST-ACCUM s.@score = 1 - @@dist.get(s);
+  F = SELECT s FROM F:s POST-ACCUM s.@score = 1 - @@dist.get(s);
+
+  PRINT P[P.ref AS ref, P.source AS kind, P.section AS section, P.title AS title, P.text AS text,
+          P.@score AS score] AS chunks;
+  PRINT F[F.pattern AS pattern, F.title AS title, F.description AS description, F.signals AS signals,
+          F.policy_rules AS policy_rules, F.@score AS score] AS patterns;
+}

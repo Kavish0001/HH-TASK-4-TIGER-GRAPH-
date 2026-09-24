@@ -1,0 +1,22 @@
+// Analytics extension: a card-to-card projection for the GDS algorithms.
+//
+// The GDS library's WCC, Louvain and PageRank run on one homogeneous vertex
+// type, and our identity graph is bipartite (Transaction to DeviceProfile). So
+// I project it: two cards get a SHARES_DEVICE edge when they used the same
+// specific device profile (see graph/algorithms/build_card_links.gsql for
+// what "specific" means). The results land on Card attributes, so a tool can
+// read a card's community without rerunning anything.
+//
+// Leakage: the projection is built only from transactions before the cutoff
+// passed to build_card_links, 2016-11-01 by default, which is before every
+// benchmark case opens. It is history, never exam-window evidence.
+
+USE GRAPH FraudInvestigation
+
+CREATE SCHEMA_CHANGE JOB fi_analytics FOR GRAPH FraudInvestigation {
+  ADD UNDIRECTED EDGE SHARES_DEVICE (FROM Card, TO Card, weight FLOAT, profiles STRING);
+  ALTER VERTEX Card ADD ATTRIBUTE (wcc_component INT DEFAULT "-1", louvain_community INT DEFAULT "-1",
+                                   device_pagerank FLOAT DEFAULT "0");
+}
+
+RUN SCHEMA_CHANGE JOB fi_analytics

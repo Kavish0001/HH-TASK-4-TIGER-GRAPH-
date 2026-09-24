@@ -1,0 +1,17 @@
+USE GRAPH FraudInvestigation
+
+// A card's community mates, read from the attributes the GDS runs wrote.
+CREATE OR REPLACE QUERY card_community(VERTEX<Card> card_id, INT max_members = 40)
+FOR GRAPH FraudInvestigation SYNTAX v2 {
+  SumAccum<INT> @@wcc, @@louvain;
+  SumAccum<FLOAT> @@pr;
+  C = {card_id};
+  C = SELECT c FROM C:c ACCUM @@wcc += c.wcc_component, @@louvain += c.louvain_community, @@pr += c.device_pagerank;
+  W = SELECT c FROM Card:c WHERE @@wcc >= 0 AND c.wcc_component == @@wcc
+      ORDER BY c.device_pagerank DESC LIMIT max_members;
+  L = SELECT c FROM Card:c WHERE @@louvain >= 0 AND c.louvain_community == @@louvain
+      ORDER BY c.device_pagerank DESC LIMIT max_members;
+  PRINT card_id AS card_id, @@wcc AS wcc_component, @@louvain AS louvain_community, @@pr AS device_pagerank;
+  PRINT W[W.card_id AS card_id, W.device_pagerank AS device_pagerank] AS wcc_members;
+  PRINT L[L.card_id AS card_id, L.device_pagerank AS device_pagerank] AS louvain_members;
+}

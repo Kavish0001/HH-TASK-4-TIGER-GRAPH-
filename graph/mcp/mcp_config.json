@@ -1,0 +1,28 @@
+{
+  "mcpServers": {
+    "fraud-investigation-graph": {
+      "command": "python",
+      "args": ["graph/mcp/server.py", "--transport", "stdio"],
+      "env": {
+        "TG_HOST": "http://localhost",
+        "TG_RESTPP_PORT": "14240",
+        "TG_GRAPH_NAME": "FraudInvestigation",
+        "TG_USERNAME": "tigergraph",
+        "TG_PASSWORD": "tigergraph"
+      }
+    },
+    "tigergraph": {
+      "command": "tigergraph-mcp",
+      "args": [],
+      "env": {
+        "TG_HOST": "http://localhost",
+        "TG_RESTPP_PORT": "14240",
+        "TG_GS_PORT": "14240",
+        "TG_GRAPHNAME": "FraudInvestigation",
+        "TG_USERNAME": "tigergraph",
+        "TG_PASSWORD": "tigergraph",
+        "TG_ALLOWED_TOOLS": "tigergraph__run_installed_query,tigergraph__show_query,tigergraph__is_query_installed,tigergraph__get_query_description,tigergraph__get_query_metadata,tigergraph__get_graph_schema,tigergraph__get_vertex_count,tigergraph__get_edge_count"
+      }
+    }
+  }
+}

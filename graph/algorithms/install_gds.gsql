@@ -1,0 +1,9 @@
+// The GDS algorithms are graph-agnostic templates shipped in the container at
+// /home/tigergraph/gsql-graph-algorithms. I create them on FraudInvestigation
+// unchanged, so the library's own documentation applies to every parameter.
+USE GRAPH FraudInvestigation
+@/home/tigergraph/gsql-graph-algorithms/algorithms/Community/connected_components/weakly_connected_components/standard/tg_wcc.gsql
+@/home/tigergraph/gsql-graph-algorithms/algorithms/Community/louvain/tg_louvain.gsql
+@/home/tigergraph/gsql-graph-algorithms/algorithms/Centrality/pagerank/global/unweighted/tg_pagerank.gsql
+@/home/tigergraph/gsql-graph-algorithms/algorithms/Similarity/jaccard/single_source/tg_jaccard_nbor_ss.gsql
+@/home/tigergraph/gsql-graph-algorithms/algorithms/Similarity/cosine/single_source/tg_cosine_nbor_ss.gsql

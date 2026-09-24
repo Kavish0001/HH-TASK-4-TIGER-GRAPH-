@@ -1,0 +1,57 @@
+// Builds the SHARES_DEVICE card projection that WCC, Louvain and PageRank run on.
+//
+// A profile links its cards only when it is specific: complete (all four parts
+// known) and rare with novelty or a proxy, or New behind an anonymous proxy on
+// most rows. These are the same rules ring_detect uses, so the offline
+// communities and the per-case ring agree. Plain sharing would link cards
+// through "unknown | unknown | unknown | unknown", which 1,013 cards use.
+
+USE GRAPH FraudInvestigation
+
+// I run this one interpreted, not installed. The installed build of the same
+// body fails at run time in 4.2.5 with an opaque "unknown function error"
+// from queryDispatcher, while the interpreted run writes the edges. The cutoff
+// and thresholds are constants below for that reason: edit them here.
+INTERPRET QUERY () FOR GRAPH FraudInvestigation SYNTAX v2 {
+  TYPEDEF TUPLE<STRING a, STRING b, STRING prof> PairT;
+  SetAccum<STRING> @custs, @cards;
+  SumAccum<INT> @rows, @marked_new, @anon, @proxy;
+  OrAccum @qual;
+  SumAccum<INT> @@profiles;
+  SetAccum<PairT> @@pairs;
+  DATETIME cutoff = to_datetime("2016-11-01 00:00:00");
+  INT max_customers = 8;
+  INT signature_max_customers = 200;
+
+  D = {DeviceProfile.*};
+  D = SELECT d FROM D:d -(DEVICE_USED_BY>)- Transaction:t
+      WHERE t.ts < cutoff
+      ACCUM d.@custs += t.customer_id, d.@cards += t.card_id, d.@rows += 1,
+            IF t.id_15 == "New" THEN d.@marked_new += 1 END,
+            IF t.id_23 == "IP_PROXY:ANONYMOUS" THEN d.@anon += 1 END,
+            IF t.id_23 != "" AND t.id_23 != "unknown" THEN d.@proxy += 1 END
+      POST-ACCUM
+        IF d.@custs.size() >= 2 AND d.@custs.size() <= max_customers
+           AND d.device_info != "unknown" AND d.os != "unknown" AND d.browser != "unknown"
+           AND d.screen != "unknown"
+           AND (d.@marked_new * 5 >= d.@rows * 4 OR d.@proxy * 2 >= d.@rows) THEN d.@qual = TRUE END,
+        IF d.@custs.size() >= 2 AND d.@custs.size() <= signature_max_customers
+           AND d.@anon * 2 >= d.@rows AND d.@marked_new * 5 >= d.@rows * 4 THEN d.@qual = TRUE END;
+
+  Q = SELECT d FROM D:d WHERE d.@qual
+      POST-ACCUM @@profiles += 1,
+        FOREACH a IN d.@cards DO
+          FOREACH b IN d.@cards DO
+            IF a < b THEN @@pairs += PairT(a, b, d.device_profile) END
+          END
+        END;
+
+  // Inserting from inside the vertex POST-ACCUM failed at runtime with an
+  // opaque dispatcher error in 4.2.5, so I collect pairs first and write them
+  // from the query body.
+
+  FOREACH p IN @@pairs DO
+    INSERT INTO SHARES_DEVICE (FROM, TO, weight, profiles) VALUES (p.a, p.b, 1.0, p.prof);
+  END;
+  PRINT cutoff AS cutoff, @@profiles AS linking_profiles, @@pairs.size() AS card_pairs_written;
+}

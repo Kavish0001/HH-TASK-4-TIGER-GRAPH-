@@ -1,0 +1,293 @@
+// Entity read tools: customer, transaction, card window, velocity, behaviour
+// shift and region history.
+//
+// Every query takes as_of and filters Transaction.ts <= as_of. Benchmark cases
+// are investigated at their opened_at, and a single row read past it leaks the
+// outcome, so I put the cut in the SELECT itself rather than trusting callers.
+//
+// Missing numeric readings are stored as -999999.0 (see schema.gsql), so any
+// query that averages a D or V column has to skip them. addr1 is stored as the
+// source string, for example "264.0", and "" means no region recorded.
+
+USE GRAPH FraudInvestigation
+
+CREATE OR REPLACE QUERY customer_profile(VERTEX<Customer> customer_id, DATETIME as_of)
+FOR GRAPH FraudInvestigation SYNTAX v2 {
+  TYPEDEF TUPLE<FLOAT amt> AmtT;
+  SetAccum<STRING> @@cards;
+  SumAccum<INT> @@n;
+  SumAccum<FLOAT> @@sum, @@risk;
+  MaxAccum<FLOAT> @@max;
+  MinAccum<DATETIME> @@first;
+  MaxAccum<DATETIME> @@last;
+  MapAccum<STRING, SumAccum<INT>> @@addr, @@prod, @@dev, @@chan;
+  // I sort amounts with a heap sized to the history so median and p95 come out
+  // exact. Customers reach 14,891 rows, which a heap handles without trouble.
+  HeapAccum<AmtT>(1, amt ASC) @@amts;
+  FLOAT median = 0, p95 = 0;
+  INT i = 0, n_med = 0, n_p95 = 0;
+  FLOAT mean = 0, mean_risk = 0;
+
+  Cust = {customer_id};
+  Cards = SELECT c FROM Cust:u -(OWNS>)- Card:c ACCUM @@cards += c.card_id;
+  T = SELECT t FROM Cards:c -(MADE>)- Transaction:t
+      WHERE t.ts <= as_of
+      ACCUM @@n += 1, @@sum += t.amt, @@max += t.amt, @@risk += t.risk_score,
+            @@first += t.ts, @@last += t.ts,
+            @@prod += (t.product_cd -> 1), @@chan += (t.channel -> 1),
+            IF t.addr1 != "" THEN @@addr += (t.addr1 -> 1) END,
+            IF t.device_profile != "" THEN @@dev += (t.device_profile -> 1) END;
+
+  IF @@n > 0 THEN
+    mean = @@sum / @@n;
+    mean_risk = @@risk / @@n;
+    @@amts.resize(@@n);
+    T = SELECT t FROM T:t ACCUM @@amts += AmtT(t.amt);
+    n_med = @@n / 2;
+    n_p95 = floor(0.95 * (@@n - 1));
+    FOREACH a IN @@amts DO
+      IF i == n_med THEN median = a.amt; END;
+      IF i == n_p95 THEN p95 = a.amt; END;
+      i = i + 1;
+    END;
+  END;
+
+  PRINT customer_id AS customer_id, @@n > 0 AS found, @@cards AS cards, @@n AS txn_count,
+        @@n AS amount_count, mean AS amount_mean, median AS amount_median,
+        p95 AS amount_p95, @@max AS amount_max,
+        @@addr AS billing_regions, @@prod AS product_codes, @@dev AS device_profiles,
+        @@chan AS channel_split, @@first AS first_txn, @@last AS last_txn,
+        mean_risk AS mean_risk_score;
+}
+
+CREATE OR REPLACE QUERY tx_context(VERTEX<Transaction> txn_id, DATETIME as_of)
+FOR GRAPH FraudInvestigation SYNTAX v2 {
+  TYPEDEF TUPLE<STRING txn_id, DATETIME ts, FLOAT amount, STRING product_cd, STRING channel,
+                FLOAT risk_score, STRING addr1, STRING device_profile, STRING r_email> TxT;
+  ListAccum<TxT> @@prev, @@next;
+  SumAccum<STRING> @@dev_info, @@os, @@browser, @@screen;
+  BOOL visible = TRUE;
+
+  Seed = {txn_id};
+  Seed = SELECT t FROM Seed:t
+         POST-ACCUM IF t.ts > as_of THEN visible = FALSE END;
+
+  // A flagged transaction later than as_of would mean the caller passed the
+  // wrong clock. I refuse rather than return it, so a leak surfaces as an error.
+  IF NOT visible THEN
+    PRINT txn_id AS txn_id, FALSE AS found, "transaction is later than as_of" AS error;
+    RETURN;
+  END;
+
+  P = SELECT p FROM Seed:t -(PREV>)- Transaction:p
+      ACCUM @@prev += TxT(p.txn_id, p.ts, p.amt, p.product_cd, p.channel, p.risk_score,
+                          p.addr1, p.device_profile, p.r_email);
+  N = SELECT x FROM Seed:t -(NEXT>)- Transaction:x
+      WHERE x.ts <= as_of
+      ACCUM @@next += TxT(x.txn_id, x.ts, x.amt, x.product_cd, x.channel, x.risk_score,
+                          x.addr1, x.device_profile, x.r_email);
+  D = SELECT d FROM Seed:t -(FROM_DEVICE>)- DeviceProfile:d
+      ACCUM @@dev_info += d.device_info, @@os += d.os, @@browser += d.browser, @@screen += d.screen;
+
+  PRINT Seed[Seed.txn_id AS txn_id, Seed.ts AS ts, Seed.amt AS amount, Seed.product_cd AS product_cd,
+             Seed.channel AS channel, Seed.risk_score AS risk_score, Seed.card_id AS card_id,
+             Seed.customer_id AS customer_id, Seed.addr1 AS addr1, Seed.addr2 AS addr2,
+             Seed.dist1 AS dist1, Seed.p_email AS p_email, Seed.r_email AS r_email,
+             Seed.has_identity AS has_identity, Seed.device_profile AS device_profile,
+             Seed.device_type AS device_type, Seed.id_12 AS id_12, Seed.id_15 AS device_status,
+             Seed.id_23 AS proxy, Seed.id_34 AS match_status, Seed.hour_of_day AS hour_of_day,
+             Seed.D1 AS D1, Seed.D2 AS D2, Seed.D3 AS D3, Seed.D5 AS D5, Seed.D11 AS D11,
+             Seed.M4 AS M4, Seed.M7 AS M7] AS transaction;
+  PRINT @@dev_info AS device_info, @@os AS os, @@browser AS browser, @@screen AS screen,
+        @@prev AS prev_txn, @@next AS next_txn;
+}
+
+CREATE OR REPLACE QUERY card_window(VERTEX<Card> card_id, INT hours = 0, INT days = 0, DATETIME as_of)
+FOR GRAPH FraudInvestigation SYNTAX v2 {
+  TYPEDEF TUPLE<STRING txn_id, DATETIME ts, FLOAT amount, STRING product_cd, STRING channel,
+                FLOAT risk_score, STRING addr1, STRING device_profile, STRING device_status,
+                STRING proxy, STRING r_email> TxT;
+  // I keep the most recent 120 rows. The window that matters for R5 is the
+  // stretch just before the alert, and a 30 day window on a 10,000 row card
+  // would otherwise flood the model's context.
+  HeapAccum<TxT>(120, ts DESC) @@rows;
+  SumAccum<INT> @@n, @@n_small;
+  SumAccum<FLOAT> @@total;
+  DATETIME cutoff;
+  INT span_h = hours;
+
+  IF span_h <= 0 THEN
+    IF days > 0 THEN span_h = days * 24; ELSE span_h = 720; END;
+  END;
+  cutoff = datetime_sub(as_of, INTERVAL span_h HOUR);
+
+  C = {card_id};
+  T = SELECT t FROM C:c -(MADE>)- Transaction:t
+      WHERE t.ts >= cutoff AND t.ts <= as_of
+      ACCUM @@n += 1, @@total += t.amt,
+            IF t.amt < 5 THEN @@n_small += 1 END,
+            @@rows += TxT(t.txn_id, t.ts, t.amt, t.product_cd, t.channel, t.risk_score,
+                          t.addr1, t.device_profile, t.id_15, t.id_23, t.r_email);
+
+  PRINT card_id AS card_id, span_h AS window_hours, cutoff AS window_start, @@n AS n,
+        @@total AS total_amount, @@n_small AS n_under_5, @@n > 120 AS truncated,
+        @@rows AS transactions_newest_first;
+}
+
+CREATE OR REPLACE QUERY velocity(VERTEX<Card> card_id, SET<INT> windows, DATETIME as_of)
+FOR GRAPH FraudInvestigation SYNTAX v2 {
+  SumAccum<INT> @@n, @@n_small, @@hist;
+  SumAccum<FLOAT> @@sum;
+  MaxAccum<FLOAT> @@max;
+  SetAccum<STRING> @@w_dev, @@b_dev, @@w_reg, @@b_reg, @@w_prod, @@b_prod, @@w_rem, @@b_rem;
+  DATETIME cutoff;
+
+  C = {card_id};
+  H = SELECT t FROM C:c -(MADE>)- Transaction:t WHERE t.ts <= as_of ACCUM @@hist += 1;
+
+  // One pass per window. A card holds at most about 10,000 rows, so rescanning
+  // it for three or four windows is cheaper than the bookkeeping to avoid it.
+  FOREACH h IN windows DO
+    @@n = 0; @@n_small = 0; @@sum = 0; @@max = 0;
+    @@w_dev.clear(); @@b_dev.clear(); @@w_reg.clear(); @@b_reg.clear();
+    @@w_prod.clear(); @@b_prod.clear(); @@w_rem.clear(); @@b_rem.clear();
+    cutoff = datetime_sub(as_of, INTERVAL h HOUR);
+    X = SELECT t FROM H:t
+        ACCUM
+          IF t.ts >= cutoff THEN
+            @@n += 1, @@sum += t.amt, @@max += t.amt,
+            IF t.amt < 5 THEN @@n_small += 1 END,
+            IF t.device_profile != "" THEN @@w_dev += t.device_profile END,
+            IF t.addr1 != "" THEN @@w_reg += t.addr1 END,
+            @@w_prod += t.product_cd,
+            IF t.r_email != "" THEN @@w_rem += t.r_email END
+          ELSE
+            IF t.device_profile != "" THEN @@b_dev += t.device_profile END,
+            IF t.addr1 != "" THEN @@b_reg += t.addr1 END,
+            @@b_prod += t.product_cd,
+            IF t.r_email != "" THEN @@b_rem += t.r_email END
+          END;
+    PRINT h AS window_hours, @@n AS n, @@sum AS sum_amount, @@n_small AS n_small_under_5,
+          @@max AS max_amount,
+          (@@w_dev MINUS @@b_dev) AS first_seen_device_profile,
+          (@@w_reg MINUS @@b_reg) AS first_seen_billing_region,
+          (@@w_prod MINUS @@b_prod) AS first_seen_product_cd,
+          (@@w_rem MINUS @@b_rem) AS first_seen_recipient_email;
+  END;
+  PRINT card_id AS card_id, @@hist AS history_n;
+}
+
+CREATE OR REPLACE QUERY behavior_shift(VERTEX<Customer> customer_id, VERTEX<Transaction> txn_id, DATETIME as_of)
+FOR GRAPH FraudInvestigation SYNTAX v2 {
+  // Baseline is the card first and the customer only when the card has fewer
+  // than 8 prior rows. A customer vertex is an issuer grouping holding up to
+  // 14,891 rows, so a customer-level baseline is the fallback, not the default.
+  SumAccum<INT> @@c_n, @@c_below, @@c_hour, @@u_n, @@u_below, @@u_hour;
+  SumAccum<FLOAT> @@c_sum, @@c_sq, @@u_sum, @@u_sq;
+  SetAccum<STRING> @@c_prod, @@c_dev, @@c_reg, @@c_chan, @@u_prod, @@u_dev, @@u_reg, @@u_chan;
+  SumAccum<STRING> @@card, @@prod, @@dev, @@reg, @@chan;
+  SumAccum<FLOAT> @@amt;
+  SumAccum<INT> @@hour;
+  STRING scope = "card";
+  INT n = 0, below = 0, same_hour = 0;
+  FLOAT mean = 0, sd = 0, z = 0, pct = 0.5, hshare = 0, s = 0, sq = 0;
+  BOOL new_prod, new_dev, new_reg, new_chan;
+
+  Seed = {txn_id};
+  Seed = SELECT t FROM Seed:t
+         ACCUM @@card += t.card_id, @@prod += t.product_cd, @@dev += t.device_profile,
+               @@reg += t.addr1, @@chan += t.channel, @@amt += t.amt, @@hour += t.hour_of_day;
+
+  Cust = {customer_id};
+  Cards = SELECT c FROM Cust:u -(OWNS>)- Card:c;
+  T = SELECT t FROM Cards:c -(MADE>)- Transaction:t
+      WHERE t.ts <= as_of AND t != txn_id
+      ACCUM
+        @@u_n += 1, @@u_sum += t.amt, @@u_sq += t.amt * t.amt,
+        IF t.amt < @@amt THEN @@u_below += 1 END,
+        IF t.hour_of_day == @@hour THEN @@u_hour += 1 END,
+        @@u_prod += t.product_cd, @@u_chan += t.channel,
+        IF t.device_profile != "" THEN @@u_dev += t.device_profile END,
+        IF t.addr1 != "" THEN @@u_reg += t.addr1 END,
+        IF t.card_id == @@card THEN
+          @@c_n += 1, @@c_sum += t.amt, @@c_sq += t.amt * t.amt,
+          IF t.amt < @@amt THEN @@c_below += 1 END,
+          IF t.hour_of_day == @@hour THEN @@c_hour += 1 END,
+          @@c_prod += t.product_cd, @@c_chan += t.channel,
+          IF t.device_profile != "" THEN @@c_dev += t.device_profile END,
+          IF t.addr1 != "" THEN @@c_reg += t.addr1 END
+        END;
+
+  IF @@c_n >= 8 THEN
+    n = @@c_n; below = @@c_below; same_hour = @@c_hour; s = @@c_sum; sq = @@c_sq;
+    new_prod = NOT @@c_prod.contains(@@prod);
+    new_dev = @@dev != "" AND NOT @@c_dev.contains(@@dev);
+    new_reg = @@reg != "" AND NOT @@c_reg.contains(@@reg);
+    new_chan = NOT @@c_chan.contains(@@chan);
+  ELSE
+    scope = "customer";
+    n = @@u_n; below = @@u_below; same_hour = @@u_hour; s = @@u_sum; sq = @@u_sq;
+    new_prod = NOT @@u_prod.contains(@@prod);
+    new_dev = @@dev != "" AND NOT @@u_dev.contains(@@dev);
+    new_reg = @@reg != "" AND NOT @@u_reg.contains(@@reg);
+    new_chan = NOT @@u_chan.contains(@@chan);
+  END;
+
+  IF n >= 3 THEN
+    mean = s / n;
+    sd = sq / n - mean * mean;
+    IF sd < 0 THEN sd = 0; END;
+    sd = sqrt(sd);
+    IF sd > 0.000001 THEN z = (@@amt - mean) / sd; END;
+    pct = below * 1.0 / n;
+  END;
+  IF n > 0 THEN hshare = same_hour * 1.0 / n; END;
+
+  PRINT scope AS baseline_scope, n AS baseline_n, @@amt AS amount, mean AS baseline_mean,
+        sd AS baseline_std, z AS amount_z, pct AS amount_percentile,
+        new_prod AS new_product_cd, new_dev AS new_device_profile, @@dev AS device_profile,
+        @@reg == "" AS no_region_recorded, new_reg AS new_billing_region,
+        @@hour AS hour_of_day, hshare AS hour_share_in_history,
+        (hshare < 0.02 AND n >= 20) AS unusual_hour, new_chan AS new_channel;
+}
+
+CREATE OR REPLACE QUERY region_history(VERTEX<Customer> customer_id, STRING addr1, DATETIME as_of)
+FOR GRAPH FraudInvestigation SYNTAX v2 {
+  // A trip and a clone look identical on one transaction. What separates them
+  // is whether the home region kept spending while the card was away, so I
+  // count home activity inside the exact span of the out-of-region rows.
+  MapAccum<STRING, SumAccum<INT>> @@regions;
+  SumAccum<INT> @@n_in, @@n_regioned, @@home_during;
+  MinAccum<DATETIME> @@lo;
+  MaxAccum<DATETIME> @@hi;
+  STRING home = "";
+  INT home_n = 0;
+  FLOAT span_days = 0, home_share = 0;
+
+  Cust = {customer_id};
+  Cards = SELECT c FROM Cust:u -(OWNS>)- Card:c;
+  T = SELECT t FROM Cards:c -(MADE>)- Transaction:t
+      WHERE t.ts <= as_of AND t.addr1 != ""
+      ACCUM @@n_regioned += 1, @@regions += (t.addr1 -> 1),
+            IF t.addr1 == addr1 THEN @@n_in += 1, @@lo += t.ts, @@hi += t.ts END;
+
+  FOREACH (r, c) IN @@regions DO
+    IF c > home_n THEN home = r; home_n = c; END;
+  END;
+
+  IF @@n_regioned > 0 THEN home_share = home_n * 1.0 / @@n_regioned; END;
+  IF @@n_in > 0 THEN
+    span_days = datetime_diff(@@hi, @@lo) / 86400.0;
+    X = SELECT t FROM T:t
+        WHERE t.ts >= @@lo AND t.ts <= @@hi AND t.addr1 == home AND home != addr1
+        ACCUM @@home_during += 1;
+  END;
+
+  PRINT customer_id AS customer_id, addr1 AS addr1, @@n_regioned > 0 AS found,
+        @@n_in > 0 AS has_history, @@n_in AS n_in_region,
+        @@lo AS first_in_region, @@hi AS last_in_region, span_days AS span_days,
+        home AS home_region, home_share AS home_share,
+        @@regions.size() AS distinct_regions, @@home_during AS home_activity_during_window,
+        (span_days >= 2 AND @@home_during == 0 AND @@n_in >= 2) AS reads_as_trip,
+        (@@home_during > 0 AND @@n_in >= 1 AND span_days < 2) AS reads_as_clone;
+}

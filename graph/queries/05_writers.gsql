@@ -1,0 +1,129 @@
+// Write tools: write_case, append_evidence, record_decision, link_similar.
+//
+// A write never creates a vertex it was not asked to create. INSERT INTO an
+// edge whose endpoint does not exist would silently mint that endpoint, and a
+// hallucinated card id would then become a "real" Card vertex that later reads
+// return as dataset evidence. So every edge write joins against existing
+// vertices first and reports what it dropped.
+//
+// The case embedding is not set here: 4.2.5 GSQL cannot assign a vector
+// attribute, so the caller upserts InvestigationCase.emb over REST right after
+// write_case (backend/tools/tg/backend.py does this).
+
+USE GRAPH FraudInvestigation
+
+CREATE OR REPLACE QUERY write_case(STRING graph_case_id, STRING case_id, STRING customer_id, STRING card_id,
+    STRING status, STRING verdict, DOUBLE fraud_probability, DOUBLE confidence, STRING pattern,
+    STRING pattern_description, STRING first_suspicious_txn_id, DOUBLE exposure_usd, STRING summary,
+    STRING stop_reason, STRING trigger_type, STRING trigger_text, DATETIME opened_at,
+    SET<STRING> affected_txn_ids, SET<STRING> connected_card_ids, SET<STRING> connected_device_profiles,
+    SET<STRING> similar_prior_cases, SET<STRING> unknowns, STRING evidence_json = "[]",
+    STRING internal_json = "{}")
+FOR GRAPH FraudInvestigation SYNTAX v2 {
+  SetAccum<STRING> @@real_txns, @@real_cards, @@real_devs, @@real_similar, @@primary;
+  SetAccum<STRING> @@dropped;
+  DATETIME written;
+
+  written = now();
+  @@primary += card_id;
+
+  // I resolve every id against the graph before the vertex is written, so the
+  // stored sets hold only real dataset ids. A later case reads these sets back
+  // as memory, and an invented id stored here would resurface as evidence.
+  RT = SELECT t FROM Transaction:t WHERE affected_txn_ids.contains(t.txn_id) ACCUM @@real_txns += t.txn_id;
+  RK = SELECT c FROM Card:c WHERE connected_card_ids.contains(c.card_id) ACCUM @@real_cards += c.card_id;
+  RD = SELECT d FROM DeviceProfile:d WHERE connected_device_profiles.contains(d.device_profile)
+       ACCUM @@real_devs += d.device_profile;
+  RS = SELECT k FROM ClosedCase:k WHERE similar_prior_cases.contains(k.case_id) ACCUM @@real_similar += k.case_id;
+  RI = SELECT k FROM InvestigationCase:k WHERE similar_prior_cases.contains(k.case_id) ACCUM @@real_similar += k.case_id;
+
+  INSERT INTO InvestigationCase VALUES (graph_case_id, case_id, customer_id, card_id, status, verdict,
+    fraud_probability, confidence, pattern, pattern_description, first_suspicious_txn_id, exposure_usd,
+    summary, stop_reason, trigger_type, trigger_text, opened_at, written, @@real_txns,
+    @@real_cards, @@real_devs, @@real_similar, unknowns, evidence_json, internal_json);
+
+  P = SELECT c FROM Card:c WHERE @@primary.contains(c.card_id)
+      POST-ACCUM INSERT INTO ON_CARD (FROM, TO) VALUES (graph_case_id InvestigationCase, c.card_id Card);
+  K = SELECT c FROM RK:c
+      POST-ACCUM INSERT INTO CONNECTED_TO (FROM, TO) VALUES (graph_case_id InvestigationCase, c.card_id Card);
+  T = SELECT t FROM RT:t
+      POST-ACCUM INSERT INTO CASE_INVOLVES (FROM, TO) VALUES (graph_case_id, t.txn_id);
+  D = SELECT d FROM RD:d
+      POST-ACCUM INSERT INTO FROM_DEVICE (FROM, TO) VALUES (graph_case_id InvestigationCase, d.device_profile DeviceProfile);
+  F = SELECT f FROM FraudPattern:f WHERE f.pattern == pattern
+      POST-ACCUM INSERT INTO MATCHES_PATTERN (FROM, TO) VALUES (graph_case_id InvestigationCase, f.pattern FraudPattern);
+
+  FOREACH x IN affected_txn_ids DO IF NOT @@real_txns.contains(x) THEN @@dropped += x; END; END;
+  FOREACH x IN connected_card_ids DO IF NOT @@real_cards.contains(x) THEN @@dropped += x; END; END;
+  FOREACH x IN connected_device_profiles DO IF NOT @@real_devs.contains(x) THEN @@dropped += x; END; END;
+  FOREACH x IN similar_prior_cases DO IF NOT @@real_similar.contains(x) THEN @@dropped += x; END; END;
+
+  PRINT graph_case_id AS graph_case_id, TRUE AS written, P.size() == 1 AS primary_card_linked,
+        @@real_txns.size() AS txns_linked, @@real_cards.size() AS connected_cards_linked,
+        @@real_devs.size() AS device_profiles_linked, @@dropped AS ids_not_in_dataset;
+}
+
+CREATE OR REPLACE QUERY append_evidence(STRING graph_case_id, STRING evidence_json)
+FOR GRAPH FraudInvestigation SYNTAX v2 {
+  // evidence_json on the case is a JSON array held as a string. I splice the
+  // new item before the closing bracket rather than keep a separate Evidence
+  // vertex type, because evidence is only ever read back whole.
+  SumAccum<INT> @@found;
+  SetAccum<STRING> @@ids;
+  @@ids += graph_case_id;
+  S = SELECT s FROM InvestigationCase:s WHERE @@ids.contains(s.graph_case_id)
+      POST-ACCUM
+        @@found += 1,
+        IF s.evidence_json == "" OR s.evidence_json == "[]" THEN
+          s.evidence_json = "[" + evidence_json + "]"
+        ELSE
+          s.evidence_json = rtrim(rtrim(s.evidence_json), "]") + "," + evidence_json + "]"
+        END;
+  PRINT @@found > 0 AS ok, graph_case_id AS graph_case_id;
+}
+
+CREATE OR REPLACE QUERY record_decision(STRING graph_case_id, STRING action, STRING route, BOOL authorized,
+                                        STRING reason, STRING actor, STRING phase = "final")
+FOR GRAPH FraudInvestigation SYNTAX v2 {
+  // A blocked attempt is recorded, not dropped: the case record has to show
+  // that the agent tried an action policy did not let it take. Only an auto
+  // route that was authorised counts as executed.
+  SetAccum<STRING> @@ids;
+  STRING decision_id;
+  BOOL executed = authorized AND route == "auto";
+  decision_id = graph_case_id + ":" + phase + ":" + action;
+  @@ids += graph_case_id;
+  S = SELECT s FROM InvestigationCase:s WHERE @@ids.contains(s.graph_case_id)
+      POST-ACCUM
+        INSERT INTO Decision VALUES (decision_id, graph_case_id, action, route, authorized, executed,
+                                     actor, phase, reason, now()),
+        INSERT INTO HAS_DECISION (FROM, TO) VALUES (s.graph_case_id, decision_id);
+  PRINT S.size() > 0 AS ok, decision_id AS decision_id, action AS action, route AS route,
+        authorized AS authorized, executed AS executed, actor AS actor;
+}
+
+CREATE OR REPLACE QUERY link_similar(STRING graph_case_id, SET<STRING> case_ids, DOUBLE score,
+                                     STRING basis = "vector+entity")
+FOR GRAPH FraudInvestigation SYNTAX v2 {
+  // case_ids may name closed cases (CC-xxxx) or earlier agent cases by either
+  // their case_id (HHG-xxx) or graph_case_id. Anything that matches neither is
+  // returned unlinked instead of being created.
+  SetAccum<STRING> @@ids, @@linked, @@missing;
+  @@ids += graph_case_id;
+  Src = SELECT s FROM InvestigationCase:s WHERE @@ids.contains(s.graph_case_id);
+  IF Src.size() == 0 THEN
+    PRINT FALSE AS ok, "no InvestigationCase with this graph_case_id" AS error;
+    RETURN;
+  END;
+  CC = SELECT k FROM ClosedCase:k WHERE case_ids.contains(k.case_id)
+       POST-ACCUM @@linked += k.case_id,
+                  INSERT INTO SIMILAR_TO (FROM, TO, score, basis)
+                    VALUES (graph_case_id InvestigationCase, k.case_id ClosedCase, score, basis);
+  IC = SELECT k FROM InvestigationCase:k
+       WHERE (case_ids.contains(k.case_id) OR case_ids.contains(k.graph_case_id)) AND k.graph_case_id != graph_case_id
+       POST-ACCUM @@linked += k.case_id,
+                  INSERT INTO SIMILAR_TO (FROM, TO, score, basis)
+                    VALUES (graph_case_id InvestigationCase, k.graph_case_id InvestigationCase, score, basis);
+  FOREACH x IN case_ids DO IF NOT @@linked.contains(x) THEN @@missing += x; END; END;
+  PRINT TRUE AS ok, @@linked AS linked, @@missing AS not_found, score AS score;
+}

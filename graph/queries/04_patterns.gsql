@@ -1,0 +1,425 @@
+// Pattern matchers, one per documented pattern, plus the two undocumented
+// shapes the closed cases describe.
+//
+// Each returns a 0 to 1 score, the signals it found, the ones it looked for
+// and did not find, and the ones it could not check. The third list matters:
+// addr1 is null on 94.8 percent of ProductCD C rows, and "no region data" must
+// never read as "no history in this region".
+//
+// Weights and thresholds mirror backend/scoring/patterns.py so that swapping
+// the mock store for the graph does not move a case across a policy threshold.
+// card_not_present_fraud and card_not_present_new_device share one query with
+// a flag, because pattern 3 is pattern 2 plus device novelty and I want the
+// two scores to stay consistent with each other by construction.
+
+USE GRAPH FraudInvestigation
+
+CREATE OR REPLACE QUERY match_card_testing(VERTEX<Card> card_id, VERTEX<Transaction> txn_id, DATETIME as_of,
+                                           INT episode_hours = 48)
+FOR GRAPH FraudInvestigation SYNTAX v2 {
+  // R5 as written says "under $5", which fires 53 times in six months and hits
+  // confirmed fraud about one time in ten. The 16 labelled card_testing cases
+  // have a median amount of $28.49. So I search twice: once with the literal
+  // thresholds, to cite the policy honestly, and once with a threshold relative
+  // to the card's own amounts, which is what the analysts actually applied.
+  TYPEDEF TUPLE<STRING txn_id, INT ep, FLOAT amt> TxT;
+  HeapAccum<TxT>(1, ep ASC) @@heap;
+  ListAccum<TxT> @@L;
+  ListAccum<INT> @@small;
+  ListAccum<STRING> @@present, @@absent, @@support, @@run_ids;
+  ListAccum<FLOAT> @@run_amts;
+  SumAccum<INT> @@n, @@flag_ep;
+  INT i = 0, j = 0, p = 0, pass = 0, n_literal = 0, n_rel = 0, n_recent = 0, n_older = 0;
+  INT end_ep = 0, last_ep = 0, follow_idx = -1, lo_ep = 0;
+  FLOAT p10 = 0, rel_small = 5, thr = 5, large = 25, follow_amt = 0, score = 0;
+  STRING follow_id = "", run_start = "";
+  BOOL habitual = FALSE, latest_literal = FALSE;
+
+  Seed = {txn_id};
+  Seed = SELECT t FROM Seed:t ACCUM @@flag_ep += t.ts_epoch;
+  lo_ep = @@flag_ep - episode_hours * 3600;
+
+  C = {card_id};
+  O = SELECT t FROM C:c -(MADE>)- Transaction:t
+      WHERE t.ts <= as_of AND t.channel == "online" ACCUM @@n += 1;
+
+  IF @@n == 0 THEN
+    PRINT "card_testing" AS pattern, 0.0 AS score, @@present AS present_signals,
+          ["online_authorizations", "small_auth_run", "escalation_purchase", "run_is_unusual_for_card"] AS absent_signals,
+          @@support AS supporting_txn_ids,
+          "No online activity on this card, so the R5 sequence cannot exist." AS narrative;
+    RETURN;
+  END;
+  @@present += "online_authorizations";
+
+  @@heap.resize(@@n);
+  O = SELECT t FROM O:t ACCUM @@heap += TxT(t.txn_id, t.ts_epoch, t.amt);
+  FOREACH x IN @@heap DO @@L += x; END;
+  p10 = @@L.get(floor(0.1 * (@@n - 1))).amt;
+  rel_small = p10;
+  IF rel_small > 30 THEN rel_small = 30; END;
+  IF rel_small < 5 THEN rel_small = 5; END;
+
+  WHILE pass < 2 DO
+    IF pass == 0 THEN thr = 5; large = 25;
+    ELSE
+      thr = rel_small; large = rel_small * 4;
+      IF large < 25 THEN large = 25; END;
+    END;
+    @@small.clear();
+    i = 0;
+    WHILE i < @@n DO
+      IF @@L.get(i).amt < thr THEN @@small += i; END;
+      i = i + 1;
+    END;
+    i = 0;
+    WHILE i < @@small.size() DO
+      end_ep = @@L.get(@@small.get(i)).ep + 3600;
+      j = i;
+      WHILE j < @@small.size() AND @@L.get(@@small.get(j)).ep <= end_ep DO j = j + 1; END;
+      IF j - i >= 3 THEN
+        last_ep = @@L.get(@@small.get(j - 1)).ep;
+        p = @@small.get(j - 1) + 1;
+        follow_idx = -1;
+        WHILE p < @@n AND @@L.get(p).ep <= last_ep + 86400 AND follow_idx < 0 DO
+          IF @@L.get(p).ep > last_ep AND @@L.get(p).amt >= large THEN follow_idx = p; END;
+          p = p + 1;
+        END;
+        IF follow_idx >= 0 THEN
+          IF pass == 0 THEN
+            n_literal = n_literal + 1;
+          ELSE
+            n_rel = n_rel + 1;
+            IF @@L.get(follow_idx).ep >= lo_ep AND @@L.get(follow_idx).ep <= @@flag_ep THEN
+              n_recent = n_recent + 1;
+              @@run_ids.clear(); @@run_amts.clear();
+              FOREACH q IN RANGE[i, j - 1] DO
+                @@run_ids += @@L.get(@@small.get(q)).txn_id;
+                @@run_amts += @@L.get(@@small.get(q)).amt;
+              END;
+              follow_id = @@L.get(follow_idx).txn_id;
+              follow_amt = @@L.get(follow_idx).amt;
+            ELSE IF @@L.get(follow_idx).ep < lo_ep THEN
+              n_older = n_older + 1;
+            END;
+          END;
+        END;
+        i = j;
+      ELSE
+        i = i + 1;
+      END;
+    END;
+    pass = pass + 1;
+  END;
+
+  IF n_recent > 0 THEN
+    @@present += "small_auth_run"; @@present += "escalation_purchase";
+  ELSE
+    @@absent += "small_auth_run"; @@absent += "escalation_purchase";
+  END;
+  // The trap in the pack: C11923-K2 produces this shape on almost any week of
+  // the year. Two or more earlier runs mean the run is the card's own normal.
+  habitual = n_older >= 2;
+  IF n_recent > 0 AND NOT habitual THEN @@present += "run_is_unusual_for_card";
+  ELSE @@absent += "run_is_unusual_for_card"; END;
+
+  IF n_recent > 0 THEN
+    FOREACH r IN @@run_ids DO @@support += r; END;
+    @@support += follow_id;
+    score = 0.62;
+    IF n_literal > 0 THEN score = score + 0.10; END;
+    IF follow_amt >= 100 THEN score = score + 0.08; END;
+    IF habitual AND score > 0.18 THEN score = 0.18; END;
+  END;
+
+  PRINT "card_testing" AS pattern, score AS score, @@present AS present_signals,
+        @@absent AS absent_signals, @@support AS supporting_txn_ids,
+        rel_small AS relative_small_threshold, n_literal AS literal_r5_sequences,
+        n_rel AS relative_sequences_total, n_recent AS sequences_in_episode_window,
+        n_older AS sequences_before_episode, habitual AS habitual_for_this_card,
+        @@n AS card_online_txn_count, @@run_amts AS latest_run_amounts,
+        follow_id AS latest_follow_txn_id, follow_amt AS latest_follow_amount;
+}
+
+CREATE OR REPLACE QUERY match_card_not_present(VERTEX<Card> card_id, VERTEX<Transaction> txn_id, DATETIME as_of,
+                                               BOOL require_new_device = FALSE, INT episode_hours = 48)
+FOR GRAPH FraudInvestigation SYNTAX v2 {
+  ListAccum<STRING> @@present, @@absent, @@unchk, @@burst;
+  SetAccum<STRING> @@prior_prod, @@prior_dev;
+  SumAccum<INT> @@n, @@below, @@flag_ep;
+  SumAccum<FLOAT> @@amt;
+  SumAccum<STRING> @@chan, @@prod, @@dev, @@status, @@proxy;
+  OrAccum @@has_identity;
+  FLOAT pct = -1, score = 0;
+  BOOL online, new_prod, marked_new = FALSE, dev_new = FALSE, has_proxy = FALSE, anon = FALSE;
+  INT lo_ep = 0;
+  STRING pname = "card_not_present_fraud";
+
+  IF require_new_device THEN pname = "card_not_present_new_device"; END;
+
+  Seed = {txn_id};
+  Seed = SELECT t FROM Seed:t
+         ACCUM @@amt += t.amt, @@chan += t.channel, @@prod += t.product_cd, @@dev += t.device_profile,
+               @@status += t.id_15, @@proxy += t.id_23, @@has_identity += t.has_identity,
+               @@flag_ep += t.ts_epoch;
+  lo_ep = @@flag_ep - episode_hours * 3600;
+
+  C = {card_id};
+  H = SELECT t FROM C:c -(MADE>)- Transaction:t
+      WHERE t.ts <= as_of
+      ACCUM
+        IF t != txn_id THEN
+          @@n += 1, @@prior_prod += t.product_cd,
+          IF t.amt < @@amt THEN @@below += 1 END,
+          IF t.device_profile != "" THEN @@prior_dev += t.device_profile END
+        END,
+        IF t.channel == "online" AND t.ts_epoch >= lo_ep AND t.ts_epoch <= @@flag_ep THEN
+          @@burst += t.txn_id
+        END;
+
+  online = @@chan == "online";
+  IF online THEN @@present += "online_channel"; score = score + 0.18;
+  ELSE @@absent += "online_channel"; END;
+
+  IF @@n >= 5 THEN pct = @@below * 1.0 / @@n; END;
+  IF pct < 0 THEN @@unchk += "amount_out_of_baseline";
+  ELSE IF pct >= 0.95 THEN @@present += "amount_out_of_baseline"; score = score + 0.20;
+  ELSE @@absent += "amount_out_of_baseline"; END;
+
+  new_prod = NOT @@prior_prod.contains(@@prod);
+  IF new_prod THEN @@present += "new_product_code"; score = score + 0.12;
+  ELSE @@absent += "new_product_code"; END;
+
+  IF @@burst.size() >= 2 AND @@burst.size() <= 6 THEN
+    @@present += "burst_within_48h"; score = score + 0.16;
+  ELSE @@absent += "burst_within_48h"; END;
+
+  // HHG-002 is online with no identity row. Its device signals are unknown,
+  // not negative, so they go in the uncheckable list.
+  IF NOT @@has_identity THEN
+    @@unchk += "device_marked_new"; @@unchk += "device_new_for_card"; @@unchk += "proxy_flag";
+  ELSE
+    marked_new = @@status == "New";
+    dev_new = @@dev != "" AND NOT @@prior_dev.contains(@@dev);
+    has_proxy = @@proxy != "" AND @@proxy != "unknown";
+    anon = @@proxy == "IP_PROXY:ANONYMOUS";
+    IF marked_new THEN @@present += "device_marked_new"; ELSE @@absent += "device_marked_new"; END;
+    IF dev_new THEN @@present += "device_new_for_card"; ELSE @@absent += "device_new_for_card"; END;
+    IF has_proxy THEN @@present += "proxy_flag"; ELSE @@absent += "proxy_flag"; END;
+  END;
+
+  IF require_new_device THEN
+    IF marked_new THEN score = score + 0.14; END;
+    IF dev_new THEN score = score + 0.12; END;
+    IF anon THEN score = score + 0.12; ELSE IF has_proxy THEN score = score + 0.05; END;
+    // Without a new device this is plain pattern 2, not pattern 3.
+    IF NOT (marked_new OR dev_new) AND score > 0.25 THEN score = 0.25; END;
+  ELSE
+    IF marked_new OR dev_new THEN score = score + 0.05; END;
+  END;
+  IF score > 0.95 THEN score = 0.95; END;
+
+  IF @@burst.size() < 2 THEN @@burst.clear(); @@burst += txn_id.txn_id; END;
+
+  PRINT pname AS pattern, score AS score, @@present AS present_signals, @@absent AS absent_signals,
+        @@unchk AS uncheckable_signals, @@burst AS supporting_txn_ids, @@amt AS amount,
+        pct AS amount_percentile_on_card, @@n AS prior_txns_on_card, new_prod AS new_product_code,
+        @@dev AS device_profile, @@status AS device_status_id_15, @@proxy AS proxy_id_23,
+        dev_new AS device_new_for_card,
+        (marked_new OR dev_new) AS new_device_is_common_false_alarm;
+}
+
+CREATE OR REPLACE QUERY match_out_of_region(VERTEX<Card> card_id, VERTEX<Transaction> txn_id, DATETIME as_of)
+FOR GRAPH FraudInvestigation SYNTAX v2 {
+  ListAccum<STRING> @@present, @@absent, @@unchk, @@in_ids;
+  MapAccum<STRING, SumAccum<INT>> @@regions;
+  SumAccum<STRING> @@addr, @@chan, @@cust;
+  SumAccum<INT> @@home_during, @@n_in;
+  MinAccum<INT> @@lo;
+  MaxAccum<INT> @@hi;
+  STRING home = "";
+  INT home_n = 0, seen_here = 0, distinct = 0;
+  FLOAT span_days = 0, score = 0;
+  BOOL card_present;
+
+  Seed = {txn_id};
+  Seed = SELECT t FROM Seed:t ACCUM @@addr += t.addr1, @@chan += t.channel, @@cust += t.customer_id;
+  card_present = @@chan == "in_person";
+  IF card_present THEN @@present += "card_present_channel"; score = score + 0.16;
+  ELSE @@absent += "card_present_channel"; END;
+
+  IF @@addr == "" THEN
+    @@unchk += "region_new_for_customer"; @@unchk += "home_activity_continued";
+    @@unchk += "sustained_multi_day_presence";
+    PRINT "out_of_region_use" AS pattern, 0.0 AS score, @@present AS present_signals,
+          @@absent AS absent_signals, @@unchk AS uncheckable_signals, [txn_id.txn_id] AS supporting_txn_ids,
+          "no billing region recorded on this transaction" AS reason;
+    RETURN;
+  END;
+
+  C = {card_id};
+  U = SELECT u FROM C:c -(OWNED_BY>)- Customer:u;
+  Cards = SELECT c FROM U:u -(OWNS>)- Card:c;
+  CT = SELECT t FROM Cards:c -(MADE>)- Transaction:t
+       WHERE t.ts <= as_of AND t.addr1 != ""
+       ACCUM IF t != txn_id THEN @@regions += (t.addr1 -> 1) END,
+             IF t.card_id == card_id.card_id AND t.addr1 == @@addr THEN
+               @@n_in += 1, @@lo += t.ts_epoch, @@hi += t.ts_epoch, @@in_ids += t.txn_id
+             END;
+
+  distinct = @@regions.size();
+  IF @@regions.containsKey(@@addr) THEN seen_here = @@regions.get(@@addr); END;
+  FOREACH (r, c) IN @@regions DO
+    IF c > home_n THEN home = r; home_n = c; END;
+  END;
+  IF @@n_in > 1 THEN span_days = (@@hi - @@lo) / 86400.0; END;
+  IF home != "" AND @@n_in > 0 THEN
+    X = SELECT t FROM CT:t WHERE t.ts_epoch >= @@lo AND t.ts_epoch <= @@hi AND t.addr1 == home
+        ACCUM @@home_during += 1;
+  END;
+
+  IF seen_here == 0 THEN @@present += "region_new_for_customer"; ELSE @@absent += "region_new_for_customer"; END;
+  IF @@home_during > 0 THEN @@present += "home_activity_continued"; ELSE @@absent += "home_activity_continued"; END;
+  IF span_days >= 2 THEN @@present += "sustained_multi_day_presence"; ELSE @@absent += "sustained_multi_day_presence"; END;
+
+  // 61.9 percent of customers use exactly one region, so a new region is
+  // strong for them and close to meaningless for a customer already on ten.
+  IF seen_here == 0 THEN
+    IF distinct <= 2 THEN score = score + 0.30;
+    ELSE IF distinct <= 5 THEN score = score + 0.16;
+    ELSE IF distinct <= 10 THEN score = score + 0.07;
+    ELSE score = score + 0.02; END;
+  END;
+  IF @@home_during > 0 AND seen_here == 0 THEN score = score + 0.28; END;
+  // 716 of the 900 cleared cases were a travelling cardholder.
+  IF span_days >= 2 AND @@home_during == 0 AND score > 0.22 THEN score = 0.22; END;
+
+  PRINT "out_of_region_use" AS pattern, score AS score, @@present AS present_signals,
+        @@absent AS absent_signals, @@unchk AS uncheckable_signals, @@in_ids AS supporting_txn_ids,
+        @@addr AS addr1, distinct AS customer_distinct_regions, seen_here AS prior_txns_in_this_region,
+        home AS home_region, @@home_during AS home_activity_during_window, span_days AS span_days_in_region,
+        (span_days >= 2 AND @@home_during == 0) AS reads_as_trip,
+        (@@home_during > 0 AND seen_here == 0) AS reads_as_clone;
+}
+
+CREATE OR REPLACE QUERY match_account_takeover(VERTEX<Card> card_id, VERTEX<Transaction> txn_id, DATETIME as_of,
+                                               INT episode_hours = 48)
+FOR GRAPH FraudInvestigation SYNTAX v2 {
+  ListAccum<STRING> @@present, @@absent, @@unchk, @@win_ids;
+  SetAccum<STRING> @@win_chan, @@prior_dev;
+  MapAccum<STRING, SumAccum<INT>> @@chan_counts, @@m4, @@m7;
+  SumAccum<INT> @@n, @@flag_ep;
+  SumAccum<STRING> @@chan, @@dev, @@status, @@fm4, @@fm7;
+  OrAccum @@has_identity;
+  FLOAT share = 0, score = 0;
+  INT lo_ep = 0, checked = 0, mism = 0, best = 0;
+  STRING modal = "";
+  BOOL dev_anom = FALSE;
+
+  Seed = {txn_id};
+  Seed = SELECT t FROM Seed:t
+         ACCUM @@chan += t.channel, @@dev += t.device_profile, @@status += t.id_15,
+               @@has_identity += t.has_identity, @@flag_ep += t.ts_epoch, @@fm4 += t.M4, @@fm7 += t.M7;
+  lo_ep = @@flag_ep - episode_hours * 3600;
+
+  C = {card_id};
+  H = SELECT t FROM C:c -(MADE>)- Transaction:t
+      WHERE t.ts <= as_of
+      ACCUM
+        IF t.ts_epoch >= lo_ep AND t.ts_epoch <= @@flag_ep THEN
+          @@win_chan += t.channel, @@win_ids += t.txn_id
+        END,
+        IF t != txn_id THEN
+          @@n += 1, @@chan_counts += (t.channel -> 1),
+          IF t.device_profile != "" THEN @@prior_dev += t.device_profile END,
+          IF t.M4 != "" THEN @@m4 += (t.M4 -> 1) END,
+          IF t.M7 != "" THEN @@m7 += (t.M7 -> 1) END
+        END;
+
+  IF @@win_chan.size() >= 2 THEN @@present += "mixed_channel_activity"; score = score + 0.22;
+  ELSE @@absent += "mixed_channel_activity"; END;
+
+  IF @@n > 0 AND @@chan_counts.containsKey(@@chan) THEN share = @@chan_counts.get(@@chan) * 1.0 / @@n; END;
+  IF share < 0.10 AND @@n >= 20 THEN
+    @@present += "channel_inconsistent_with_history"; score = score + 0.22;
+  ELSE @@absent += "channel_inconsistent_with_history"; END;
+
+  IF @@has_identity THEN
+    dev_anom = (@@dev != "" AND NOT @@prior_dev.contains(@@dev)) OR @@status == "New";
+    IF dev_anom THEN @@present += "device_anomaly"; score = score + 0.16;
+    ELSE @@absent += "device_anomaly"; END;
+  ELSE
+    @@unchk += "device_anomaly";
+  END;
+
+  // Only M4 and M7 are loaded (the scout's shortlist). Their individual
+  // meanings are unpublished, so I report disagreement with the card's usual
+  // value and never claim what a flag means.
+  IF @@fm4 != "" AND @@m4.size() > 0 THEN
+    checked = checked + 1; best = 0;
+    FOREACH (v, c) IN @@m4 DO IF c > best THEN best = c; modal = v; END; END;
+    IF modal != @@fm4 THEN mism = mism + 1; END;
+  END;
+  IF @@fm7 != "" AND @@m7.size() > 0 THEN
+    checked = checked + 1; best = 0;
+    FOREACH (v, c) IN @@m7 DO IF c > best THEN best = c; modal = v; END; END;
+    IF modal != @@fm7 THEN mism = mism + 1; END;
+  END;
+  IF checked == 0 THEN @@unchk += "match_flag_anomaly";
+  ELSE IF mism >= 2 THEN @@present += "match_flag_anomaly"; score = score + 0.18;
+  ELSE @@absent += "match_flag_anomaly"; END;
+
+  // The README defines this pattern as mixed-channel; without that it is
+  // some other pattern.
+  IF @@win_chan.size() < 2 AND score > 0.25 THEN score = 0.25; END;
+  IF @@win_ids.size() <= 1 THEN @@win_ids.clear(); @@win_ids += txn_id.txn_id; END;
+
+  PRINT "account_takeover" AS pattern, score AS score, @@present AS present_signals,
+        @@absent AS absent_signals, @@unchk AS uncheckable_signals, @@win_ids AS supporting_txn_ids,
+        @@win_chan AS channels_in_window, @@chan AS flagged_channel,
+        share AS flagged_channel_share_in_history, checked AS match_flags_checked,
+        mism AS match_flags_disagreeing_with_card_history, dev_anom AS device_anomaly;
+}
+
+CREATE OR REPLACE QUERY match_structuring(VERTEX<Card> card_id, VERTEX<Transaction> txn_id, DATETIME as_of,
+                                          FLOAT band_min = 400, FLOAT band_max = 500, INT min_n = 4,
+                                          INT window_min = 60)
+FOR GRAPH FraudInvestigation SYNTAX v2 {
+  // Undocumented pattern B: several online purchases inside an hour, each just
+  // under a round ceiling. Five confirmed-fraud closed cases describe it.
+  ListAccum<STRING> @@present, @@absent, @@band_ids;
+  ListAccum<FLOAT> @@band_amts;
+  SumAccum<INT> @@flag_ep, @@earlier;
+  SumAccum<FLOAT> @@total;
+  MinAccum<INT> @@lo;
+  MaxAccum<INT> @@hi;
+  FLOAT score = 0;
+  BOOL hit = FALSE;
+
+  Seed = {txn_id};
+  Seed = SELECT t FROM Seed:t ACCUM @@flag_ep += t.ts_epoch;
+  C = {card_id};
+  H = SELECT t FROM C:c -(MADE>)- Transaction:t
+      WHERE t.ts <= as_of AND t.channel == "online" AND t.amt >= band_min AND t.amt < band_max
+      ACCUM
+        IF t.ts_epoch >= @@flag_ep - window_min * 60 AND t.ts_epoch <= @@flag_ep + window_min * 60 THEN
+          @@band_ids += t.txn_id, @@band_amts += t.amt, @@total += t.amt, @@lo += t.ts_epoch, @@hi += t.ts_epoch
+        END,
+        IF t.ts_epoch < @@flag_ep - 48 * 3600 THEN @@earlier += 1 END;
+
+  IF @@band_ids.size() >= min_n AND @@hi - @@lo <= window_min * 60 THEN hit = TRUE; END;
+  IF hit THEN @@present += "several_online_just_under_round_ceiling_in_one_hour";
+  ELSE @@absent += "several_online_just_under_round_ceiling_in_one_hour"; END;
+  IF @@earlier >= 12 THEN @@absent += "not_routine_for_this_card"; ELSE @@present += "not_routine_for_this_card"; END;
+  IF hit THEN
+    score = 0.66;
+    IF @@total >= 1500 AND @@total <= 2500 THEN score = score + 0.12; END;
+    IF @@earlier >= 12 AND score > 0.25 THEN score = 0.25; END;
+  ELSE
+    @@band_ids.clear();
+  END;
+
+  PRINT "undocumented_structuring" AS pattern, score AS score, @@present AS present_signals,
+        @@absent AS absent_signals, @@band_ids AS supporting_txn_ids, @@band_amts AS amounts,
+        @@total AS total_usd, @@earlier AS earlier_in_band_on_card;
+}

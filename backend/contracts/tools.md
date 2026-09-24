@@ -80,3 +80,28 @@ was authorized, so a blocked attempt is still visible in the case record.
 `tool_calls`, `tokens` and `latency_s` are required answer fields. The tool layer
 increments the call counter, so no tool call can escape the count. Wrap every tool
 at one place rather than counting at call sites.
+
+## Graph implementation notes (graph-engineer)
+
+What the installed queries actually do where the table above leaves room. The
+MCP tool names and argument names match `backend/tools/base.py`.
+
+- `similar_cases` takes `query_text` (embedded with bge-small, query prefix) or
+  a precomputed `case_embedding`. Score is cosine plus 0.45 per shared entity,
+  capped at 0.9, the same blend as `backend/graphrag/retriever.py`.
+- `pattern_match` accepts `card_testing`, `card_not_present_fraud`,
+  `card_not_present_new_device`, `out_of_region_use`, `account_takeover`, and
+  `undocumented_structuring` (alias `undocumented`). Output adds `coverage` and
+  `uncheckable_signals`, matching `backend/scoring/patterns.py`.
+- `ring_detect` follows a device profile only if it is rare (8 customers or
+  fewer), complete and New or proxied, or New behind an anonymous proxy on most
+  rows. One hop by default. On HHG-014 it returns the 44 cards on the SM-G935F
+  profile up to that case's `opened_at`.
+- `shared_device_profile` adds `signature` (new, proxy and anonymous shares)
+  and `parts_present`, because breadth alone is not evidence.
+- Visibility: a `ClosedCase` is visible when `closed_at <= as_of`; an agent
+  case (`InvestigationCase`) when its `opened_at < as_of`. The agent case's
+  `outcome` field carries its `status`.
+- `write_case` stores only ids that resolve to real vertices and returns the
+  rest in `ids_not_in_dataset`. `graph_case_id` defaults to `GC-<case_id>`, so
+  a rerun overwrites rather than duplicates.

@@ -1,0 +1,193 @@
+// Network read tools: shared device profile (R6) and ring detection.
+//
+// The finding that shaped both: half of all device profiles are shared by more
+// than one card and the largest by 1,013, so sharing alone is not evidence.
+// The one real ring in the data (SM-G935F, 52 cards) is not rare either. What
+// sets it apart is that 100 percent of its rows carry id_15 = New and an
+// anonymous proxy. So I report breadth AND that signature, and ring_detect
+// follows an edge through a profile only when it is rare or carries it.
+
+USE GRAPH FraudInvestigation
+
+CREATE OR REPLACE QUERY shared_device_profile(VERTEX<DeviceProfile> device_profile, DATETIME as_of,
+                                              INT max_cards = 60, INT max_cases = 25)
+FOR GRAPH FraudInvestigation SYNTAX v2 {
+  TYPEDEF TUPLE<STRING card_id, STRING customer_id, INT n, DATETIME first_seen, DATETIME last_seen> CardT;
+  TYPEDEF TUPLE<STRING case_id, STRING source, STRING customer_id, STRING card_id, STRING outcome,
+                STRING pattern, DOUBLE exposure_usd, DATETIME closed_at, STRING actions_taken,
+                STRING report_filed, STRING analyst_notes> CaseT;
+  SetAccum<STRING> @@all_cards, @@all_custs, @@listed;
+  MapAccum<STRING, SumAccum<INT>> @@cn;
+  MapAccum<STRING, MinAccum<DATETIME>> @@cfirst;
+  MapAccum<STRING, MaxAccum<DATETIME>> @@clast;
+  HeapAccum<CardT>(1, first_seen ASC) @@cards;
+  HeapAccum<CaseT>(1, closed_at DESC) @@cases;
+  SetAccum<STRING> @@fraud_cases;
+  SumAccum<INT> @@rows, @@marked_new, @@proxy, @@anon;
+  SumAccum<STRING> @@dinfo, @@os, @@browser, @@screen;
+  INT parts = 0;
+
+  @@cards.resize(max_cards);
+  @@cases.resize(max_cases);
+
+  D = {device_profile};
+  D = SELECT d FROM D:d
+      ACCUM @@dinfo += d.device_info, @@os += d.os, @@browser += d.browser, @@screen += d.screen;
+  IF @@dinfo != "unknown" THEN parts = parts + 1; END;
+  IF @@os != "unknown" THEN parts = parts + 1; END;
+  IF @@browser != "unknown" THEN parts = parts + 1; END;
+  IF @@screen != "unknown" THEN parts = parts + 1; END;
+
+  // Breadth is all-time on purpose: whether a profile is a generic browser
+  // class is a property of the string, not of the investigation date. Per-card
+  // rows and cases are cut at as_of.
+  T = SELECT t FROM D:d -(DEVICE_USED_BY>)- Transaction:t
+      ACCUM @@all_cards += t.card_id, @@all_custs += t.customer_id,
+            IF t.ts <= as_of THEN
+              @@rows += 1,
+              IF t.id_15 == "New" THEN @@marked_new += 1 END,
+              IF t.id_23 != "" AND t.id_23 != "unknown" THEN @@proxy += 1 END,
+              IF t.id_23 == "IP_PROXY:ANONYMOUS" THEN @@anon += 1 END,
+              @@cn += (t.card_id -> 1), @@cfirst += (t.card_id -> t.ts),
+              @@clast += (t.card_id -> t.ts)
+            END;
+
+  FOREACH (cid, n) IN @@cn DO
+    @@cards += CardT(cid, substr(cid, 0, 6), n, @@cfirst.get(cid), @@clast.get(cid));
+  END;
+  FOREACH c IN @@cards DO @@listed += c.card_id; END;
+
+  // I look cases up for the listed cards and every other card their customer
+  // holds, because a prior case on a sibling card is still history for that
+  // issuer account.
+  K = to_vertex_set(@@listed, "Card");
+  U = SELECT u FROM K:c -(OWNED_BY>)- Customer:u;
+  K2 = SELECT c FROM U:u -(OWNS>)- Card:c;
+  CC = SELECT k FROM K2:c -((CARD_OF_CASE>|CONNECTED_FROM>))- ClosedCase:k
+       WHERE k.closed_at <= as_of
+       POST-ACCUM @@cases += CaseT(k.case_id, "closed_case", k.customer_id, k.card_id, k.outcome,
+                                   k.pattern, k.exposure_usd, k.closed_at, k.actions_taken,
+                                   k.report_filed, k.analyst_notes),
+                  IF k.outcome == "confirmed_fraud" THEN @@fraud_cases += k.case_id END;
+  // Agent-written cases become visible once their own opened_at has passed,
+  // which is how a later benchmark case sees an earlier one and never a later.
+  IC = SELECT k FROM K2:c -((CARD_OF_CASE>|CONNECTED_FROM>))- InvestigationCase:k
+       WHERE k.opened_at < as_of
+       POST-ACCUM @@cases += CaseT(k.case_id, "agent_memory", k.customer_id, k.card_id, k.status,
+                                   k.pattern, k.exposure_usd, k.opened_at, "", "", k.summary);
+
+  PRINT device_profile AS device_profile, @@all_cards.size() AS n_cards,
+        @@all_custs.size() AS n_customers, parts AS parts_present, @@rows AS rows_to_as_of,
+        @@marked_new AS rows_marked_new, @@proxy AS rows_with_proxy, @@anon AS rows_anonymous_proxy,
+        @@cn.size() AS n_cards_to_as_of, @@cards AS cards, @@cases AS prior_cases,
+        @@fraud_cases AS confirmed_fraud_prior_cases;
+}
+
+CREATE OR REPLACE QUERY ring_detect(STRING card_id = "", STRING device_profile = "", DATETIME as_of,
+                                    INT max_customers = 8, INT max_hops = 1, INT max_members = 40,
+                                    INT signature_max_customers = 200, INT recent_days = 45)
+FOR GRAPH FraudInvestigation SYNTAX v2 {
+  // This is weakly connected components restricted to the seed's component:
+  // a breadth-first closure over the bipartite graph of cards and the device
+  // profiles they used up to as_of. A global WCC (GDS tg_wcc) cannot honour
+  // as_of and would glue half the bank together through generic browser
+  // strings, so the component is computed per call with edges filtered by
+  // time and by how specific the shared profile is.
+  //
+  // max_hops defaults to 1. On HHG-014 a second hop doubled the ring from 44
+  // to 88 cards by following the victims' own home devices, which says nothing
+  // about the fraudster. A caller that wants the wider picture can raise it.
+  OrAccum @seen, @qual, @visited;
+  SetAccum<STRING> @custs, @cards, @recent_custs;
+  SumAccum<INT> @rows, @marked_new, @anon, @proxy;
+  SumAccum<STRING> @why;
+  SetAccum<STRING> @@seed_card, @@seed_dev, @@frontier_ids, @@member_ids;
+  MapAccum<STRING, SumAccum<INT>> @@mn;
+  MapAccum<STRING, SetAccum<STRING>> @@mvia;
+  SetAccum<STRING> @outcomes, @case_ids;
+  SetAccum<STRING> @@fraud_members, @@member_custs;
+  SumAccum<INT> @n;
+  SetAccum<STRING> @via;
+  INT hop = 0, total = 0;
+  DATETIME recent_from;
+
+  recent_from = datetime_sub(as_of, INTERVAL recent_days DAY);
+  IF card_id != "" THEN @@seed_card += card_id; END;
+  IF device_profile != "" THEN @@seed_dev += device_profile; END;
+  F = to_vertex_set(@@seed_card, "Card");
+  F = SELECT c FROM F:c POST-ACCUM c.@visited = TRUE, @@member_ids += c.card_id;
+  // A full scan of 9,706 profiles is cheaper than fighting the ANY type
+  // to_vertex_set returns, which cannot be unioned with a typed set.
+  D0 = SELECT d FROM DeviceProfile:d WHERE @@seed_dev.contains(d.device_profile);
+  AllQ (DeviceProfile) = {};
+
+  WHILE hop < max_hops AND (F.size() > 0 OR hop == 0) DO
+    Devs = SELECT d FROM F:c -(MADE>)- Transaction:t -(FROM_DEVICE>)- DeviceProfile:d
+           WHERE t.ts <= as_of AND NOT d.@seen;
+    IF hop == 0 THEN Devs = Devs UNION D0; END;
+    Devs = SELECT d FROM Devs:d WHERE NOT d.@seen POST-ACCUM d.@seen = TRUE;
+    Devs = SELECT d FROM Devs:d -(DEVICE_USED_BY>)- Transaction:t
+           WHERE t.ts <= as_of
+           ACCUM d.@custs += t.customer_id, d.@rows += 1,
+                 IF t.ts >= recent_from THEN d.@recent_custs += t.customer_id END,
+                 IF t.id_15 == "New" THEN d.@marked_new += 1 END,
+                 IF t.id_23 == "IP_PROXY:ANONYMOUS" THEN d.@anon += 1 END,
+                 IF t.id_23 != "" AND t.id_23 != "unknown" THEN d.@proxy += 1 END
+           POST-ACCUM
+             // Rarity alone chained a single card into 2,000 customers over
+             // three hops on the first run, because small Android fingerprints
+             // with the OS and screen missing are rare but meaningless. So a
+             // rare profile must also be complete and carry novelty or a proxy.
+             IF d.@custs.size() >= 2 AND d.@custs.size() <= max_customers
+                AND d.device_info != "unknown" AND d.os != "unknown" AND d.browser != "unknown"
+                AND d.screen != "unknown"
+                AND (d.@marked_new * 5 >= d.@rows * 4 OR d.@proxy * 2 >= d.@rows) THEN
+               d.@qual = TRUE, d.@why = "rare_complete_profile_new_or_proxied"
+             END,
+             IF d.@custs.size() >= 2 AND d.@custs.size() <= signature_max_customers
+                AND d.@anon * 2 >= d.@rows AND d.@marked_new * 5 >= d.@rows * 4 THEN
+               d.@qual = TRUE, d.@why = "new_device_behind_anonymous_proxy"
+             END;
+    // The findings ask for a narrow window as well: a profile two strangers
+    // shared in July says little about an alert in December. So at least two
+    // customers must have used it in the recent_days before as_of.
+    Q = SELECT d FROM Devs:d WHERE d.@qual AND d.@recent_custs.size() >= 2;
+    AllQ = AllQ UNION Q;
+    @@frontier_ids.clear();
+    X = SELECT d FROM Q:d -(DEVICE_USED_BY>)- Transaction:t
+        WHERE t.ts <= as_of
+        ACCUM d.@cards += t.card_id, @@frontier_ids += t.card_id,
+              @@mn += (t.card_id -> 1), @@mvia += (t.card_id -> d.device_profile);
+    F = to_vertex_set(@@frontier_ids, "Card");
+    F = SELECT c FROM F:c WHERE NOT c.@visited
+        POST-ACCUM c.@visited = TRUE, @@member_ids += c.card_id;
+    hop = hop + 1;
+  END;
+
+  M = to_vertex_set(@@member_ids, "Card");
+  M = SELECT c FROM M:c
+      POST-ACCUM c.@n = @@mn.get(c.card_id), c.@via = @@mvia.get(c.card_id),
+                 @@member_custs += c.customer_id;
+  total = M.size();
+  M = SELECT c FROM M:c ORDER BY c.@n DESC LIMIT max_members;
+  CC = SELECT k FROM M:c -((CARD_OF_CASE>|CONNECTED_FROM>))- ClosedCase:k
+       WHERE k.closed_at <= as_of
+       ACCUM c.@outcomes += k.outcome, c.@case_ids += k.case_id,
+             IF k.outcome == "confirmed_fraud" THEN @@fraud_members += c.card_id END;
+  IC = SELECT k FROM M:c -((CARD_OF_CASE>|CONNECTED_FROM>))- InvestigationCase:k
+       WHERE k.opened_at < as_of
+       ACCUM c.@outcomes += k.status, c.@case_ids += k.case_id;
+
+  PRINT card_id AS seed_card, device_profile AS seed_device_profile, total AS ring_size,
+        M.size() AS members_listed,
+        @@member_custs.size() AS distinct_customers,
+        @@fraud_members.size() AS confirmed_fraud_members,
+        (@@member_custs.size() >= 2 AND M.size() >= 2) AS is_ring,
+        hop AS hops_run;
+  PRINT AllQ[AllQ.device_profile AS value, AllQ.@why AS why_followed, AllQ.@custs.size() AS n_customers,
+             AllQ.@recent_custs.size() AS n_customers_recent,
+             AllQ.@rows AS n_txns, AllQ.@marked_new AS rows_marked_new, AllQ.@anon AS rows_anonymous_proxy,
+             AllQ.@cards AS cards] AS shared_elements;
+  PRINT M[M.card_id AS card_id, M.customer_id AS customer_id, M.@n AS n_shared_txns,
+          M.@via AS shared, M.@outcomes AS prior_case_outcomes, M.@case_ids AS prior_case_ids] AS members;
+}
