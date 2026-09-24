@@ -1,0 +1,283 @@
+// FraudInvestigation schema, TigerGraph Community Edition 4.2.5.
+//
+// Two things about this version drove the design and are worth knowing before
+// you edit it:
+//
+//   * STRING COMPRESS was removed in 4.x. Every categorical attribute is a
+//     plain STRING, which is why the Transaction attribute list is kept to the
+//     shortlist in plans/findings/dataset.md section 8 rather than all 393
+//     columns. The container has 7.6 GB of RAM and TigerGraph holds 3 GB of it
+//     before a single row is loaded.
+//   * Vector attributes cannot be declared inside CREATE VERTEX and cannot be
+//     added with ADD VECTOR ATTRIBUTE. The only form 4.2.5 accepts is
+//     ALTER VERTEX <v> ADD VECTOR ATTRIBUTE <name>(DIMENSION=n, METRIC="...")
+//     inside a SCHEMA_CHANGE JOB, which is why vectors are a second job below.
+//     The index type is HNSW and the data type FLOAT; neither is selectable.
+//
+// Schema changes cost 30 to 45 seconds each regardless of size, so everything
+// that can go in one job does.
+
+CREATE GRAPH FraudInvestigation()
+
+USE GRAPH FraudInvestigation
+
+CREATE SCHEMA_CHANGE JOB fi_schema FOR GRAPH FraudInvestigation {
+
+  // ---- entity layer -------------------------------------------------------
+
+  // customer_id is a 1:1 relabelling of card1, so it identifies an issuer
+  // account and not a person. One of them reaches 14,891 transactions.
+  ADD VERTEX Customer (
+    PRIMARY_ID customer_id STRING,
+    card1 STRING,
+    n_cards UINT,
+    first_ts DATETIME,
+    last_ts DATETIME,
+    n_txns UINT
+  ) WITH primary_id_as_attribute="true";
+
+  // card_id is derived, not a source column: customer_id + "-K" + the 1-based
+  // rank of this row's card6 among the customer's distinct card6 values, empty
+  // sorting first. See graph/prep/prepare.py for the validation.
+  ADD VERTEX Card (
+    PRIMARY_ID card_id STRING,
+    customer_id STRING,
+    card1 STRING,
+    card2 STRING,
+    card3 STRING,
+    network STRING,          // card4: visa, mastercard, american express, discover
+    card5 STRING,
+    card_type STRING,        // card6: credit, debit
+    first_ts DATETIME,
+    last_ts DATETIME,
+    n_txns UINT
+  ) WITH primary_id_as_attribute="true";
+
+  // card_id, customer_id, device_profile and the id_* fields are denormalised
+  // onto Transaction on purpose. Almost every read tool filters on them, and a
+  // filter on an attribute beats a hop in every query I timed.
+  //
+  // Missing numeric readings carry -999999.0, not 0, because 0 is a real value
+  // for every D and V column. Queries render the sentinel back to JSON null.
+  ADD VERTEX Transaction (
+    PRIMARY_ID txn_id STRING,
+    card_id STRING,
+    customer_id STRING,
+    ts DATETIME,
+    ts_epoch UINT,
+    hour_of_day UINT,
+    amt FLOAT,
+    product_cd STRING,
+    channel STRING,
+    risk_score FLOAT,
+    addr1 STRING,
+    addr2 STRING,
+    dist1 FLOAT,
+    dist2 FLOAT,
+    p_email STRING,
+    r_email STRING,
+    // identity.csv covers only 144,432 of 590,742 rows, and 6,640 online
+    // transactions have no identity row at all. has_identity says which.
+    has_identity BOOL,
+    device_profile STRING,
+    device_type STRING,
+    id_12 STRING,
+    id_15 STRING,            // New / Found / Unknown: the pattern 3 signal
+    id_23 STRING,            // proxy: TRANSPARENT / ANONYMOUS / HIDDEN
+    id_34 STRING,
+    // Unnamed Vesta model features. The README is explicit that these have no
+    // published definitions, so evidence that cites them must say so.
+    D1 FLOAT, D2 FLOAT, D3 FLOAT, D5 FLOAT, D7 FLOAT, D11 FLOAT,
+    M4 STRING, M7 STRING,
+    V10 FLOAT, V48 FLOAT, V70 FLOAT, V95 FLOAT, V96 FLOAT, V97 FLOAT,
+    V100 FLOAT, V101 FLOAT, V102 FLOAT, V103 FLOAT,
+    V139 FLOAT, V140 FLOAT, V146 FLOAT, V147 FLOAT,
+    V279 FLOAT, V283 FLOAT, V284 FLOAT, V285 FLOAT,
+    V287 FLOAT, V288 FLOAT, V289 FLOAT, V312 FLOAT
+  ) WITH primary_id_as_attribute="true";
+
+  // Primary id is the composed string "DeviceInfo | OS | browser | screen",
+  // because that exact string is what connected_device_profiles in the answer
+  // file expects. Missing parts carry the literal token "unknown"; roughly half
+  // of all profiles have at least one missing part.
+  ADD VERTEX DeviceProfile (
+    PRIMARY_ID device_profile STRING,
+    device_info STRING,
+    os STRING,
+    browser STRING,
+    screen STRING
+  ) WITH primary_id_as_attribute="true";
+
+  ADD VERTEX EmailDomain (
+    PRIMARY_ID domain STRING
+  ) WITH primary_id_as_attribute="true";
+
+  ADD VERTEX BillingRegion (
+    PRIMARY_ID addr1 STRING,
+    country STRING
+  ) WITH primary_id_as_attribute="true";
+
+  ADD VERTEX ProductCode (
+    PRIMARY_ID code STRING,
+    channel STRING
+  ) WITH primary_id_as_attribute="true";
+
+  // ---- memory layer -------------------------------------------------------
+
+  ADD VERTEX ClosedCase (
+    PRIMARY_ID case_id STRING,
+    customer_id STRING,
+    card_id STRING,
+    opened_at DATETIME,
+    closed_at DATETIME,
+    outcome STRING,          // confirmed_fraud / cleared
+    pattern STRING,          // the five, plus undocumented and none
+    first_fraud_txn_id STRING,
+    n_txns UINT,
+    exposure_usd DOUBLE,
+    actions_taken STRING,
+    report_filed STRING,
+    analyst_notes STRING
+  ) WITH primary_id_as_attribute="true";
+
+  // Named InvestigationCase because Case is a reserved keyword in GSQL 4.2.5
+  // (CASE ... WHEN). The contract calls it Case; this is the same vertex.
+  // The Case vertex stores the InternalCase object, per
+  // backend/contracts/internal_case.md, not the answer projection. The extra
+  // fields are what makes a retrieved case useful as memory: a later
+  // investigation wants to know what the earlier agent was unsure about.
+  ADD VERTEX InvestigationCase (
+    PRIMARY_ID graph_case_id STRING,
+    case_id STRING,
+    customer_id STRING,
+    card_id STRING,
+    status STRING,
+    verdict STRING,
+    fraud_probability DOUBLE,
+    confidence DOUBLE,
+    pattern STRING,
+    pattern_description STRING,
+    first_suspicious_txn_id STRING,
+    exposure_usd DOUBLE,
+    summary STRING,
+    stop_reason STRING,
+    trigger_type STRING,
+    trigger_text STRING,
+    opened_at DATETIME,
+    written_at DATETIME,
+    affected_txn_ids SET<STRING>,
+    connected_card_ids SET<STRING>,
+    connected_device_profiles SET<STRING>,
+    similar_prior_cases SET<STRING>,
+    unknowns SET<STRING>,
+    evidence_json STRING,
+    internal_json STRING
+  ) WITH primary_id_as_attribute="true";
+
+  // One vertex per documented pattern plus undocumented and none. Carries the
+  // README text so pattern_match and the GraphRAG retrieval share one source.
+  ADD VERTEX FraudPattern (
+    PRIMARY_ID pattern STRING,
+    title STRING,
+    description STRING,
+    signals STRING,
+    policy_rules STRING
+  ) WITH primary_id_as_attribute="true";
+
+  ADD VERTEX PolicyChunk (
+    PRIMARY_ID chunk_id STRING,
+    source STRING,           // fraud_policy / pattern / readme / regulatory
+    section STRING,
+    title STRING,
+    text STRING,
+    ref STRING               // what the agent copies into evidence[].ref
+  ) WITH primary_id_as_attribute="true";
+
+  // record_decision needs a place to put an action that was recommended but
+  // not authorised. A blocked attempt has to stay visible in the case record,
+  // so it is a vertex and not a dropped write.
+  ADD VERTEX Decision (
+    PRIMARY_ID decision_id STRING,
+    graph_case_id STRING,
+    action STRING,
+    route STRING,
+    authorized BOOL,
+    executed BOOL,
+    actor STRING,
+    phase STRING,            // initial / final
+    reason STRING,
+    created_at DATETIME
+  ) WITH primary_id_as_attribute="true";
+
+  // ---- edges --------------------------------------------------------------
+  //
+  // Reverse edges are added only where a query actually traverses backwards.
+  // BILLED_IN and RECIPIENT_EMAIL get one because ring detection needs it;
+  // FOR_PRODUCT and PURCHASER_EMAIL do not, because those targets are hubs
+  // with five and sixty members and a reverse walk from them would touch most
+  // of the graph for no benefit.
+
+  ADD DIRECTED EDGE OWNS (FROM Customer, TO Card) WITH REVERSE_EDGE="OWNED_BY";
+  ADD DIRECTED EDGE MADE (FROM Card, TO Transaction);
+
+  ADD DIRECTED EDGE FROM_DEVICE (
+    FROM Transaction, TO DeviceProfile
+    | FROM InvestigationCase, TO DeviceProfile
+  ) WITH REVERSE_EDGE="DEVICE_USED_BY";
+
+  ADD DIRECTED EDGE PURCHASER_EMAIL (FROM Transaction, TO EmailDomain);
+  ADD DIRECTED EDGE RECIPIENT_EMAIL (FROM Transaction, TO EmailDomain)
+    WITH REVERSE_EDGE="RECIPIENT_EMAIL_OF";
+  ADD DIRECTED EDGE BILLED_IN (FROM Transaction, TO BillingRegion)
+    WITH REVERSE_EDGE="BILLING_REGION_OF";
+  ADD DIRECTED EDGE FOR_PRODUCT (FROM Transaction, TO ProductCode);
+
+  // Built in ts order within a card. The source file is already ts sorted, so
+  // the prep step carries the predecessor on each row and the loader never has
+  // to sort anything.
+  ADD DIRECTED EDGE NEXT (FROM Transaction, TO Transaction)
+    WITH REVERSE_EDGE="PREV";
+
+  ADD DIRECTED EDGE INVOLVES (FROM ClosedCase, TO Transaction)
+    WITH REVERSE_EDGE="INVOLVED_IN";
+  ADD DIRECTED EDGE ON_CARD (
+    FROM ClosedCase, TO Card
+    | FROM InvestigationCase, TO Card
+  ) WITH REVERSE_EDGE="CARD_OF_CASE";
+  ADD DIRECTED EDGE CONNECTED_TO (
+    FROM ClosedCase, TO Card
+    | FROM InvestigationCase, TO Card
+  ) WITH REVERSE_EDGE="CONNECTED_FROM";
+
+  ADD DIRECTED EDGE CASE_INVOLVES (FROM InvestigationCase, TO Transaction)
+    WITH REVERSE_EDGE="CASE_INVOLVED_IN";
+  ADD DIRECTED EDGE MATCHES_PATTERN (
+    FROM InvestigationCase, TO FraudPattern
+    | FROM ClosedCase, TO FraudPattern
+  ) WITH REVERSE_EDGE="PATTERN_OF";
+
+  // score is cosine similarity blended with entity overlap; basis records
+  // which half carried it, so the agent can cite the reason it matched.
+  ADD DIRECTED EDGE SIMILAR_TO (
+    FROM InvestigationCase, TO ClosedCase
+    | FROM InvestigationCase, TO InvestigationCase,
+    score DOUBLE,
+    basis STRING
+  ) WITH REVERSE_EDGE="SIMILAR_FROM";
+
+  ADD DIRECTED EDGE HAS_DECISION (FROM InvestigationCase, TO Decision);
+}
+
+RUN SCHEMA_CHANGE JOB fi_schema
+
+// Vectors are a separate job because 4.2.5 only accepts ALTER VERTEX ... ADD
+// VECTOR ATTRIBUTE, which the parser rejects inside the same job that creates
+// the vertex. Dimension 384 matches BAAI/bge-small-en-v1.5 from .env.example.
+CREATE SCHEMA_CHANGE JOB fi_vectors FOR GRAPH FraudInvestigation {
+  ALTER VERTEX ClosedCase ADD VECTOR ATTRIBUTE emb(DIMENSION=384, METRIC="COSINE");
+  ALTER VERTEX InvestigationCase ADD VECTOR ATTRIBUTE emb(DIMENSION=384, METRIC="COSINE");
+  ALTER VERTEX FraudPattern ADD VECTOR ATTRIBUTE emb(DIMENSION=384, METRIC="COSINE");
+  ALTER VERTEX PolicyChunk ADD VECTOR ATTRIBUTE emb(DIMENSION=384, METRIC="COSINE");
+}
+
+RUN SCHEMA_CHANGE JOB fi_vectors

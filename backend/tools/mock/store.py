@@ -38,9 +38,13 @@ class Store:
 
     # Lookup indexes built once.
     _by_txn: dict[int, int] = None  # type: ignore[assignment]
+    _breadth_cache: dict[str, tuple[int, int]] = None  # type: ignore[assignment]
+    _base_rate_cache: dict[str, float] = None  # type: ignore[assignment]
 
     def __post_init__(self) -> None:
         self._by_txn = {int(t): i for i, t in enumerate(self.txns["TransactionID"].to_numpy())}
+        self._breadth_cache = {}
+        self._base_rate_cache = {}
 
     # ---- basic accessors -------------------------------------------------
 
@@ -88,79 +92,114 @@ class Store:
     def device_profile_breadth(self, device_profile: str) -> tuple[int, int]:
         """(distinct cards, distinct customers) ever seen on this profile.
 
-        A profile like `Windows | Windows 10 | chrome 63.0 | 1920x1080` is shared
-        by hundreds of customers and is not evidence of anything. Rarity is what
-        makes a shared device meaningful, so the scorer needs this number.
+        Half the profiles in this dataset are shared by more than one card and
+        the biggest is shared by 1,013, so sharing alone says nothing. Rarity is
+        one of the two things that make a shared device meaningful.
         """
+        cached = self._breadth_cache.get(device_profile)
+        if cached is not None:
+            return cached
         ids = set(
             self.identity.loc[
                 self.identity["device_profile"] == device_profile, "TransactionID"
             ].astype("int64")
         )
         if not ids:
-            return (0, 0)
-        df = self.txns[self.txns["TransactionID"].isin(ids)]
-        return (int(df["card_id"].nunique()), int(df["customer_id"].nunique()))
+            result = (0, 0)
+        else:
+            df = self.txns[self.txns["TransactionID"].isin(ids)]
+            result = (int(df["card_id"].nunique()), int(df["customer_id"].nunique()))
+        self._breadth_cache[device_profile] = result
+        return result
+
+    def device_profile_signature(self, device_profile: str) -> dict:
+        """What makes a shared profile evidence rather than a browser class.
+
+        The scout's finding: the one profile in this dataset that really is a
+        ring carries id_15=New on 100 percent of its rows and an anonymous proxy
+        on 100 percent of them, across 52 cards. Generic profiles shared by
+        hundreds of cards have neither concentration. So breadth alone is the
+        wrong test; breadth plus novelty plus proxy concentration is the right
+        one.
+        """
+        rows = self.identity[self.identity["device_profile"] == device_profile]
+        n = len(rows)
+        if n == 0:
+            return {"n_rows": 0, "new_share": 0.0, "proxy_share": 0.0, "anonymous_share": 0.0, "parts_present": 0}
+        status = rows["id_15"].fillna("")
+        proxy = rows["id_23"].fillna("")
+        parts = [p for p in device_profile.split(" | ")]
+        return {
+            "n_rows": n,
+            "new_share": round(float((status == "New").mean()), 3),
+            "proxy_share": round(float((proxy != "").mean()), 3),
+            "anonymous_share": round(float(proxy.str.contains("ANONYMOUS").mean()), 3),
+            "parts_present": sum(1 for p in parts if p and p.lower() != "unknown"),
+        }
 
     def closed_cases_before(self, as_of: str | datetime) -> pd.DataFrame:
         cut = _to_ts(as_of)
         return self.closed_cases[self.closed_cases["closed_at_ts"] <= cut]
 
+    def confirmed_fraud_card_base_rate(self, as_of: str | datetime) -> float:
+        """Share of all cards in the bank carrying a confirmed-fraud closed case.
 
-def _assign_card_ids(txns: pd.DataFrame, case_pack: pd.DataFrame) -> pd.DataFrame:
+        Any "these cards have prior fraud" signal has to be read against this,
+        or a device shared by 200 cards looks damning purely from volume.
+        """
+        key = str(_to_ts(as_of).date())
+        cached = self._base_rate_cache.get(key)
+        if cached is not None:
+            return cached
+        cc = self.closed_cases_before(as_of)
+        confirmed = cc[cc["outcome"] == "confirmed_fraud"]
+        total_cards = 14317  # distinct customer/card6 pairs in the full dataset
+        rate = len(set(confirmed["card_id"])) / total_cards if total_cards else 0.0
+        self._base_rate_cache[key] = rate
+        return rate
+
+
+NULL_SENTINEL = "\x00null"
+UNKNOWN_PART = "unknown"
+
+
+def compose_device_profile(frame: pd.DataFrame) -> pd.Series:
+    """`DeviceInfo | OS | browser | screen`, space-pipe-space.
+
+    id_30 and id_33 are null about half the time, so a single null token has to
+    be chosen and kept: `unknown`. Dropping null parts instead would collapse
+    two different devices onto the same string and would not match the format
+    the answer file expects in connected_device_profiles.
+    """
+    parts = []
+    for col in ("DeviceInfo", "id_30", "id_31", "id_33"):
+        series = frame[col].astype("object").where(frame[col].notna(), UNKNOWN_PART)
+        parts.append(series.astype(str).str.strip().replace({"": UNKNOWN_PART}))
+    return parts[0] + " | " + parts[1] + " | " + parts[2] + " | " + parts[3]
+
+
+def _assign_card_ids(txns: pd.DataFrame, card_index: pd.DataFrame) -> pd.DataFrame:
     """Derive `C01234-K1` style card ids.
 
-    The dataset never publishes the mapping, only the labels in case_pack.csv and
-    closed_cases_history.csv. Ranking a customer's cards by first-seen timestamp
-    descending reproduces 2274 of 2359 closed-case labels (96.4 percent), which
-    is the best of the orderings tested, so that is the rule. For the 20
-    benchmark cards the label is then overwritten with the exact case_pack
-    string, because those are the ones that get graded.
+    card_id is not a column. The rule is customer_id + "-K" + rank(card6), nulls
+    ranked first then ascending lexicographic, which reproduces every label in
+    closed_cases_history.csv and every card in case_pack.csv. The ranking has to
+    come from the customer's whole history, so it arrives precomputed from
+    build_card_index.py rather than being derived from this slice.
     """
     txns = txns.copy()
-    txns["card_key"] = (
-        txns["card1"].astype("Int64").astype(str) + "/" + txns["card2"].astype("Int64").astype(str)
-    )
-    grouped = (
-        txns.groupby(["customer_id", "card_key"], sort=False)
-        .agg(first_ts=("ts", "min"), n=("TransactionID", "size"))
-        .reset_index()
-    )
-    grouped = grouped.sort_values(
-        ["customer_id", "first_ts", "n", "card_key"], ascending=[True, False, True, True]
-    )
-    grouped["card_idx"] = grouped.groupby("customer_id").cumcount() + 1
-    grouped["card_id"] = grouped["customer_id"].astype(str) + "-K" + grouped["card_idx"].astype(str)
-
-    txns = txns.drop(columns=[c for c in ("card_id", "card_idx") if c in txns.columns])
-    txns = txns.merge(
-        grouped[["customer_id", "card_key", "card_id", "card_idx"]],
-        on=["customer_id", "card_key"],
+    txns = txns.drop(columns=[c for c in ("card_id", "card_idx", "card_key") if c in txns.columns])
+    txns["card6_key"] = txns["card6"].fillna(NULL_SENTINEL).astype(str)
+    merged = txns.merge(
+        card_index.rename(columns={"card6": "card6_key"})[["customer_id", "card6_key", "card_id", "card_idx"]],
+        on=["customer_id", "card6_key"],
         how="left",
     )
-
-    # Anchor the benchmark cards to the published labels.
-    by_txn = txns.set_index("TransactionID")
-    for _, case in case_pack.iterrows():
-        flagged = int(case["flagged_txn_id"])
-        if flagged not in by_txn.index:
-            continue
-        key = by_txn.loc[flagged, "card_key"]
-        if isinstance(key, pd.Series):
-            key = key.iloc[0]
-        wanted = str(case["card_id"])
-        same_customer = txns["customer_id"] == str(case["customer_id"])
-        currently = txns.loc[same_customer & (txns["card_key"] == key), "card_id"]
-        if currently.empty or currently.iloc[0] == wanted:
-            continue
-        # Swap the two labels rather than assigning, so the customer keeps a
-        # distinct id per card.
-        other = txns.loc[same_customer & (txns["card_id"] == wanted), "card_key"]
-        held = currently.iloc[0]
-        txns.loc[same_customer & (txns["card_key"] == key), "card_id"] = wanted
-        if not other.empty:
-            txns.loc[same_customer & (txns["card_key"] == other.iloc[0]), "card_id"] = held
-    return txns
+    # A customer never seen by the index cannot happen with the full-file build,
+    # but fall back to a single card rather than emitting a null id.
+    merged["card_id"] = merged["card_id"].fillna(merged["customer_id"].astype(str) + "-K1")
+    merged["card_idx"] = merged["card_idx"].fillna(1).astype(int)
+    return merged
 
 
 def _load_closed_cases(path: Path) -> pd.DataFrame:
@@ -186,9 +225,15 @@ def get_store() -> Store:
         raise FileNotFoundError(
             f"{txn_path} missing. Run: python -m backend.tools.mock.extract_slice"
         )
+    index_path = cache / "card_index.parquet"
+    if not index_path.exists():
+        raise FileNotFoundError(
+            f"{index_path} missing. Run: python -m backend.tools.mock.build_card_index"
+        )
     with _LOCK:
         txns = pd.read_parquet(txn_path)
         identity = pd.read_parquet(cache / "identity_slice.parquet")
+        card_index = pd.read_parquet(index_path)
         case_pack = pd.read_csv(settings.data_dir / "case_pack.csv")
         closed = _load_closed_cases(settings.data_dir / "closed_cases_history.csv")
 
@@ -197,9 +242,11 @@ def get_store() -> Store:
         txns["TransactionAmt"] = txns["TransactionAmt"].astype(float)
         txns["risk_score"] = txns["risk_score"].astype(float)
         identity["TransactionID"] = identity["TransactionID"].astype("int64")
-        identity["device_profile"] = identity["device_profile"].fillna("")
+        # Recompose rather than trusting the cached column, so there is one
+        # definition of the profile string in the codebase.
+        identity["device_profile"] = compose_device_profile(identity)
 
-        txns = _assign_card_ids(txns, case_pack)
+        txns = _assign_card_ids(txns, card_index)
         txns = txns.sort_values("ts").reset_index(drop=True)
         return Store(txns=txns, identity=identity, closed_cases=closed, case_pack=case_pack)
 
