@@ -4,9 +4,9 @@ Replace `[LINK]` with the blog or demo video URL before posting.
 
 ## X
 
-Built a fraud investigation agent on @TigerGraphDB for the HHGOA challenge with @247pmstudio.
+Built a fraud investigation agent on @TigerGraphDB for the @247pmstudio HHGOA challenge.
 
-It walks from a flagged card to shared devices and past cases, scores risk and confidence separately, asks for evidence when unsure, and routes blocks and SARs to a human.
+It walks from a flagged card to shared devices and past cases, scores risk and confidence apart, asks for evidence when unsure, and routes blocks and SARs to a human.
 
 [LINK]
 
