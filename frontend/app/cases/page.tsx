@@ -87,8 +87,8 @@ export default function QueuePage() {
   return (
     <>
       <CrumbBand crumbs={["fraud", "case queue"]} right={cases ? <span className={awaiting ? "text-flame-500" : ""}>{`// ${awaiting} awaiting approval`}</span> : null} />
-      <div className="grid grid-cols-[240px_minmax(0,1fr)] h-[calc(100vh-var(--chrome-h))]">
-        <aside className="border-r border-rust-800 bg-ember-950 overflow-auto p-4 space-y-5" aria-label="Filters">
+      <div className="grid grid-cols-1 md:grid-cols-[240px_minmax(0,1fr)] h-[calc(100vh-var(--chrome-h))]">
+        <aside className="hidden md:block border-r border-rust-800 bg-ember-950 overflow-auto p-4 space-y-5" aria-label="Filters">
           <FilterGroup label="Status">
             {STATUSES.map((s) => (
               <Check key={s} label={s} checked={status.has(s)} onChange={() => toggle(status, s, setStatus)} />

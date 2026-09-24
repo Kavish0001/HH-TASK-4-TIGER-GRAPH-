@@ -2,6 +2,8 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // Lets a production build run beside a live dev server without sharing .next.
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   // ESLint is not installed in this package; type checking still runs in the build.
   eslint: { ignoreDuringBuilds: true },
   // Keeps the Next dev badge out of demo screenshots.
