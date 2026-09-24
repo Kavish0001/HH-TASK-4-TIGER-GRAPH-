@@ -7,21 +7,25 @@ import { API_URL, IS_LIVE } from "@/lib/api";
 import { Chip, cx } from "./ui";
 
 const NAV = [
-  { href: "/", label: "queue" },
+  { href: "/", label: "overview" },
+  { href: "/cases", label: "queue" },
   { href: "/launch", label: "launcher" },
 ];
 
 export function TopBar() {
   const path = usePathname();
   return (
-    <header className="h-[46px] flex items-center gap-6 px-4 border-b border-rust-800 bg-ink-950 sticky top-0 z-20">
-      <Link href="/" className="flex flex-col leading-none">
-        <span className="font-display font-bold text-[15px] tracking-tight text-text">HHGOA fraud desk</span>
-        <span className="mt-1 h-[2px] w-7 bg-flame-500" aria-hidden />
+    <header className="h-[46px] flex items-center gap-3 sm:gap-6 px-4 border-b border-rust-800 bg-ink-950 sticky top-0 z-20">
+      <Link href="/" className="flex items-center gap-2 leading-none" aria-label="HHGOA fraud desk, home">
+        <img src="/mark.svg" alt="" width={22} height={22} className="rounded-[5px]" />
+        <span className="flex flex-col">
+          <span className="hidden sm:inline font-display font-semibold text-[15px] tracking-tight text-text">HHGOA fraud desk</span>
+          <span className="hidden sm:block mt-1 h-[2px] w-7 bg-flame-500" aria-hidden />
+        </span>
       </Link>
-      <nav aria-label="Primary" className="flex gap-1">
+      <nav aria-label="Primary" className="flex gap-1 min-w-0 overflow-x-auto">
         {NAV.map((n) => {
-          const active = n.href === "/" ? path === "/" || path.startsWith("/cases") : path.startsWith(n.href);
+          const active = n.href === "/" ? path === "/" : path.startsWith(n.href);
           return (
             <Link
               key={n.href}
@@ -37,7 +41,7 @@ export function TopBar() {
           );
         })}
       </nav>
-      <div className="ml-auto flex items-center gap-2">
+      <div className="ml-auto hidden sm:flex items-center gap-2">
         {IS_LIVE ? (
           <Chip className="border-rust-600 text-text-muted" title={API_URL}>
             api: live

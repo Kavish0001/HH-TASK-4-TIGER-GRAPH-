@@ -396,6 +396,10 @@ sanity check, not a benchmark.
 
 Taken from the dashboard running against the live API over MCP.
 
+**Landing page** with the 3D backdrop (each route has its own dimmed model behind the data).
+
+![Landing](docs/screenshots/landing.png)
+
 **Case queue**: risk, confidence, status and pending approvals for the 20 benchmark cases.
 
 ![Case queue](docs/screenshots/queue.png)

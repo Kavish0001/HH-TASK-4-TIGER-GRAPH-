@@ -49,7 +49,7 @@ export function CaseView({ id, autoRun }: { id: string; autoRun: boolean }) {
           <div className="panel p-4 max-w-xl" role="alert">
             <p className="text-flame-500 font-mono text-[12px]">Could not load {id}</p>
             <p className="text-text-muted mt-1">{loadError}</p>
-            <Link href="/" className="mt-3 inline-block font-mono text-[11px] text-text-muted underline">
+            <Link href="/cases" className="mt-3 inline-block font-mono text-[11px] text-text-muted underline">
               back to queue
             </Link>
           </div>
