@@ -23,3 +23,4 @@ backend/tools/mock/data/
 *.csv.gz
 backend/data_cache/
 *.parquet
+backend/eval/cache/
