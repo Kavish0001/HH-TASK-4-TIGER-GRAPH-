@@ -4,18 +4,19 @@ Replace `[LINK]` with the blog or demo video URL before posting.
 
 ## X
 
-Built a fraud investigation agent on @TigerGraphDB for the HHGOA challenge.
+Built a fraud investigation agent on @TigerGraphDB for the HHGOA challenge with @247pmstudio.
 
 It walks from a flagged card to shared devices and prior cases, scores risk and
 confidence separately, asks for evidence when unsure, and sends blocks and SARs
 to a human.
 
+Code: https://github.com/Kavish0001/HH-TASK-4-TIGER-GRAPH-
 [LINK]
 
 ## LinkedIn
 
 We built an agent that investigates card fraud alerts on TigerGraph, for the
-@TigerGraphDB HHGOA agentic fraud investigation challenge.
+@TigerGraphDB HHGOA agentic fraud investigation challenge by @247pmstudio.
 
 Given an alert, it opens a case at the trigger time, runs GSQL queries through a
 TigerGraph MCP server (customer history, shared device profiles, ring detection,
