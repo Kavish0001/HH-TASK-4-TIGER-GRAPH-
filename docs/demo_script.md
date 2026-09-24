@@ -17,8 +17,8 @@ Before recording:
   `GC-HHG-006` vertex, so it does not disturb memory for the other cases.
 - GraphStudio open in a second tab on the `FraudInvestigation` graph.
 - Numbers quoted below are from the answer files at the time of writing.
-  TODO(verify): re-read `cases/HHG-006.json` and `cases/HHG-014.json` after the
-  final run and update any number that moved.
+  Checked against the final calibrated run (HHG-006: 0.79 to 0.95, BLOCK_CARD
+  added; HHG-014: 52 cardholders on the device profile).
 
 ---
 

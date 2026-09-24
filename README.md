@@ -361,9 +361,27 @@ changes prose fields that pass the narrative guards.
 See `outputs/eval_report.md` for the format validation, the check that every case
 exists in the graph, and the backtest on closed cases.
 
-TODO(verify): `outputs/eval_report.md` does not exist yet. Copy its headline
-numbers here once the evaluator lane writes it. I have left numbers out on
-purpose so this README cannot disagree with it.
+| Check | Result |
+|---|---|
+| Answer files valid (schema plus README rules) | 20 / 20, 0 errors, 0 warnings |
+| Cases stored in TigerGraph as `InvestigationCase` with evidence and decisions | 20 / 20 |
+| Benchmark verdicts | 7 legitimate, 7 uncertain, 6 fraud; 3 SARs (HHG-006, HHG-010, HHG-014) |
+| Backtest on 50 closed cases (25 cleared, 25 confirmed), no leakage | 0 errors, 0 self-leaks |
+| Precision on fraud calls | 69% |
+| Recall on fraud calls (uncertain counts as a miss) | 36% |
+| Recall if uncertain counts as caught | 92% |
+| Cleared cases called legitimate | 48% |
+| Pattern accuracy on confirmed cases | 48% |
+
+The agent leans toward "uncertain" on confirmed fraud rather than guessing. In
+an investigation tool I think that is the right side to err on, because an
+uncertain case goes to an analyst with its evidence and unknowns, while a
+wrong "legitimate" closes it. An earlier version weighted a new device too
+heavily and called most false alarms fraud; the backtest caught that and the
+fix took cleared-case probability from 0.64 down to 0.35 on average, against
+0.61 for confirmed fraud. The backtest ran on the mock backend with templated
+narratives (the Gemini free tier ran out of daily quota), so treat it as a
+sanity check, not a benchmark.
 
 ## Screenshots
 
