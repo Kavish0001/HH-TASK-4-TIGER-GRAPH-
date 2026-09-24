@@ -1,0 +1,139 @@
+{
+  "case_id": "HHG-016",
+  "case": {
+    "status": "open",
+    "verdict": "uncertain",
+    "fraud_probability": 0.572,
+    "pattern": "card_not_present_new_device",
+    "pattern_description": "",
+    "affected_txn_ids": [
+      "3534820"
+    ],
+    "first_suspicious_txn_id": "3534820",
+    "connected_card_ids": [],
+    "connected_device_profiles": [],
+    "exposure_usd": 59.67,
+    "evidence": [
+      {
+        "claim": "Flagged transaction 3534820 on card C09988-K1: $59.67, online channel, product code C, no billing region recorded. The bank model scored it 0.37, which is a reason to look, not a finding",
+        "source": "graph",
+        "ref": "query:tx_context(txn_id=3534820, as_of=2016-12-12 01:39:08)",
+        "entity_ids": [
+          "3534820",
+          "C09988-K1"
+        ]
+      },
+      {
+        "claim": "Against 48 earlier transactions on the card, the amount sits at the 75% percentile; device profile new to this card",
+        "source": "graph",
+        "ref": "query:behavior_shift(customer_id=C09988, txn_id=3534820)",
+        "entity_ids": [
+          "C09988-K1",
+          "3534820"
+        ]
+      },
+      {
+        "claim": "Pattern check card-not-present fraud from a new device scored 0.44: Online purchase of $59.67 at the 75% percentile of this card's history, from a device profile new to this card",
+        "source": "graph",
+        "ref": "query:pattern_match(pattern=card_not_present_new_device, card_id=C09988-K1, txn_id=3534820)",
+        "entity_ids": [
+          "3534820"
+        ]
+      },
+      {
+        "claim": "Device profile Windows | unknown | edge 16.0 | unknown appears on 160 cards across 158 customers; the profile is common, so sharing alone is not evidence",
+        "source": "graph",
+        "ref": "query:shared_device_profile(device_profile=Windows | unknown | edge 16.0 | unknown)",
+        "entity_ids": [
+          "C09988-K1"
+        ]
+      },
+      {
+        "claim": "Ring detection from C09988-K1 over rare shared devices finds 6 cards across 6 customers, 0 with confirmed-fraud closed cases",
+        "source": "graph",
+        "ref": "query:ring_detect(seed=C09988-K1)",
+        "entity_ids": [
+          "C03938-K1",
+          "C09988-K1",
+          "C08924-K2",
+          "C02315-K1",
+          "C10374-K1",
+          "C08644-K1"
+        ]
+      },
+      {
+        "claim": "Policy R4 governs the recommended actions",
+        "source": "document",
+        "ref": "policy:R4",
+        "entity_ids": []
+      },
+      {
+        "claim": "Evidence request customer_validation: Simulated, the dataset supplies no replies. Assumed no reply within 24 hours. The evidence is thin or conflicting: the leading pattern scores 0.44 with no independent corroboration, and there is no recurring-charge or travel explanation either, so neither a denial nor a confirmation can be assumed.",
+        "source": "customer",
+        "ref": "evidence_request:1",
+        "entity_ids": []
+      }
+    ],
+    "similar_prior_cases": [
+      "CC-0576",
+      "CC-0078",
+      "CC-0598",
+      "CC-3979",
+      "CC-0698"
+    ],
+    "summary": "The cardholder disputed a charge on card C09988-K1, transaction 3534820 ($59.67). The leading hypothesis is card-not-present fraud from a new device: Online purchase of $59.67 at the 75% percentile of this card's history, from a device profile new to this card. The cardholder was asked to validate the activity and no reply was assumed within 24 hours (simulated). Assessed fraud probability is 0.57 at confidence 0.77, verdict uncertain, exposure $59.67. Final recommendation: CREATE_CASE, MONITOR_CARD (R4).",
+    "written_to_graph": true,
+    "graph_case_id": "GC-HHG-016"
+  },
+  "evidence_requests": [
+    {
+      "type": "customer_validation",
+      "asked_after_step": 19,
+      "assumed_response": "Simulated, the dataset supplies no replies. Assumed no reply within 24 hours. The evidence is thin or conflicting: the leading pattern scores 0.44 with no independent corroboration, and there is no recurring-charge or travel explanation either, so neither a denial nor a confirmation can be assumed."
+    }
+  ],
+  "next_best_actions": {
+    "initial": [
+      {
+        "action": "STEP_UP_AUTH",
+        "route": "auto",
+        "reason": "R1: the case rests on a single signal and probability is 0.57, below 0.70, so verification comes before any block"
+      },
+      {
+        "action": "VERIFY_WITH_CUSTOMER",
+        "route": "auto",
+        "reason": "R1: the case rests on a single signal and probability is 0.57, below 0.70, so verification comes before any block"
+      },
+      {
+        "action": "CREATE_CASE",
+        "route": "auto",
+        "reason": "Policy 3a: probability 0.57 is at or above 0.30 and evidence was requested and the customer disputes a charge"
+      }
+    ],
+    "final": [
+      {
+        "action": "CREATE_CASE",
+        "route": "auto",
+        "reason": "Policy 3a: probability 0.57 is at or above 0.30 and evidence was requested and the customer disputes a charge"
+      },
+      {
+        "action": "MONITOR_CARD",
+        "route": "auto",
+        "reason": "R4: no reply within 24 hours"
+      }
+    ],
+    "what_changed": "The assumed response (no_reply) left probability at 0.57, so the recommendation moved from STEP_UP_AUTH, VERIFY_WITH_CUSTOMER, CREATE_CASE to CREATE_CASE, MONITOR_CARD under R4."
+  },
+  "sar": {
+    "file": false,
+    "reason": "Policy 3a: a report requires fraud confirmed or strongly suspected. Assessed probability 0.57 with verdict uncertain, so no report.",
+    "narrative": "",
+    "subjects": [],
+    "total_amount_usd": 0.0,
+    "activity_dates": []
+  },
+  "stop_reason": "No reply was assumed, and further graph queries are unlikely to change the decision, so the case rests on R4 and R8 rather than on more querying. Confidence 0.77. Main open question: No billing region recorded on the flagged transaction, so out-of-region reasoning is unavailable",
+  "tool_calls": 16,
+  "tokens": 0,
+  "latency_s": 1.22
+}

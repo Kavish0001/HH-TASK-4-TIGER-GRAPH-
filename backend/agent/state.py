@@ -34,6 +34,25 @@ class AgentState:
     context_block: Any = None
     emit: Callable[[str, dict[str, Any]], None] | None = None
 
+    # Loop control. `plan` is the queue of tool calls the next gather round
+    # runs; assess refills it from the sufficiency checklist.
+    plan: list[tuple[str, dict[str, Any]]] = field(default_factory=list)
+    rounds: int = 0
+    max_rounds: int = 3
+    independent: int = 1
+    need_evidence: bool = False
+    request_type: str = ""
+    simulated: Any = None
+    initial_assessment: Any = None
+    initial_bundle: Any = None
+    final_bundle: Any = None
+    initial_state: CaseState | None = None
+    scope: dict[str, Any] = field(default_factory=dict)
+    narrative_ctx: dict[str, Any] = field(default_factory=dict)
+    tokens_at_start: int = 0
+    started_perf: float = 0.0
+    llm_notes: list[str] = field(default_factory=list)
+
     def next_step(self, node: str, tool: str = "", summary: str = "", args: dict[str, Any] | None = None) -> AgentStep:
         self.step_index += 1
         step = AgentStep(

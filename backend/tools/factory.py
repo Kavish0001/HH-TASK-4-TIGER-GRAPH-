@@ -60,7 +60,7 @@ class McpBackend(ToolBackend):
         client = MultiServerMCPClient(
             {"tigergraph": {"url": self.server_url, "transport": "sse"}}
         )
-        tools = asyncio.get_event_loop().run_until_complete(client.get_tools())
+        tools = _run_async(client.get_tools())
         self._tools = {t.name: t for t in tools}
         log.info("loaded %s MCP tools: %s", len(self._tools), sorted(self._tools))
         return self._tools
@@ -70,18 +70,49 @@ class McpBackend(ToolBackend):
         tool = tools.get(name)
         if tool is None:
             return ToolResult(ok=False, ref=f"query:{name}", error=f"MCP server exposes no tool {name}")
-        payload = tool.invoke({k: v for k, v in args.items() if v is not None})
-        if isinstance(payload, dict):
-            data = payload
-        else:
-            import json
-
-            try:
-                data = json.loads(payload)
-            except (TypeError, ValueError):
-                data = {"raw": str(payload)}
+        # MCP tools are async-only StructuredTools; sync invoke raises.
+        payload = _run_async(tool.ainvoke({k: v for k, v in args.items() if v is not None}))
+        data = _parse_payload(payload)
         ref = data.get("ref") or f"query:{name}({_arg_string(args)})"
-        return ToolResult(ok=True, ref=ref, data=data)
+        # A failed GSQL query comes back as {"ok": false, "error": ...} rather
+        # than an exception, and must count as a failed tool, not as evidence.
+        ok = bool(data.get("ok", True))
+        # graph/mcp/server.py flattens the result to {ok, ref, **data}, so the
+        # payload already has the mock and tg shapes.
+        return ToolResult(ok=ok, ref=ref, data=data, error=str(data.get("error", "")) if not ok else "")
+
+
+def _run_async(coro: Any) -> Any:
+    """Run a coroutine from sync code, including from inside a running loop
+    (the FastAPI worker threads have none, but a notebook or test might)."""
+    import asyncio
+
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(coro)
+    import concurrent.futures
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+        return pool.submit(asyncio.run, coro).result()
+
+
+def _parse_payload(payload: Any) -> dict[str, Any]:
+    import json
+
+    if isinstance(payload, dict):
+        return payload
+    # langchain-mcp-adapters returns text content, sometimes as a list of parts.
+    if isinstance(payload, (list, tuple)):
+        texts = [p.get("text", "") if isinstance(p, dict) else getattr(p, "text", str(p)) for p in payload]
+        payload = "".join(texts)
+    if isinstance(payload, tuple):
+        payload = payload[0]
+    try:
+        data = json.loads(payload)
+        return data if isinstance(data, dict) else {"result": data}
+    except (TypeError, ValueError):
+        return {"raw": str(payload)}
 
 
 def _arg_string(args: dict[str, Any]) -> str:
@@ -92,6 +123,18 @@ def get_backend() -> ToolBackend:
     settings = get_settings()
     if settings.tool_backend == "mcp":
         return McpBackend(settings.mcp_server_url)
+    if settings.tool_backend == "tg":
+        # Imported lazily so a machine without the graph lane's dependencies
+        # still runs the mock path.
+        from backend.tools.tg.backend import TigerGraphBackend
+
+        return TigerGraphBackend(
+            host=settings.tg_host,
+            port=settings.tg_restpp_port,
+            graph=settings.tg_graph_name,
+            username=settings.tg_username,
+            password=settings.tg_password or None,
+        )
     return MockBackend()
 
 

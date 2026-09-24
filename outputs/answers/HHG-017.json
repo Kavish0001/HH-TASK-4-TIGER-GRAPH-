@@ -1,0 +1,119 @@
+{
+  "case_id": "HHG-017",
+  "case": {
+    "status": "closed_legitimate",
+    "verdict": "legitimate",
+    "fraud_probability": 0.239,
+    "pattern": "none",
+    "pattern_description": "",
+    "affected_txn_ids": [],
+    "first_suspicious_txn_id": "",
+    "connected_card_ids": [],
+    "connected_device_profiles": [],
+    "exposure_usd": 0.0,
+    "evidence": [
+      {
+        "claim": "Transaction 3450629 on card C04570-K1 was flagged for review due to an online purchase of $100.09.",
+        "source": "graph",
+        "ref": "query:tx_context(txn_id=3450629, as_of=2016-11-12 00:46:24)",
+        "entity_ids": [
+          "3450629",
+          "C04570-K1"
+        ]
+      },
+      {
+        "claim": "The transaction amount is at the 21st percentile of the card's history, showing no significant deviation from the customer's baseline.",
+        "source": "graph",
+        "ref": "query:behavior_shift(customer_id=C04570, txn_id=3450629)",
+        "entity_ids": [
+          "C04570-K1",
+          "3450629"
+        ]
+      },
+      {
+        "claim": "The card-not-present fraud pattern score is 0.34, reflecting three online transactions in the preceding 48 hours.",
+        "source": "graph",
+        "ref": "query:pattern_match(pattern=card_not_present_fraud, card_id=C04570-K1, txn_id=3450629)",
+        "entity_ids": [
+          "3450436",
+          "3450503",
+          "3450629"
+        ]
+      },
+      {
+        "claim": "The billing region 204.0 is consistent with the customer's historical activity, having six prior transactions over 106.23 days.",
+        "source": "graph",
+        "ref": "query:region_history(customer_id=C04570, addr1=204.0)",
+        "entity_ids": [
+          "C04570"
+        ]
+      },
+      {
+        "claim": "The device profile is shared across 299 cards, indicating it is a common profile rather than a unique indicator of fraud.",
+        "source": "graph",
+        "ref": "query:shared_device_profile(device_profile=Windows | Windows 10 | chrome 65.0 | 1920x1080)",
+        "entity_ids": [
+          "C04570-K1"
+        ]
+      },
+      {
+        "claim": "There is one prior closed case for this customer, which was cleared as non-fraudulent.",
+        "source": "graph",
+        "ref": "query:prior_cases_for_entities(n_entities=2, as_of=2016-11-12 00:46:24)",
+        "entity_ids": [
+          "CC-1383"
+        ]
+      }
+    ],
+    "similar_prior_cases": [
+      "CC-1383",
+      "CC-2594",
+      "CC-4591",
+      "CC-1311",
+      "CC-0682"
+    ],
+    "summary": "The transaction 3450629 for $100.09 on card C04570-K1 was flagged by the model with a fraud probability of 0.24. Analysis of the cardholder's history and transaction patterns indicates the activity is consistent with established behavior. No evidence of fraud was identified, and the case has been closed as legitimate.",
+    "written_to_graph": true,
+    "graph_case_id": "GC-HHG-017"
+  },
+  "evidence_requests": [],
+  "next_best_actions": {
+    "initial": [
+      {
+        "action": "ALLOW_TRANSACTION",
+        "route": "auto",
+        "reason": "Probability 0.24 at confidence 0.64 on 1 independent pieces of evidence; nothing supports holding the transaction"
+      },
+      {
+        "action": "CLOSE_NO_FRAUD",
+        "route": "auto",
+        "reason": "Policy section 6: probability 0.24 with no pattern scoring above 0.34; further steps are unlikely to change the decision, so the alert closes"
+      }
+    ],
+    "final": [
+      {
+        "action": "ALLOW_TRANSACTION",
+        "route": "auto",
+        "reason": "Probability 0.24 at confidence 0.64 on 1 independent pieces of evidence; nothing supports holding the transaction"
+      },
+      {
+        "action": "CLOSE_NO_FRAUD",
+        "route": "auto",
+        "reason": "Policy section 6: probability 0.24 with no pattern scoring above 0.34; further steps are unlikely to change the decision, so the alert closes"
+      }
+    ],
+    "what_changed": "nothing"
+  },
+  "sar": {
+    "file": false,
+    "reason": "Policy 3a: a report requires fraud confirmed or strongly suspected. Assessed probability 0.24 with verdict legitimate, so no report.",
+    "narrative": "",
+    "subjects": [],
+    "total_amount_usd": 0.0,
+    "activity_dates": []
+  },
+  "stop_reason": "The investigation concluded with a confidence level of 0.64, as the evidence consistently points to legitimate activity. The primary unknown remains the cardholder's direct confirmation, which was not sought due to the low probability of fraud.",
+  "tool_calls": 17,
+  "tokens": 4606,
+  "latency_s": 26.68
+}

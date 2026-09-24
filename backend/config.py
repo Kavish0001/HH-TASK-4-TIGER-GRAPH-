@@ -24,7 +24,9 @@ class Settings(BaseSettings):
     )
 
     # Tool layer
-    tool_backend: Literal["mock", "mcp"] = "mock"
+    # `tg` calls the installed GSQL queries over RESTPP directly (graph lane,
+    # backend/tools/tg); `mcp` goes through the TigerGraph MCP server.
+    tool_backend: Literal["mock", "mcp", "tg"] = "mock"
     mcp_server_url: str = "http://localhost:8765/sse"
 
     # TigerGraph

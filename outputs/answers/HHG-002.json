@@ -1,0 +1,138 @@
+{
+  "case_id": "HHG-002",
+  "case": {
+    "status": "open",
+    "verdict": "uncertain",
+    "fraud_probability": 0.497,
+    "pattern": "card_not_present_fraud",
+    "pattern_description": "",
+    "affected_txn_ids": [
+      "3478782"
+    ],
+    "first_suspicious_txn_id": "3478782",
+    "connected_card_ids": [],
+    "connected_device_profiles": [],
+    "exposure_usd": 292.36,
+    "evidence": [
+      {
+        "claim": "Flagged transaction 3478782 on card C11891-K1: $292.36, online channel, product code C, no billing region recorded. The bank model scored it 0.79, which is a reason to look, not a finding",
+        "source": "graph",
+        "ref": "query:tx_context(txn_id=3478782, as_of=2016-11-22 23:27:07)",
+        "entity_ids": [
+          "3478782",
+          "C11891-K1"
+        ]
+      },
+      {
+        "claim": "Against 35 earlier transactions on the card, the amount sits at the 100% percentile; amount at the 100% percentile of the card's history",
+        "source": "graph",
+        "ref": "query:behavior_shift(customer_id=C11891, txn_id=3478782)",
+        "entity_ids": [
+          "C11891-K1",
+          "3478782"
+        ]
+      },
+      {
+        "claim": "Pattern check card-not-present fraud scored 0.38: Online purchase of $292.36 at the 100% percentile of this card's history",
+        "source": "graph",
+        "ref": "query:pattern_match(pattern=card_not_present_fraud, card_id=C11891-K1, txn_id=3478782)",
+        "entity_ids": [
+          "3478782"
+        ]
+      },
+      {
+        "claim": "1 closed case(s) before this alert touch this card or customer: 1 confirmed fraud (card_not_present_fraud), 0 cleared",
+        "source": "graph",
+        "ref": "query:prior_cases_for_entities(n_entities=2, as_of=2016-11-22 23:27:07)",
+        "entity_ids": [
+          "CC-4160"
+        ]
+      },
+      {
+        "claim": "This agent's own earlier case HHG-017 (a case this agent closed earlier, text similarity 0.81) closed as open with pattern card_not_present_fraud",
+        "source": "graph",
+        "ref": "case:GC-HHG-017",
+        "entity_ids": [
+          "HHG-017"
+        ]
+      },
+      {
+        "claim": "This agent's own earlier case HHG-015 (a case this agent closed earlier, text similarity 0.79) closed as closed_fraud with pattern card_not_present_new_device",
+        "source": "graph",
+        "ref": "case:GC-HHG-015",
+        "entity_ids": [
+          "HHG-015"
+        ]
+      },
+      {
+        "claim": "Policy R4 governs the recommended actions",
+        "source": "document",
+        "ref": "policy:R4",
+        "entity_ids": []
+      },
+      {
+        "claim": "Evidence request customer_validation: Simulated, the dataset supplies no replies. Assumed no reply within 24 hours. The evidence is thin or conflicting: the leading pattern scores 0.38 with no independent corroboration, and there is no recurring-charge or travel explanation either, so neither a denial nor a confirmation can be assumed.",
+        "source": "customer",
+        "ref": "evidence_request:1",
+        "entity_ids": []
+      }
+    ],
+    "similar_prior_cases": [
+      "CC-4160"
+    ],
+    "summary": "The bank's model flagged the transaction on card C11891-K1, transaction 3478782 ($292.36). The leading hypothesis is card-not-present fraud: Online purchase of $292.36 at the 100% percentile of this card's history. The cardholder was asked to validate the activity and no reply was assumed within 24 hours (simulated). Assessed fraud probability is 0.50 at confidence 0.77, verdict uncertain, exposure $292.36. Final recommendation: CREATE_CASE, MONITOR_CARD (R4).",
+    "written_to_graph": true,
+    "graph_case_id": "GC-HHG-002"
+  },
+  "evidence_requests": [
+    {
+      "type": "customer_validation",
+      "asked_after_step": 17,
+      "assumed_response": "Simulated, the dataset supplies no replies. Assumed no reply within 24 hours. The evidence is thin or conflicting: the leading pattern scores 0.38 with no independent corroboration, and there is no recurring-charge or travel explanation either, so neither a denial nor a confirmation can be assumed."
+    }
+  ],
+  "next_best_actions": {
+    "initial": [
+      {
+        "action": "STEP_UP_AUTH",
+        "route": "auto",
+        "reason": "R1: the case rests on a single signal and probability is 0.50, below 0.70, so verification comes before any block"
+      },
+      {
+        "action": "VERIFY_WITH_CUSTOMER",
+        "route": "auto",
+        "reason": "R1: the case rests on a single signal and probability is 0.50, below 0.70, so verification comes before any block"
+      },
+      {
+        "action": "CREATE_CASE",
+        "route": "auto",
+        "reason": "Policy 3a: probability 0.50 is at or above 0.30 and evidence was requested"
+      }
+    ],
+    "final": [
+      {
+        "action": "CREATE_CASE",
+        "route": "auto",
+        "reason": "Policy 3a: probability 0.50 is at or above 0.30 and evidence was requested"
+      },
+      {
+        "action": "MONITOR_CARD",
+        "route": "auto",
+        "reason": "R4: no reply within 24 hours"
+      }
+    ],
+    "what_changed": "The assumed response (no_reply) left probability at 0.50, so the recommendation moved from STEP_UP_AUTH, VERIFY_WITH_CUSTOMER, CREATE_CASE to CREATE_CASE, MONITOR_CARD under R4."
+  },
+  "sar": {
+    "file": false,
+    "reason": "Policy 3a: a report requires fraud confirmed or strongly suspected. Assessed probability 0.50 with verdict uncertain, so no report.",
+    "narrative": "",
+    "subjects": [],
+    "total_amount_usd": 0.0,
+    "activity_dates": []
+  },
+  "stop_reason": "No reply was assumed, and further graph queries are unlikely to change the decision, so the case rests on R4 and R8 rather than on more querying. Confidence 0.77. Main open question: Signal could not be checked on the available data: device_marked_new",
+  "tool_calls": 14,
+  "tokens": 0,
+  "latency_s": 1.02
+}

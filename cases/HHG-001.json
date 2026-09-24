@@ -1,0 +1,122 @@
+{
+  "case_id": "HHG-001",
+  "case": {
+    "status": "closed_legitimate",
+    "verdict": "legitimate",
+    "fraud_probability": 0.215,
+    "pattern": "none",
+    "pattern_description": "",
+    "affected_txn_ids": [],
+    "first_suspicious_txn_id": "",
+    "connected_card_ids": [],
+    "connected_device_profiles": [],
+    "exposure_usd": 0.0,
+    "evidence": [
+      {
+        "claim": "Flagged transaction 3514030 on card C12382-K1: $77.07, in_person channel, product code W, billing region 444.0. The bank model scored it 0.61, which is a reason to look, not a finding",
+        "source": "graph",
+        "ref": "query:tx_context(txn_id=3514030, as_of=2016-12-05 01:55:28)",
+        "entity_ids": [
+          "3514030",
+          "C12382-K1"
+        ]
+      },
+      {
+        "claim": "Against 359 earlier transactions on the card, the amount sits at the 46% percentile; no material deviation from the card's baseline",
+        "source": "graph",
+        "ref": "query:behavior_shift(customer_id=C12382, txn_id=3514030)",
+        "entity_ids": [
+          "C12382-K1",
+          "3514030"
+        ]
+      },
+      {
+        "claim": "Pattern check out-of-region use scored 0.16: Card-present use in billing region 444 seen 10 times before, while 18 transactions continued in the home region 204 over the same window",
+        "source": "graph",
+        "ref": "query:pattern_match(pattern=out_of_region_use, card_id=C12382-K1, txn_id=3514030)",
+        "entity_ids": [
+          "3264155",
+          "3275900",
+          "3276102",
+          "3320680",
+          "3356278",
+          "3376974",
+          "3400970",
+          "3441958"
+        ]
+      },
+      {
+        "claim": "Billing region 444.0: has earlier history for this customer (11 transactions, span 82.02 days); home region 204.0; neither a trip nor a clone pattern",
+        "source": "graph",
+        "ref": "query:region_history(customer_id=C12382, addr1=444.0)",
+        "entity_ids": [
+          "C12382"
+        ]
+      },
+      {
+        "claim": "4 closed case(s) before this alert touch this card or customer: 4 confirmed fraud (card_not_present_new_device, out_of_region_use), 0 cleared",
+        "source": "graph",
+        "ref": "query:prior_cases_for_entities(n_entities=2, as_of=2016-12-05 01:55:28)",
+        "entity_ids": [
+          "CC-1066",
+          "CC-1673",
+          "CC-2964",
+          "CC-3587"
+        ]
+      }
+    ],
+    "similar_prior_cases": [
+      "CC-1066",
+      "CC-1673",
+      "CC-2964",
+      "CC-3587",
+      "CC-1244",
+      "CC-4236",
+      "CC-4235",
+      "CC-1081"
+    ],
+    "summary": "The bank's model flagged the transaction on card C12382-K1, transaction 3514030 ($77.07). The graph evidence does not support fraud: Card-present use in billing region 444 seen 10 times before, while 18 transactions continued in the home region 204 over the same window. Assessed fraud probability is 0.21 at confidence 0.69, verdict legitimate, exposure $0.00. Final recommendation: ALLOW_TRANSACTION, CLOSE_NO_FRAUD (policy 3a).",
+    "written_to_graph": true,
+    "graph_case_id": "GC-HHG-001"
+  },
+  "evidence_requests": [],
+  "next_best_actions": {
+    "initial": [
+      {
+        "action": "ALLOW_TRANSACTION",
+        "route": "auto",
+        "reason": "Probability 0.21 at confidence 0.69 on 3 independent pieces of evidence; nothing supports holding the transaction"
+      },
+      {
+        "action": "CLOSE_NO_FRAUD",
+        "route": "auto",
+        "reason": "Policy section 6: probability 0.21 with no pattern scoring above 0.16; further steps are unlikely to change the decision, so the alert closes"
+      }
+    ],
+    "final": [
+      {
+        "action": "ALLOW_TRANSACTION",
+        "route": "auto",
+        "reason": "Probability 0.21 at confidence 0.69 on 3 independent pieces of evidence; nothing supports holding the transaction"
+      },
+      {
+        "action": "CLOSE_NO_FRAUD",
+        "route": "auto",
+        "reason": "Policy section 6: probability 0.21 with no pattern scoring above 0.16; further steps are unlikely to change the decision, so the alert closes"
+      }
+    ],
+    "what_changed": "nothing"
+  },
+  "sar": {
+    "file": false,
+    "reason": "Policy 3a: a report requires fraud confirmed or strongly suspected. Assessed probability 0.21 with verdict legitimate, so no report.",
+    "narrative": "",
+    "subjects": [],
+    "total_amount_usd": 0.0,
+    "activity_dates": []
+  },
+  "stop_reason": "Further graph steps are unlikely to change the decision. Confidence 0.69. Main open question: No identity record on the flagged transaction, so device, proxy and screen are unknown",
+  "tool_calls": 15,
+  "tokens": 0,
+  "latency_s": 0.65
+}

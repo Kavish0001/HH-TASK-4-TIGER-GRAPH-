@@ -1,0 +1,160 @@
+{
+  "case_id": "HHG-018",
+  "case": {
+    "status": "escalated",
+    "verdict": "uncertain",
+    "fraud_probability": 0.479,
+    "pattern": "account_takeover",
+    "pattern_description": "",
+    "affected_txn_ids": [
+      "3491361"
+    ],
+    "first_suspicious_txn_id": "3491361",
+    "connected_card_ids": [],
+    "connected_device_profiles": [],
+    "exposure_usd": 39.08,
+    "evidence": [
+      {
+        "claim": "Flagged transaction 3491361 on card C02354-K2: $39.08, in_person channel, product code W, billing region 126.0. The bank model scored it 0.48, which is a reason to look, not a finding",
+        "source": "graph",
+        "ref": "query:tx_context(txn_id=3491361, as_of=2016-11-27 14:41:26)",
+        "entity_ids": [
+          "3491361",
+          "C02354-K2"
+        ]
+      },
+      {
+        "claim": "Against 5862 earlier transactions on the card, the amount sits at the 18% percentile; no material deviation from the card's baseline",
+        "source": "graph",
+        "ref": "query:behavior_shift(customer_id=C02354, txn_id=3491361)",
+        "entity_ids": [
+          "C02354-K2",
+          "3491361"
+        ]
+      },
+      {
+        "claim": "Pattern check account takeover scored 0.22: Activity in 2 channel(s) within 48 hours; the flagged channel accounts for 91.6% of this card's history; 1 of 9 match flags disagree with the card's usual values",
+        "source": "graph",
+        "ref": "query:pattern_match(pattern=account_takeover, card_id=C02354-K2, txn_id=3491361)",
+        "entity_ids": [
+          "3491361"
+        ]
+      },
+      {
+        "claim": "Billing region 126.0: has earlier history for this customer (566 transactions, span 147.98 days); home region 325.0; neither a trip nor a clone pattern",
+        "source": "graph",
+        "ref": "query:region_history(customer_id=C02354, addr1=126.0)",
+        "entity_ids": [
+          "C02354"
+        ]
+      },
+      {
+        "claim": "20 closed case(s) before this alert touch this card or customer: 19 confirmed fraud (account_takeover, card_not_present_fraud, out_of_region_use), 1 cleared",
+        "source": "graph",
+        "ref": "query:prior_cases_for_entities(n_entities=2, as_of=2016-11-27 14:41:26)",
+        "entity_ids": [
+          "CC-0255",
+          "CC-0405",
+          "CC-0454",
+          "CC-0631",
+          "CC-1450",
+          "CC-1699",
+          "CC-2051",
+          "CC-2187"
+        ]
+      },
+      {
+        "claim": "Policy R4 governs the recommended actions",
+        "source": "document",
+        "ref": "policy:R4",
+        "entity_ids": []
+      },
+      {
+        "claim": "Policy R8 governs the recommended actions",
+        "source": "document",
+        "ref": "policy:R8",
+        "entity_ids": []
+      },
+      {
+        "claim": "Evidence request customer_validation: Simulated, the dataset supplies no replies. Assumed no reply within 24 hours. The evidence is thin or conflicting: the leading pattern scores 0.22 with no independent corroboration, and there is no recurring-charge or travel explanation either, so neither a denial nor a confirmation can be assumed.",
+        "source": "customer",
+        "ref": "evidence_request:1",
+        "entity_ids": []
+      }
+    ],
+    "similar_prior_cases": [
+      "CC-0255",
+      "CC-0405",
+      "CC-0454",
+      "CC-0631",
+      "CC-1450",
+      "CC-3923",
+      "CC-3946",
+      "CC-3941"
+    ],
+    "summary": "The cardholder disputed a charge on card C02354-K2, transaction 3491361 ($39.08). The leading hypothesis is account takeover: Activity in 2 channel(s) within 48 hours; the flagged channel accounts for 91.6% of this card's history; 1 of 9 match flags disagree with the card's usual values. The cardholder was asked to validate the activity and no reply was assumed within 24 hours (simulated). Assessed fraud probability is 0.48 at confidence 0.62, verdict uncertain, exposure $39.08. Final recommendation: CREATE_CASE, MONITOR_CARD, ESCALATE_TO_ANALYST (R4, R8).",
+    "written_to_graph": true,
+    "graph_case_id": "GC-HHG-018"
+  },
+  "evidence_requests": [
+    {
+      "type": "customer_validation",
+      "asked_after_step": 18,
+      "assumed_response": "Simulated, the dataset supplies no replies. Assumed no reply within 24 hours. The evidence is thin or conflicting: the leading pattern scores 0.22 with no independent corroboration, and there is no recurring-charge or travel explanation either, so neither a denial nor a confirmation can be assumed."
+    }
+  ],
+  "next_best_actions": {
+    "initial": [
+      {
+        "action": "STEP_UP_AUTH",
+        "route": "auto",
+        "reason": "R1: the case rests on a single signal and probability is 0.48, below 0.70, so verification comes before any block"
+      },
+      {
+        "action": "VERIFY_WITH_CUSTOMER",
+        "route": "auto",
+        "reason": "R1: the case rests on a single signal and probability is 0.48, below 0.70, so verification comes before any block"
+      },
+      {
+        "action": "CREATE_CASE",
+        "route": "auto",
+        "reason": "Policy 3a: probability 0.48 is at or above 0.30 and evidence was requested and the customer disputes a charge"
+      },
+      {
+        "action": "ESCALATE_TO_ANALYST",
+        "route": "auto",
+        "reason": "R8: the verdict is uncertain and the evidence conflicts"
+      }
+    ],
+    "final": [
+      {
+        "action": "CREATE_CASE",
+        "route": "auto",
+        "reason": "Policy 3a: probability 0.48 is at or above 0.30 and evidence was requested and the customer disputes a charge"
+      },
+      {
+        "action": "MONITOR_CARD",
+        "route": "auto",
+        "reason": "R4: no reply within 24 hours"
+      },
+      {
+        "action": "ESCALATE_TO_ANALYST",
+        "route": "auto",
+        "reason": "R8: the verdict is uncertain and the evidence conflicts"
+      }
+    ],
+    "what_changed": "The assumed response (no_reply) left probability at 0.48, so the recommendation moved from STEP_UP_AUTH, VERIFY_WITH_CUSTOMER, CREATE_CASE, ESCALATE_TO_ANALYST to CREATE_CASE, MONITOR_CARD, ESCALATE_TO_ANALYST under R4, R8."
+  },
+  "sar": {
+    "file": false,
+    "reason": "Policy 3a: a report requires fraud confirmed or strongly suspected. Assessed probability 0.48 with verdict uncertain, so no report.",
+    "narrative": "",
+    "subjects": [],
+    "total_amount_usd": 0.0,
+    "activity_dates": []
+  },
+  "stop_reason": "No reply was assumed, and further graph queries are unlikely to change the decision, so the case rests on R4 and R8 rather than on more querying. Confidence 0.62. Main open question: Signal could not be checked on the available data: device_anomaly",
+  "tool_calls": 16,
+  "tokens": 0,
+  "latency_s": 2.23
+}

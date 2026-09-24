@@ -1,0 +1,168 @@
+{
+  "case_id": "HHG-019",
+  "case": {
+    "status": "closed_legitimate",
+    "verdict": "legitimate",
+    "fraud_probability": 0.246,
+    "pattern": "none",
+    "pattern_description": "",
+    "affected_txn_ids": [],
+    "first_suspicious_txn_id": "",
+    "connected_card_ids": [],
+    "connected_device_profiles": [],
+    "exposure_usd": 0.0,
+    "evidence": [
+      {
+        "claim": "Flagged transaction 3503878 on card C07987-K2: $99.92, online channel, product code R, billing region 264.0. The bank model scored it 0.90, which is a reason to look, not a finding",
+        "source": "graph",
+        "ref": "query:tx_context(txn_id=3503878, as_of=2016-12-01 22:28:53)",
+        "entity_ids": [
+          "3503878",
+          "C07987-K2"
+        ]
+      },
+      {
+        "claim": "Against 219 earlier transactions on the card, the amount sits at the 40% percentile; device profile new to this card",
+        "source": "graph",
+        "ref": "query:behavior_shift(customer_id=C07987, txn_id=3503878)",
+        "entity_ids": [
+          "C07987-K2",
+          "3503878"
+        ]
+      },
+      {
+        "claim": "Pattern check card-not-present fraud from a new device scored 0.44: Online purchase of $99.92 at the 40% percentile of this card's history, from a device profile new to this card",
+        "source": "graph",
+        "ref": "query:pattern_match(pattern=card_not_present_new_device, card_id=C07987-K2, txn_id=3503878)",
+        "entity_ids": [
+          "3503878"
+        ]
+      },
+      {
+        "claim": "Alternative hypothesis account_takeover scored lower at 0.38; present: mixed_channel_activity, device_anomaly; absent: channel_inconsistent_with_history",
+        "source": "graph",
+        "ref": "query:pattern_match(pattern=account_takeover, card_id=C07987-K2, txn_id=3503878)",
+        "entity_ids": [
+          "C07987-K2"
+        ]
+      },
+      {
+        "claim": "The flagged amount and product code repeat on this card 4 time(s) before, recurrence strength 0.60; merchant is not in the data, so recurrence is read from amount, product code and cadence",
+        "source": "graph",
+        "ref": "query:card_window(card_id=C07987-K2, hours=48)",
+        "entity_ids": [
+          "3064986",
+          "3108054",
+          "3344081",
+          "3419333"
+        ]
+      },
+      {
+        "claim": "Billing region 264.0: has earlier history for this customer (6 transactions, span 142.96 days); home region 325.0; neither a trip nor a clone pattern",
+        "source": "graph",
+        "ref": "query:region_history(customer_id=C07987, addr1=264.0)",
+        "entity_ids": [
+          "C07987"
+        ]
+      },
+      {
+        "claim": "Device profile Windows | other | chrome 61.0 | 1280x720 appears on 5 cards across 5 customers; the profile is rare enough to matter",
+        "source": "graph",
+        "ref": "query:shared_device_profile(device_profile=Windows | other | chrome 61.0 | 1280x720)",
+        "entity_ids": [
+          "C07987-K2"
+        ]
+      },
+      {
+        "claim": "Ring detection from C07987-K2 over rare shared devices finds 7 cards across 7 customers, 6 with confirmed-fraud closed cases",
+        "source": "graph",
+        "ref": "query:ring_detect(seed=C07987-K2)",
+        "entity_ids": [
+          "C07987-K2",
+          "C07671-K2",
+          "C07727-K1",
+          "C05530-K2",
+          "C11309-K1",
+          "C06224-K2",
+          "C07360-K1"
+        ]
+      },
+      {
+        "claim": "4 closed case(s) before this alert touch this card or customer: 3 confirmed fraud (card_not_present_fraud, out_of_region_use), 1 cleared",
+        "source": "graph",
+        "ref": "query:prior_cases_for_entities(n_entities=2, as_of=2016-12-01 22:28:53)",
+        "entity_ids": [
+          "CC-2011",
+          "CC-2087",
+          "CC-2860",
+          "CC-5026"
+        ]
+      },
+      {
+        "claim": "This agent's own earlier case HHG-015 (a case this agent closed earlier, text similarity 0.80) closed as closed_fraud with pattern card_not_present_new_device",
+        "source": "graph",
+        "ref": "case:GC-HHG-015",
+        "entity_ids": [
+          "HHG-015"
+        ]
+      },
+      {
+        "claim": "This agent's own earlier case HHG-002 (a case this agent closed earlier, text similarity 0.80) closed as open with pattern card_not_present_fraud",
+        "source": "graph",
+        "ref": "case:GC-HHG-002",
+        "entity_ids": [
+          "HHG-002"
+        ]
+      }
+    ],
+    "similar_prior_cases": [
+      "CC-2011",
+      "CC-2087",
+      "CC-2860",
+      "CC-5026"
+    ],
+    "summary": "The bank's model flagged the transaction on card C07987-K2, transaction 3503878 ($99.92). The graph evidence does not support fraud: Online purchase of $99.92 at the 40% percentile of this card's history, from a device profile new to this card. Assessed fraud probability is 0.25 at confidence 0.76, verdict legitimate, exposure $0.00. Final recommendation: ALLOW_TRANSACTION, CLOSE_NO_FRAUD (policy 3a).",
+    "written_to_graph": true,
+    "graph_case_id": "GC-HHG-019"
+  },
+  "evidence_requests": [],
+  "next_best_actions": {
+    "initial": [
+      {
+        "action": "ALLOW_TRANSACTION",
+        "route": "auto",
+        "reason": "Assessed probability 0.25 with no corroborating signal, so the transaction stands"
+      },
+      {
+        "action": "CLOSE_NO_FRAUD",
+        "route": "auto",
+        "reason": "Policy 3a: nothing here needs a case; the alert closes as legitimate"
+      }
+    ],
+    "final": [
+      {
+        "action": "ALLOW_TRANSACTION",
+        "route": "auto",
+        "reason": "Assessed probability 0.25 with no corroborating signal, so the transaction stands"
+      },
+      {
+        "action": "CLOSE_NO_FRAUD",
+        "route": "auto",
+        "reason": "Policy 3a: nothing here needs a case; the alert closes as legitimate"
+      }
+    ],
+    "what_changed": "nothing"
+  },
+  "sar": {
+    "file": false,
+    "reason": "Policy 3a: a report requires fraud confirmed or strongly suspected. Assessed probability 0.25 with verdict legitimate, so no report.",
+    "narrative": "",
+    "subjects": [],
+    "total_amount_usd": 0.0,
+    "activity_dates": []
+  },
+  "stop_reason": "Further graph steps are unlikely to change the decision. Confidence 0.76. Main open question: Cardholder has not been asked whether they made the transaction",
+  "tool_calls": 17,
+  "tokens": 0,
+  "latency_s": 1.71
+}

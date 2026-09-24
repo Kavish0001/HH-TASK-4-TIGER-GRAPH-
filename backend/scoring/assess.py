@@ -26,6 +26,10 @@ from backend.tools.mock.store import Store
 UNDOCUMENTED_DETECTORS = {"undocumented_structuring", "undocumented_proxy_device_ring"}
 
 
+MONTHLY_MIN_DAYS = 24
+MONTHLY_MAX_DAYS = 37
+
+
 @dataclass
 class RecurringCharge:
     strength: float
@@ -61,18 +65,34 @@ def detect_recurring_charge(store: Store, card_id: str, txn_id: str, as_of: str)
         )
 
     gaps = same["ts"].diff().dropna().dt.total_seconds() / 86400
-    monthly = gaps[(gaps >= 25) & (gaps <= 35)]
+    # Billing dates drift with weekends and month length, so a monthly beat is
+    # 24 to 37 days rather than a strict 30.
+    monthly = gaps[(gaps >= MONTHLY_MIN_DAYS) & (gaps <= MONTHLY_MAX_DAYS)]
     cadence_share = float(len(monthly) / len(gaps)) if len(gaps) else 0.0
 
+    # The first version counted any three same-amount charges as recurring. On
+    # a card with a thousand transactions that is chance, and it cleared ten of
+    # the twenty pack cases on its own. What R7 describes is the disputed charge
+    # itself arriving on a monthly beat after earlier ones, so I anchor on the
+    # gap from the last matching charge to the flagged one.
+    flagged_ts = pd.Timestamp(row["ts"])
+    last_gap = (flagged_ts - same["ts"].iloc[-1]).total_seconds() / 86400
+    flagged_on_beat = MONTHLY_MIN_DAYS <= last_gap <= MONTHLY_MAX_DAYS
+    # Expected chance matches: how many same-amount charges a card this busy
+    # would show anyway. Dense cards need a longer chain to count.
+    density = len(same) / max(len(prior), 1)
+
     strength = 0.0
-    if len(same) >= 2:
+    if flagged_on_beat and len(monthly) >= 2:
+        strength = 0.85
+    elif flagged_on_beat and len(monthly) >= 1:
+        strength = 0.6
+    elif flagged_on_beat:
         strength = 0.35
-    if len(same) >= 3:
-        strength = 0.55
-    if cadence_share >= 0.5:
-        strength = min(strength + 0.35, 0.95)
-    elif cadence_share > 0:
-        strength = min(strength + 0.12, 0.8)
+    elif len(monthly) >= 2 and cadence_share >= 0.5:
+        strength = 0.25
+    if density > 0.05 and strength < 0.85:
+        strength *= 0.5
 
     return RecurringCharge(
         strength=round(strength, 3),
@@ -82,6 +102,8 @@ def detect_recurring_charge(store: Store, card_id: str, txn_id: str, as_of: str)
             "tolerance_usd": round(tol, 2),
             "median_gap_days": round(float(gaps.median()), 1) if len(gaps) else None,
             "monthly_cadence_share": round(cadence_share, 3),
+            "days_since_last_match": round(float(last_gap), 1),
+            "flagged_on_monthly_beat": bool(flagged_on_beat),
             "note": "no merchant column in this dataset; recurrence inferred from amount, product code and cadence",
         },
     )

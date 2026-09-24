@@ -129,6 +129,11 @@ class RetrievedChunk(_Model):
     text: str
     score: float
     kind: str
+    # Filled for prior-case chunks so the similar-cases panel can show the
+    # outcome without a second lookup.
+    outcome: str | None = None
+    pattern: str | None = None
+    exposure_usd: float | None = None
 
 
 class InternalCase(_Model):

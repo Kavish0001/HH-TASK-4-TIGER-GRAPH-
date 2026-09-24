@@ -82,20 +82,37 @@ def retrieve_similar_cases(
             }
         )
 
-    # Cases this agent has already closed become memory for later ones.
-    for record in get_case_memory().for_entities(entity_ids, as_of or "9999"):
+    # Cases this agent has already closed become memory for later ones. They
+    # compete on the same blended score as closed cases: text similarity plus
+    # the entity bonus. I originally only admitted entity matches, which meant
+    # an earlier benchmark case that read alike but shared no card never came
+    # back. Scoring them the same way lets them surface when they are genuinely
+    # close, and keeps them out when they are not.
+    records = get_case_memory().available_at(as_of or "9999")
+    q_vec = index.embedder.encode_one(query_text) if records and hasattr(index, "embedder") else None
+    for record in records:
+        overlap = wanted & set(record.entities)
+        text_sim = 0.0
+        if q_vec is not None:
+            vec = index.embedder.encode_one(record.as_text())
+            text_sim = float(q_vec @ vec / ((q_vec @ q_vec) ** 0.5 * (vec @ vec) ** 0.5 + 1e-9))
+        bonus = min(ENTITY_BONUS * len(overlap), MAX_ENTITY_BONUS)
         scored.append(
             {
                 "case_id": record.case_id,
-                "similarity": 0.0,
-                "blended_score": round(MAX_ENTITY_BONUS, 4),
+                "similarity": round(text_sim, 4),
+                "blended_score": round(text_sim + bonus, 4),
                 "outcome": record.outcome,
                 "pattern": record.pattern,
                 "exposure_usd": record.exposure_usd,
                 "closed_at": record.closed_at,
                 "connected_card_ids": record.connected_card_ids,
                 "txn_ids": record.txn_ids,
-                "why_matched": "a case this agent closed earlier on a shared entity",
+                "why_matched": (
+                    f"a case this agent closed earlier, sharing {', '.join(sorted(overlap)[:3])}"
+                    if overlap
+                    else f"a case this agent closed earlier, text similarity {text_sim:.2f}"
+                ),
                 "ref": f"case:{record.graph_case_id}",
                 "text": record.as_text(),
                 "source": "agent_memory",

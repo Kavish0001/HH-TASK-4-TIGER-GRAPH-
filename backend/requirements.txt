@@ -2,10 +2,13 @@
 langgraph==0.2.60
 langchain-core==0.3.29
 langchain-mcp-adapters==0.1.7
+# tigergraph-mcp pulls mcp 2.x, which breaks langchain-mcp-adapters 0.1.7.
+mcp>=1.30,<2
 google-genai==2.25.0
-fastapi==0.115.6
+fastapi==0.141.1
 uvicorn[standard]==0.34.0
-sse-starlette==2.2.1
+sse-starlette==3.4.11
+starlette==1.7.0
 pydantic==2.10.4
 pydantic-settings==2.7.0
 

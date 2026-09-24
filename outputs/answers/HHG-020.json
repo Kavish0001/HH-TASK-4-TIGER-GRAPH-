@@ -1,0 +1,164 @@
+{
+  "case_id": "HHG-020",
+  "case": {
+    "status": "closed_fraud",
+    "verdict": "fraud",
+    "fraud_probability": 0.872,
+    "pattern": "card_not_present_new_device",
+    "pattern_description": "",
+    "affected_txn_ids": [
+      "3509359"
+    ],
+    "first_suspicious_txn_id": "3509359",
+    "connected_card_ids": [],
+    "connected_device_profiles": [],
+    "exposure_usd": 125.08,
+    "evidence": [
+      {
+        "claim": "Flagged transaction 3509359 on card C12265-K2: $125.08, online channel, product code R, billing region 264.0. The bank model scored it 0.52, which is a reason to look, not a finding",
+        "source": "graph",
+        "ref": "query:tx_context(txn_id=3509359, as_of=2016-12-03 12:04:26)",
+        "entity_ids": [
+          "3509359",
+          "C12265-K2"
+        ]
+      },
+      {
+        "claim": "Against 82 earlier transactions on the card, the amount sits at the 58% percentile; product code never used on this card; device profile new to this card",
+        "source": "graph",
+        "ref": "query:behavior_shift(customer_id=C12265, txn_id=3509359)",
+        "entity_ids": [
+          "C12265-K2",
+          "3509359"
+        ]
+      },
+      {
+        "claim": "Pattern check card-not-present fraud from a new device scored 0.56: Online purchase of $125.08 at the 59% percentile of this card's history, from a device profile new to this card",
+        "source": "graph",
+        "ref": "query:pattern_match(pattern=card_not_present_new_device, card_id=C12265-K2, txn_id=3509359)",
+        "entity_ids": [
+          "3509359"
+        ]
+      },
+      {
+        "claim": "Alternative hypothesis card_not_present_fraud scored lower at 0.35; present: online_channel, new_product_code, device_marked_new; absent: amount_out_of_baseline, burst_within_48h, proxy_flag",
+        "source": "graph",
+        "ref": "query:pattern_match(pattern=card_not_present_fraud, card_id=C12265-K2, txn_id=3509359)",
+        "entity_ids": [
+          "C12265-K2"
+        ]
+      },
+      {
+        "claim": "Billing region 264.0: has earlier history for this customer (84 transactions, span 150.11 days); home region 264.0; neither a trip nor a clone pattern",
+        "source": "graph",
+        "ref": "query:region_history(customer_id=C12265, addr1=264.0)",
+        "entity_ids": [
+          "C12265"
+        ]
+      },
+      {
+        "claim": "Device profile Trident/7.0 | Windows 10 | ie 11.0 for desktop | 1920x1080 appears on 253 cards across 253 customers; the profile is common, so sharing alone is not evidence",
+        "source": "graph",
+        "ref": "query:shared_device_profile(device_profile=Trident/7.0 | Windows 10 | ie 11.0 for desktop | 1920x1080)",
+        "entity_ids": [
+          "C12265-K2"
+        ]
+      },
+      {
+        "claim": "2 closed case(s) before this alert touch this card or customer: 2 confirmed fraud (account_takeover), 0 cleared",
+        "source": "graph",
+        "ref": "query:prior_cases_for_entities(n_entities=2, as_of=2016-12-03 12:04:26)",
+        "entity_ids": [
+          "CC-2277",
+          "CC-2447"
+        ]
+      },
+      {
+        "claim": "This agent's own earlier case HHG-015 (a case this agent closed earlier, text similarity 0.81) closed as closed_fraud with pattern card_not_present_new_device",
+        "source": "graph",
+        "ref": "case:GC-HHG-015",
+        "entity_ids": [
+          "HHG-015"
+        ]
+      },
+      {
+        "claim": "This agent's own earlier case HHG-010 (a case this agent closed earlier, text similarity 0.80) closed as closed_fraud with pattern card_not_present_new_device",
+        "source": "graph",
+        "ref": "case:GC-HHG-010",
+        "entity_ids": [
+          "HHG-010"
+        ]
+      },
+      {
+        "claim": "Policy R2 governs the recommended actions",
+        "source": "document",
+        "ref": "policy:R2",
+        "entity_ids": []
+      },
+      {
+        "claim": "Evidence request step_up_auth: Simulated, the dataset supplies no replies. Assumed the cardholder denies the transaction and still holds the card. The activity matches the card_not_present_new_device pattern and is corroborated by 2 independent signals pointing the same way, with no competing legitimate explanation in the cardholder's own history.",
+        "source": "customer",
+        "ref": "evidence_request:1",
+        "entity_ids": []
+      }
+    ],
+    "similar_prior_cases": [
+      "CC-2277",
+      "CC-2447"
+    ],
+    "summary": "The bank's model flagged the transaction on card C12265-K2, transaction 3509359 ($125.08). The leading hypothesis is card-not-present fraud from a new device: Online purchase of $125.08 at the 59% percentile of this card's history, from a device profile new to this card. The cardholder, asked to validate the activity, was assumed to deny it (simulated response). Assessed fraud probability is 0.87 at confidence 1.00, verdict fraud, exposure $125.08. Final recommendation: BLOCK_CARD, CREATE_CASE (R2).",
+    "written_to_graph": true,
+    "graph_case_id": "GC-HHG-020"
+  },
+  "evidence_requests": [
+    {
+      "type": "step_up_auth",
+      "asked_after_step": 20,
+      "assumed_response": "Simulated, the dataset supplies no replies. Assumed the cardholder denies the transaction and still holds the card. The activity matches the card_not_present_new_device pattern and is corroborated by 2 independent signals pointing the same way, with no competing legitimate explanation in the cardholder's own history."
+    }
+  ],
+  "next_best_actions": {
+    "initial": [
+      {
+        "action": "CREATE_CASE",
+        "route": "auto",
+        "reason": "Policy 3a: probability 0.55 is at or above 0.30 and evidence was requested"
+      },
+      {
+        "action": "MONITOR_CARD",
+        "route": "auto",
+        "reason": "Probability 0.55 is inconclusive; monitoring keeps the card usable while the picture is unclear"
+      },
+      {
+        "action": "STEP_UP_AUTH",
+        "route": "auto",
+        "reason": "Policy section 6: probability 0.55 has not reached 0.85 or 0.15 on two independent pieces of evidence (confidence 0.97), so the agent asks before acting"
+      }
+    ],
+    "final": [
+      {
+        "action": "BLOCK_CARD",
+        "route": "L1",
+        "reason": "R2: the cardholder states they did not make the transaction"
+      },
+      {
+        "action": "CREATE_CASE",
+        "route": "auto",
+        "reason": "R2: the cardholder states they did not make the transaction"
+      }
+    ],
+    "what_changed": "The assumed response (denied) moved probability from 0.55 to 0.87, so the recommendation moved from CREATE_CASE, MONITOR_CARD, STEP_UP_AUTH to BLOCK_CARD, CREATE_CASE under R2."
+  },
+  "sar": {
+    "file": false,
+    "reason": "Policy 3a: fraud is suspected but no filing trigger holds. Exposure is at or below $1,000, no connected card, no shared origin and the pattern is documented. Case only, no report.",
+    "narrative": "",
+    "subjects": [],
+    "total_amount_usd": 0.0,
+    "activity_dates": []
+  },
+  "stop_reason": "The assumed cardholder response (denied) settles the question under policy section 6. Confidence 1.00. Main open question: The dataset carries no merchant name, so 'same merchant' recurrence is inferred from amount, product code and cadence rather than observed directly",
+  "tool_calls": 17,
+  "tokens": 0,
+  "latency_s": 1.14
+}

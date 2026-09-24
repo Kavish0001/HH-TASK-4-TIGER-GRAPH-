@@ -142,9 +142,12 @@ class TigerGraphBackend(ToolBackend):
         for key in VERTEX_PARAMS.get(query, ()):
             if key in body:
                 body[key] = {"id": str(body[key])}
+        # RESTPP URL-decodes the body before parsing it, so a literal "%" in
+        # any text parameter ("new on 100% of rows") fails the whole call.
+        # Escaping it as %25 round-trips to the original character.
         r = requests.post(
             f"{self.base}/query/{self.graph}/{query}",
-            data=json.dumps(body),
+            data=json.dumps(body).replace("%", "%25"),
             auth=self.auth,
             headers={"Content-Type": "application/json"},
             timeout=self.timeout,
