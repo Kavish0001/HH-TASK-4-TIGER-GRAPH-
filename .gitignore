@@ -15,3 +15,11 @@ venv/
 .DS_Store
 .pytest_cache/
 *.log
+
+# Derived data, regenerable via graph/prep/prepare.py. transactions_slim.csv
+# alone is 133 MB, over GitHub's 100 MB per-file hard limit.
+graph/prepared/
+backend/tools/mock/data/
+*.csv.gz
+backend/data_cache/
+*.parquet

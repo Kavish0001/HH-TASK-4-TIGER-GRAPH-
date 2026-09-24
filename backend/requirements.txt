@@ -14,7 +14,7 @@ pyTigerGraph==1.8.6
 
 # Data and GraphRAG
 pandas==2.2.3
-numpy==2.2.1
+numpy==2.2.6
 sentence-transformers==3.3.1
 pyyaml==6.0.2
 
