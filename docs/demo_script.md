@@ -24,7 +24,9 @@ Before recording:
 
 ## 1. The problem (0:00 to 0:20, 20s)
 
-**Screen:** Case queue, all 20 cases, sorted by opened time.
+**Screen:** Start on the landing page (http://localhost:3000) for two seconds,
+then click "Open case queue". The queue (`/cases`) shows all 20 cases with risk,
+confidence, status and pending approvals.
 
 **Voice:**
 "A bank's fraud model flags transactions all day. Most high scores are
@@ -133,7 +135,7 @@ every read is cut at the trigger time."
 
 **Voice:**
 "Next.js dashboard, FastAPI, a LangGraph state machine. The agent reaches
-TigerGraph through an MCP server over twenty installed GSQL queries, with graph
+TigerGraph through an MCP server exposing sixteen tools backed by twenty-six installed GSQL queries, with graph
 algorithms for ring structure and TigerGraph vectors for policy and case
 retrieval. Policy is a YAML file the code enforces. The language model only
 writes the prose, and its text is dropped if it names anything the graph did
