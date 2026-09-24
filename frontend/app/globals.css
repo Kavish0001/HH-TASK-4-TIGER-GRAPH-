@@ -1,0 +1,172 @@
+@import "tailwindcss";
+
+/* Tokens from plans/design/decision.md section 3. Contrast for every text pair is
+   measured there; the two rules that fall out of it: flame-500 text only on the two
+   darkest grounds (flame-400 on raised), and rust is never a glyph colour. */
+
+@font-face { font-family: "Inter"; src: url("/fonts/Inter-400.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Inter"; src: url("/fonts/Inter-500.woff2") format("woff2"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "Inter"; src: url("/fonts/Inter-600.woff2") format("woff2"); font-weight: 600; font-display: swap; }
+@font-face { font-family: "JetBrains Mono"; src: url("/fonts/JetBrainsMono-400.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "JetBrains Mono"; src: url("/fonts/JetBrainsMono-500.woff2") format("woff2"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "JetBrains Mono"; src: url("/fonts/JetBrainsMono-700.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+@font-face { font-family: "Space Grotesk"; src: url("/fonts/SpaceGrotesk-500.woff2") format("woff2"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "Space Grotesk"; src: url("/fonts/SpaceGrotesk-700.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", "Inter", ui-sans-serif, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+
+  --color-ink-50: #F5F5F5;
+  --color-ink-100: #E9E9E9;
+  --color-ink-200: #D5D5D5;
+  --color-ink-300: #BDBDBD;
+  --color-ink-400: #A1A1A1;
+  --color-ink-500: #878787;
+  --color-ink-600: #6D6D6D;
+  --color-ink-700: #535353;
+  --color-ink-800: #3A3A3A;
+  --color-ink-900: #232323;
+  --color-ink-950: #0C0C0C;
+
+  --color-ember-50: #FDF3F0;
+  --color-ember-100: #F9E5E0;
+  --color-ember-200: #F1CEC5;
+  --color-ember-300: #E4B2A6;
+  --color-ember-400: #D49382;
+  --color-ember-500: #C17563;
+  --color-ember-600: #A65C4A;
+  --color-ember-700: #874636;
+  --color-ember-800: #673124;
+  --color-ember-900: #481E14;
+  --color-ember-950: #290C06;
+
+  --color-rust-50: #FFF2EF;
+  --color-rust-100: #FBE1DB;
+  --color-rust-200: #F3C5BA;
+  --color-rust-300: #E5A393;
+  --color-rust-400: #D27D68;
+  --color-rust-500: #BB5841;
+  --color-rust-600: #9B3922;
+  --color-rust-700: #7E2611;
+  --color-rust-800: #601604;
+  --color-rust-900: #410800;
+  --color-rust-950: #210200;
+
+  --color-flame-50: #FFF2EF;
+  --color-flame-100: #FFE4DE;
+  --color-flame-200: #FFCDC0;
+  --color-flame-300: #FFAD99;
+  --color-flame-400: #FF8568;
+  --color-flame-500: #F2613F;
+  --color-flame-600: #D23F1A;
+  --color-flame-700: #A82700;
+  --color-flame-800: #7A1900;
+  --color-flame-900: #4F0C00;
+  --color-flame-950: #240200;
+
+  --color-sage-100: #E7EDE6;
+  --color-sage-200: #D2DDD0;
+  --color-sage-300: #B9C9B7;
+  --color-sage-400: #9DB39A;
+  --color-sage-500: #7F997C;
+  --color-sage-600: #657E61;
+  --color-sage-700: #4C6249;
+  --color-sage-800: #354833;
+  --color-sage-900: #202E1E;
+
+  --color-text: #F5EDE8;
+  --color-text-muted: #C9B7AC;
+  --color-text-faint: #A38F83;
+  --color-risk-low: #D9C7BC;
+
+  --radius-xs: 3px;
+}
+
+:root {
+  color-scheme: dark;
+  --bg-app: var(--color-ink-950);
+  --bg-surface: var(--color-ember-950);
+  --bg-raised: var(--color-ember-900);
+  --bg-raised-hi: var(--color-ember-800);
+  --line: var(--color-rust-800);
+  --line-strong: var(--color-rust-600);
+  --line-control: var(--color-rust-500);
+  --focus: var(--color-flame-500);
+  --chrome-h: 72px;
+}
+
+html, body { height: 100%; }
+body {
+  background: var(--bg-app);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection { background: var(--color-flame-500); color: var(--color-ink-950); }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+* { scrollbar-width: thin; scrollbar-color: var(--color-rust-800) transparent; }
+*::-webkit-scrollbar { width: 9px; height: 9px; }
+*::-webkit-scrollbar-thumb { background: var(--color-rust-800); border: 2px solid transparent; background-clip: content-box; border-radius: 9px; }
+
+@utility eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-text-faint);
+}
+
+@utility dot-grid {
+  background-image: radial-gradient(var(--color-rust-800) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@layer components {
+/* Panel: surface fill identifies it (hairline is decorative, see decision 3.3). A
+   state class drives the 2px left edge so every panel shows waiting/streaming/done. */
+.panel {
+  background: var(--bg-surface);
+  border: 1px solid var(--color-rust-800);
+  border-radius: 3px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  position: relative;
+}
+.panel[data-state="running"] { border-left: 2px solid var(--color-flame-500); }
+.panel[data-state="alert"] { border-left: 2px solid var(--color-flame-500); }
+.panel-h {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--color-rust-800);
+  flex: none;
+}
+.panel-b { padding: 8px 10px; overflow: auto; min-height: 0; flex: 1 1 auto; }
+
+/* The running step pulses its eyebrow only, never the whole row. */
+@keyframes eb-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+.pulse { animation: eb-pulse 1.2s ease-in-out infinite; }
+
+.row-dotted + .row-dotted { border-top: 1px dotted var(--color-rust-800); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
