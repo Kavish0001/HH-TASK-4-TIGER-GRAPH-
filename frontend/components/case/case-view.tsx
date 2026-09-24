@@ -101,6 +101,12 @@ export function CaseView({ id, autoRun }: { id: string; autoRun: boolean }) {
               <Button size="sm" onClick={() => setAnswerOpen(true)} disabled={!hasRun(data) || running}>
                 Answer file
               </Button>
+              {hasRun(data) && !running && (
+                <a href={`/cases/${encodeURIComponent(data.case_id)}/report`} target="_blank" rel="noreferrer"
+                  className="inline-flex items-center border border-rust-700 px-2.5 py-1 font-mono text-[11px] uppercase tracking-wider text-text hover:border-flame-500 hover:text-flame-400">
+                  PDF report
+                </a>
+              )}
               <Button size="sm" variant={hasRun(data) ? "ghost" : "primary"} onClick={start} disabled={running}>
                 {running ? "Running" : hasRun(data) ? "Re-run" : "Run investigation"}
               </Button>

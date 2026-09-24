@@ -163,3 +163,41 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Findings report (/cases/[id]/report). It reads as a paper document on screen
+   and prints alone: everything else on the page is hidden when printing, so the
+   browser's Save as PDF gives a clean multi-page report. */
+.report-wrap { position: relative; z-index: 1; padding: 24px 16px 64px; }
+.report-bar { max-width: 900px; margin: 0 auto 16px; display: flex; gap: 12px; align-items: center; justify-content: space-between; font-family: var(--font-mono, monospace); font-size: 12px; color: #d9cfc9; }
+.report-bar button { background: #f2613f; color: #0c0c0c; border: 0; padding: 8px 14px; font-family: inherit; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; cursor: pointer; }
+#report { max-width: 900px; margin: 0 auto; background: #fff; color: #1a1412; padding: 48px 56px; font-size: 13px; line-height: 1.55; box-shadow: 0 10px 40px rgba(0,0,0,.5); }
+#report h1 { font-size: 30px; font-weight: 700; margin: 2px 0 4px; color: #0c0c0c; }
+#report h2 { font-size: 15px; font-weight: 700; margin: 28px 0 10px; padding-bottom: 4px; border-bottom: 2px solid #9b3922; color: #481e14; break-after: avoid; }
+#report h3 { font-size: 12.5px; font-weight: 700; margin: 14px 0 6px; color: #481e14; }
+#report p { margin: 8px 0; }
+#report ul { margin: 6px 0 6px 20px; list-style: disc; }
+#report .r-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; border-bottom: 1px solid #e3d6cf; padding-bottom: 14px; }
+#report .r-eyebrow { font-family: var(--font-mono, monospace); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: #9b3922; margin: 0; }
+#report .r-muted { color: #6f625c; }
+#report .r-mono { font-family: var(--font-mono, monospace); font-size: 11.5px; word-break: break-word; }
+#report .r-verdict { font-family: var(--font-mono, monospace); text-transform: uppercase; font-weight: 700; font-size: 13px; padding: 6px 12px; border: 2px solid; white-space: nowrap; }
+#report .r-fraud { color: #c2381b; border-color: #c2381b; }
+#report .r-uncertain { color: #9b3922; border-color: #9b3922; }
+#report .r-legitimate { color: #3f6b4a; border-color: #3f6b4a; }
+#report table { width: 100%; border-collapse: collapse; margin: 8px 0; }
+#report .r-table th, #report .r-table td { border: 1px solid #e3d6cf; padding: 5px 7px; text-align: left; vertical-align: top; }
+#report .r-table th { background: #f7efeb; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #481e14; }
+#report .r-table tr { break-inside: avoid; }
+#report .r-kv th { width: 190px; text-align: left; font-weight: 600; color: #481e14; padding: 4px 8px 4px 0; vertical-align: top; }
+#report .r-kv td { padding: 4px 0; }
+#report .r-narrative { background: #f7efeb; border-left: 3px solid #9b3922; padding: 10px 14px; }
+#report .r-foot { margin-top: 32px; padding-top: 10px; border-top: 1px solid #e3d6cf; font-size: 10.5px; color: #6f625c; }
+
+@media print {
+  @page { size: A4; margin: 14mm; }
+  html, body { background: #fff !important; }
+  body * { visibility: hidden !important; }
+  #report, #report * { visibility: visible !important; }
+  #report { position: absolute; left: 0; top: 0; width: 100%; max-width: none; margin: 0; padding: 0; box-shadow: none; }
+  .no-print { display: none !important; }
+}
