@@ -312,6 +312,15 @@ With `NEXT_PUBLIC_API_URL` empty the dashboard runs on bundled mock cases in
 `frontend/lib/mock/`. Note the frontend reads `NEXT_PUBLIC_API_URL` from
 `frontend/.env.local`, not from the root `.env`.
 
+### Quick start (after setup)
+
+Once the graph is loaded and dependencies are installed, one command brings up
+TigerGraph, the MCP server, the API and the dashboard:
+
+```
+bash scripts/start_demo.sh               # http://localhost:3000
+```
+
 ## Reproducing the 20 answer files
 
 With TigerGraph loaded, queries installed and the MCP server running:
