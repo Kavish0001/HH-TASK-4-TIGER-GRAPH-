@@ -48,14 +48,14 @@ export function Backdrop() {
         className="absolute inset-0 transition-opacity duration-700"
         style={{
           background: landing
-            ? "radial-gradient(ellipse 42% 52% at 72% 46%, rgba(155,57,34,0.30), transparent 70%), radial-gradient(ellipse 26% 28% at 72% 46%, rgba(242,97,63,0.12), transparent 70%)"
+            ? "radial-gradient(ellipse 55% 60% at 50% 50%, rgba(155,57,34,0.18), transparent 70%)"
             : "radial-gradient(ellipse 40% 45% at 85% 85%, rgba(72,30,20,0.35), transparent 70%)",
         }}
       />
       {ok && (
         <div
           className="absolute inset-0 transition-opacity duration-1000"
-          style={{ opacity: ready ? cfg.opacity : 0, filter: landing ? undefined : "saturate(0.55)" }}
+          style={{ opacity: ready ? cfg.opacity : 0, filter: landing ? "saturate(0.8)" : "saturate(0.3)" }}
         >
           <Guard>
             <Suspense fallback={null}>

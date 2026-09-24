@@ -23,7 +23,7 @@ export default function LandingPage() {
     <>
       <section className="relative min-h-[calc(100svh-46px)] flex items-center">
         {/* Keeps the headline legible where the model sits behind it on narrow screens. */}
-        <div aria-hidden className="absolute inset-0 bg-[linear-gradient(90deg,rgba(12,12,12,0.92)_0%,rgba(12,12,12,0.72)_45%,rgba(12,12,12,0)_75%)] max-lg:bg-[linear-gradient(180deg,rgba(12,12,12,0.35)_0%,rgba(12,12,12,0.85)_55%)]" />
+        <div aria-hidden className="absolute inset-0 bg-[linear-gradient(90deg,rgba(12,12,12,0.7)_0%,rgba(12,12,12,0.45)_45%,rgba(12,12,12,0)_75%)] max-lg:bg-[linear-gradient(180deg,rgba(12,12,12,0.35)_0%,rgba(12,12,12,0.85)_55%)]" />
         <div className="relative w-full max-w-[1200px] mx-auto px-5 sm:px-8 py-16">
           <div className="max-w-[560px]">
             <p className="eyebrow">{"// agentic fraud investigation on TigerGraph"}</p>
